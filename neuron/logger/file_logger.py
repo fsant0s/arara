@@ -15,8 +15,8 @@ from neuron.logger.logger_utils import get_current_ts, to_dict
 from .base_logger import LLMConfig
 
 if TYPE_CHECKING:
-    from neuron import Agent, ConversableAgent, OpenAIWrapper
-    from neuron.oai.groq import GroqClient
+    from neuron import Agent, ClientWrapper
+    from neuron.clients.cloud_based import GroqClient
 
 
 logger = logging.getLogger(__name__)
@@ -107,7 +107,7 @@ class FileLogger(BaseLogger):
         except Exception as e:
             self.logger.error(f"[file_logger] Failed to log chat completion: {e}")
 
-    def log_new_agent(self, agent: ConversableAgent, init_args: Dict[str, Any] = {}) -> None:
+    def log_new_agent(self, agent: Agent, init_args: Dict[str, Any] = {}) -> None:
         """
         Log a new agent instance.
         """
@@ -176,7 +176,7 @@ class FileLogger(BaseLogger):
                 self.logger.error(f"[file_logger] Failed to log event {e}")
 
     def log_new_wrapper(
-        self, wrapper: OpenAIWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]] = {}
+        self, wrapper: ClientWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]] = {}
     ) -> None:
         """
         Log a new wrapper instance.
@@ -220,7 +220,7 @@ class FileLogger(BaseLogger):
             #| TogetherClient #TODO: to be added in the future
             #| CohereClient #TODO: to be added in the future
         ),
-        wrapper: OpenAIWrapper,
+        wrapper: ClientWrapper,
         init_args: Dict[str, Any],
     ) -> None:
         """

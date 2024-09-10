@@ -11,9 +11,9 @@ from neuron.logger.base_logger import BaseLogger, LLMConfig
 from neuron.logger.logger_factory import LoggerFactory
 
 if TYPE_CHECKING:
-    from .oai import OpenAIWrapper
-    from .agents import Agent, ConversableAgent
-    from .oai.groq import GroqClient
+    from .clients import ClientFactory
+    from .agents import Agent
+    from .clients.cloud_based import GroqClient
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def log_chat_completion(
     )
 
 
-def log_new_agent(agent: ConversableAgent, init_args: Dict[str, Any]) -> None:
+def log_new_agent(agent: Agent, init_args: Dict[str, Any]) -> None:
     if neuron_logger is None:
         logger.error("[runtime logging] log_new_agent: neuron logger is None")
         return
@@ -86,7 +86,7 @@ def log_event(source: Union[str, Agent], name: str, **kwargs: Dict[str, Any]) ->
     neuron_logger.log_event(source, name, **kwargs)
 
 
-def log_new_wrapper(wrapper: OpenAIWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
+def log_new_wrapper(wrapper: ClientFactory, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
     if neuron_logger is None:
         logger.error("[runtime logging] log_new_wrapper: neuron logger is None")
         return
@@ -117,7 +117,7 @@ def log_new_client(
         GroqClient
         #TODO: AzureOpenAI, OpenAI, GeminiClient, AnthropicClient, MistralAIClient, TogetherClient, GroqClient, CohereClient
     ],
-    wrapper: OpenAIWrapper,
+    wrapper: ClientFactory,
     init_args: Dict[str, Any],
 ) -> None:
     if neuron_logger is None:

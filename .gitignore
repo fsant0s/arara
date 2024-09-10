@@ -1,6 +1,0 @@
-./neuron_logs
-.gitignore
-
-__pycache__/
-*.py[cod]
-*.pyo

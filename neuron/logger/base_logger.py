@@ -5,12 +5,10 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, TypeVar, Union
 
-from openai import AzureOpenAI, OpenAI
 from openai.types.chat import ChatCompletion
 
 if TYPE_CHECKING:
-    #TODO: it should be from agents import Agent, ConversableAgent, OpenAIWrapper
-    from ..agents import Agent, ConversableAgent
+    from ..agents import Agent, ClientWrapper
 
 F = TypeVar("F", bound=Callable[..., Any])
 ConfigItem = Dict[str, Union[str, List[str]]]
@@ -44,14 +42,14 @@ class BaseLogger(ABC):
         """
         Log a chat completion to database.
 
-        In NEURON, chat completions are somewhat complicated because they are handled by the `neuron.oai.OpenAIWrapper` class.
+        In NEURON, chat completions are somewhat complicated because they are handled by the `neuron.clients.ClientWrapper` class.
         One invocation to `create` can lead to multiple underlying OpenAI calls, depending on the llm_config list used, and
         any errors or retries.
 
         Args:
-            invocation_id (uuid):               A unique identifier for the invocation to the OpenAIWrapper.create method call
+            invocation_id (uuid):               A unique identifier for the invocation to the ClientWrapper.create method call
             client_id (int):                    A unique identifier for the underlying OpenAI client instance
-            wrapper_id (int):                   A unique identifier for the OpenAIWrapper instance
+            wrapper_id (int):                   A unique identifier for the ClientWrapper instance
             source (str or Agent):              The source/creator of the event as a string name or an Agent instance
             request (dict):                     A dictionary representing the request or call to the OpenAI client endpoint
             response (str or ChatCompletion):   The response from OpenAI
@@ -62,12 +60,12 @@ class BaseLogger(ABC):
         ...
 
     @abstractmethod
-    def log_new_agent(self, agent: ConversableAgent, init_args: Dict[str, Any]) -> None:
+    def log_new_agent(self, agent: Agent, init_args: Dict[str, Any]) -> None:
         """
         Log the birth of a new agent.
 
         Args:
-            agent (ConversableAgent):   The agent to log.
+            agent (Agent):   The agent to log.
             init_args (dict):           The arguments passed to the construct the conversable agent
         """
         ...
@@ -85,12 +83,12 @@ class BaseLogger(ABC):
         ...
 
     @abstractmethod
-    def log_new_wrapper(self, wrapper: OpenAIWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
+    def log_new_wrapper(self, wrapper: ClientWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
         """
-        Log the birth of a new OpenAIWrapper.
+        Log the birth of a new ClientWrapper.
 
         Args:
-            wrapper (OpenAIWrapper):    The wrapper to log.
+            wrapper (ClientWrapper):    The wrapper to log.
             init_args (dict):           The arguments passed to the construct the wrapper
         """
         ...

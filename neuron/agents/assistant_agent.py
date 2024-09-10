@@ -1,14 +1,13 @@
-from typing import Callable, Dict, Literal, Optional, Union
+from typing import Dict, Literal, Optional, Union
 
 from neuron.runtime_logging import log_new_agent, logging_enabled
+from neuron.clients import CloudBasedClient
+from .llm_agent import LLMAgent
 
-from .conversable_agent import ConversableAgent
-
-
-class AssistantAgent(ConversableAgent):
+class AssistantAgent(LLMAgent):
     """(In preview) Assistant agent, designed to solve a task with LLM.
 
-    AssistantAgent is a subclass of ConversableAgent configured with a default system message.
+    AssistantAgent is a subclass of Agent configured with a default system message.
     """
 
     DEFAULT_SYSTEM_MESSAGE = """You are a helpful AI assistant."""
@@ -18,9 +17,9 @@ class AssistantAgent(ConversableAgent):
     def __init__(
         self,
         name: str,
-        system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
-        llm_config: Optional[Union[Dict, Literal[False]]] = None,
         description: Optional[str] = None,
+        llm_config: Optional[Union[Dict, Literal[False]]] = None,
+        system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         **kwargs,
     ):
         super().__init__(
@@ -30,6 +29,10 @@ class AssistantAgent(ConversableAgent):
             description=description,
             **kwargs,
         )
+
+        if not isinstance(self.client, CloudBasedClient):
+            raise ValueError("The 'self.client' argument should be a CloudBasedClient instance.")
+
         if logging_enabled():
             log_new_agent(self, locals())
 
