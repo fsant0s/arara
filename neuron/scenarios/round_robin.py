@@ -83,6 +83,18 @@ class RoundRobinManager(LLMAgent):
 
         reply_from_learner = learner.generate_reply(sender=self)
         learner.send(reply_from_learner, self, request_reply=False, silent=False)
+
+        message = self.last_message(learner)
+        for agent in round_robin.agents:
+            if agent != learner:
+                self.send(message, agent, request_reply=False, silent=True)
+
+
+        kr = round_robin.agents[3]
+        embeddings = kr.generate_reply(sender=self)
+        reply_from_kr = "Embeddings done :D. Sending to the next agent."
+        kr.send(reply_from_kr, self, request_reply=False, silent=False)
+
         return True, None
 
    

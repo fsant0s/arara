@@ -39,9 +39,9 @@ class LLMEmbedding(CustomClient):
             model_dir (str): Path to the model file.
             model_name (str): Name of the model.
         """
-
+        
         self._model_dir = kwargs.get("model_dir")
-        self._model_name = kwargs.get("model_name")
+        self._model_name = kwargs.get("model")
 
         if not self._model_dir:
             raise ValueError("The 'model_dir' argument is required.")
@@ -56,7 +56,7 @@ class LLMEmbedding(CustomClient):
         last_message = messages[-1]['content'] if messages else None
         try:
             inputs = self._tokenizer(last_message, return_tensors="pt")
-            reponse = self._model(torch.tensor(inputs['input_ids']))
+            reponse = self._model(inputs['input_ids'].clone().detach())
             embeddings = reponse.logits
             reponse = str(embeddings.mean(dim=1)[0].tolist())
             response_id = str(uuid.uuid4())

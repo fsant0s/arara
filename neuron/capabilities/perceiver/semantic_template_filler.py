@@ -5,6 +5,7 @@ from neuron.code_utils import content_str
 from ..agent_capability import AgentCapability
 
 from typing import Dict, Optional, Union, List
+import numpy as np
 import pandas as pd
 
 class SemanticTemplateFillerCapability(AgentCapability):
@@ -116,12 +117,16 @@ class SemanticTemplateFillerCapability(AgentCapability):
         Template: {self.template}
         """
         response = self.__get_response(user_prompt)
-        '''
-        #TODO:
-        Sometimes the response is:
-        {'id': 1, 'result': {'name': ['sildofo'], 'address': ['np.nan'], 'city': ['np.nan'], 'state': ['np.nan'], 'postal_code': ['np.nan'], 'latitude': ['np.nan'], 'longitude': ['np.nan'], 'stars': ['np.nan'], 'review_count': ['np.nan'], 'is_open': ['np.nan'], 'attributes': ['np.nan'], 'categories': ['np.nan'], 'hours': ['np.nan']}}
-        </tool_response>
-        '''
+        response = response.replace("</tool_response>", "").replace("<tool_response>", "") # Remove the tool_response tags. Probably a bug in the LLM client.
+
+        try:
+            df_response = pd.DataFrame(eval(response))
+            if set(df_response.columns) != set(self.row.index):
+                raise ValueError("Column names in the DataFrame do not match the expected columns.\nExpected: {self.row.index}\nReceived: {df_response.columns}")
+        except Exception as e:
+            raise ValueError(f"Unable to convert the response {response} to a DataFrame.") from e
+
+        
         return response
 
 
