@@ -97,7 +97,7 @@ class BeGreatClient(CustomClient):
         return message
 
 
-    def _convert_str_to_dataframe(self, input_str) -> dict:
+    def _convert_str_to_dataframe(self, input_str: str) -> dict:
         """
         Tenta converter uma string em formato JSON para um DataFrame do pandas.
 
@@ -113,4 +113,4 @@ class BeGreatClient(CustomClient):
         try:
             return pd.DataFrame(eval(input_str))
         except Exception:
-            raise ValueError("Provided string is not a valid JSON format.")
+            raise ValueError("Unable to convert the string to a `pd.DataFrame`. Please check the format of `input_str`.")

@@ -38,7 +38,7 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
         client_constructors = {
             "groq": GroqClient,
             "begreat": BeGreatClient,
-            "LLMEmbedding": LLMEmbedding,
+            "llmembedding": LLMEmbedding,
         }
 
         # Retrieve the appropriate client class from the mapping

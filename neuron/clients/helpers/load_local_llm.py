@@ -20,6 +20,7 @@ def load_local_llm(model_name: str, model_dir: str) -> None:
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model.load_state_dict(torch.load(model_path, map_location=device))
+        model.generation_config.pad_token_id = tokenizer.pad_token_id
         model.eval()
         
         return model, tokenizer
