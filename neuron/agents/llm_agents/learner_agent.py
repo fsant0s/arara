@@ -5,16 +5,22 @@ from neuron.clients import CloudBasedClient
 
 from neuron.agents import  LLMAgent
 
-class ExplainableAgent(LLMAgent):
+class LearnerAgent(LLMAgent):
     
-    DEFAULT_DESCRIPTION = "An Explainer Agent evaluates each item in a list and determines which items match the user's description. It provides an explanation of why the selected items meet the criteria."
+    DEFAULT_DESCRIPTION = "An Assessor Agent evaluates data elements to determine the best match with the user's description."
     DEFAULT_SYSTEM_MESSAGE = """
-    As the Explainer agent, your task is to analyze the list of items provided by the user and evaluate them one by one to determine which items match the user's description. For each matching item, provide an explanation of why it meets the user's requirements. If no items match, simply respond with 'no items match the description'.
+    You have been assigned the role of an Assessor agent. Your task is to evaluate a list of items against the user's specific request. Follow these guidelines:
+
+    1. Carefully review the user’s request for key requirements.
+    2. Analyze each provided item to determine if it matches the key requirements.
+    3. If you find at least one matching item, return only the matching items.
+    4. If no item matches, respond with a message indicating that there was no match.
+    5. Focus solely on the user's key requirements without providing detailed lists or additional explanations.
     """
 
     def __init__(
         self,
-        name="explainer_agent",
+        name="learner_agent",
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
         description: Optional[str] = DEFAULT_DESCRIPTION,

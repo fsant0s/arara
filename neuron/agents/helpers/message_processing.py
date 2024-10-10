@@ -19,8 +19,8 @@ def process_message_before_send(
 def process_received_message(
         self: BaseAgent, message: Union[Dict, str], sender: BaseAgent, silent: bool
     ) -> None:
-    # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
-    valid = append_oai_message(self, message, "user", sender)
+    # When the agent receives a message, the role of the message is "user". 
+    valid = append_oai_message(self, message, "user", sender, is_sending=False)
     if logging_enabled():
         log_event(self, "received_message", message=message, sender=sender.name, valid=valid)
 

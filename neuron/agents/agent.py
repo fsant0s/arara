@@ -19,6 +19,7 @@ from .helpers import (
     prepare_chat,
     chat_messages,
     match_trigger,
+    append_short_memories_before_reply
 )
 
 from ..runtime_logging import logging_enabled, log_event
@@ -99,6 +100,7 @@ class Agent(BaseAgent):
             "process_last_received_message": [],
             "process_message_before_send": [],
             "process_all_messages_before_reply": [],
+            "append_short_memories_before_reply": [],
         }
         self.client = validate_llm_config(self.llm_config, llm_config, self.DEFAULT_CONFIG)
         self.register_reply([BaseAgent, None], Agent._generate_oai_reply)
@@ -108,7 +110,7 @@ class Agent(BaseAgent):
         self,
         recipient: "Agent",
         should_clear_history: bool = True,
-        silent: Optional[bool] = False,
+        silent: Optional[bool] = True,
         message: Optional[Union[Dict, str, Callable]] = None,
         **kwargs,
     ) -> None:
@@ -151,10 +153,8 @@ class Agent(BaseAgent):
         silent: Optional[bool] = False,
     ):
         message = process_message_before_send(self, message, recipient, silent)
-        # When the agent composes and sends the message, the role of the message is "assistant"
-        # unless it's "function".
         
-        valid = append_oai_message(self, message, "assistant", recipient)
+        valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
         if valid:
             recipient.receive(message, self, request_reply, silent)
         else:
@@ -176,14 +176,12 @@ class Agent(BaseAgent):
         if reply is not None:
             self.send(reply, sender, silent=silent)
 
-
     def generate_reply(
         self,
         messages: Optional[List[Dict[str, Any]]] = None,
         sender: Optional["BaseAgent"] = None,
         **kwargs: Any,
     ) -> Union[str, Dict, None]:
-        
         if all((messages is None, sender is None)):
             error_msg = f"Either {messages=} or {sender=} must be provided."
             logger.error(error_msg)
@@ -195,15 +193,18 @@ class Agent(BaseAgent):
         # Call the hookable method that gives registered hooks a chance to process the last message.
         # Message modifications do not affect the incoming messages or self._oai_messages.
         messages = process_last_received_message(self, messages)
-    
         # Call the hookable method that gives registered hooks a chance to process all messages.
         # Message modifications do not affect the incoming messages or self._oai_messages.
         messages = process_all_messages_before_reply(self, messages)
+
+        # add a comment
+        messages = append_short_memories_before_reply(self, messages)
+       
         for reply_func_tuple in self._reply_func_list:
             reply_func = reply_func_tuple["reply_func"]
             if match_trigger(self, reply_func_tuple["trigger"], sender):
                 final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
-                if logging_enabled():
+                if logging_enabled() and final is not None and reply is not None:
                     log_event(
                         self,
                         "reply_func_executed",
@@ -229,7 +230,7 @@ class Agent(BaseAgent):
             return False, None
         if messages is None:
             messages = self._oai_messages[sender]
-            
+      
         extracted_response = self._generate_oai_reply_from_client(
             client, messages, self.client_cache
         )

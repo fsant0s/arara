@@ -238,9 +238,7 @@ class ClientWrapper:
             full_config = {**config, **self._config_list[i]}
             # separate the config into create_config and extra_kwargs
             create_config, extra_kwargs = self._separate_create_config(full_config)
-            client_type = extra_kwargs.get("client_type")
-            if client_type and client_type.startswith("azure") and "model" in create_config:
-                create_config["model"] = create_config["model"].replace(".", "")
+            
             # construct the create params
             params = self._construct_create_params(create_config, extra_kwargs)
             

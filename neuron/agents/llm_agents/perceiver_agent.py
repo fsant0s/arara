@@ -47,9 +47,10 @@ class PerceiverAgent(LLMAgent):
         # Check if system_message is absent or empty.
         # If not, it triggers the parent method, indicating further processing of
         # the returned message from one capability, which may involve an additional API call.
+        
         if self.system_message is not None and self.system_message != "":
             return super()._generate_oai_reply(messages, sender, config)
-        
+    
         if messages is None:
             messages = self._oai_messages[sender]
 
