@@ -56,12 +56,13 @@ class GroqClient(CloudBasedClient):
         # Ensure we have the api_key upon instantiation
         self.api_key = kwargs.get("api_key", None)
         if not self.api_key:
-            self.api_key = os.getenv("GROQ_API_KEY")
+            api_key = os.getenv("GROQ_API_KEY")
 
         assert (
             self.api_key
         ), "Please include the api_key in your config list entry for Groq or set the GROQ_API_KEY env variable."
 
+    
     def parse_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Loads the parameters for Groq API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults"""
         groq_params = {}
@@ -103,18 +104,19 @@ class GroqClient(CloudBasedClient):
 
         # Convert NEURON messages to Groq messages
         groq_messages = oai_messages_to_groq_messages(messages)
+        
         # Parse parameters to the Groq API's parameters
         groq_params = self.parse_params(params)
 
         groq_params["messages"] = groq_messages
-
-        # We use chat model by default, and set max_retries to 5 (in line with typical retries loop)
-        client = Groq(api_key=self.api_key, max_retries=5)
-
+        
         # Token counts will be returned
         prompt_tokens = 0
         completion_tokens = 0
         total_tokens = 0
+
+        # In case you put the client in __init__ it wll cause crash 
+        client = Groq(api_key=self.api_key, max_retries=5)
 
         try:
             response = client.chat.completions.create(**groq_params)

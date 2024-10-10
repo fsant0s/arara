@@ -3,7 +3,7 @@ from .message_to_dict import message_to_dict
 from typing import Union, Dict
 from neuron.agents.base_agent import BaseAgent
 
-def append_oai_message(self: BaseAgent, message: Union[Dict, str], role, conversation_id: BaseAgent) -> bool:
+def append_oai_message(self: BaseAgent, message: Union[Dict, str], role, conversation_id: BaseAgent, is_sending: bool) -> bool:
         
     message = message_to_dict(message)
     
@@ -16,6 +16,13 @@ def append_oai_message(self: BaseAgent, message: Union[Dict, str], role, convers
     
     if "content" not in oai_message:
         return False
+    
+    if "name" not in oai_message:
+        # If we don't have a name field, append it
+        if is_sending:
+            oai_message["name"] = self.name
+        else:
+            oai_message["name"] = conversation_id.name
 
     oai_message["role"] = role
     self._oai_messages[conversation_id].append(oai_message)

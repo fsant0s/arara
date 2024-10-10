@@ -11,3 +11,4 @@ from .prepare_chat import prepare_chat
 from .clear_history import clear_history
 from .chat_messages import chat_messages
 from .match_trigger import match_trigger
+from .append_short_memories_before_reply import append_short_memories_before_reply

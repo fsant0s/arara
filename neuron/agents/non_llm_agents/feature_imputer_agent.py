@@ -4,13 +4,13 @@ from neuron.runtime_logging import log_new_agent, logging_enabled
 from neuron.agents import Agent
 from neuron.clients import CustomClient
 
-class LearnerAgent(Agent):
+class FeatureImputerAgent(Agent):
     
-    DEFAULT_DESCRIPTION = "A Learner Agent processes incoming data, inferring new information for further use."
+    DEFAULT_DESCRIPTION = "A Feature Imputer Agent processes incomplete data by imputing missing values, enabling more accurate and complete analysis for further use."
 
     def __init__(
         self,
-        name="learner_agent",
+        name="feature_imputer",
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
         description: Optional[str] = DEFAULT_DESCRIPTION,
         **kwargs,

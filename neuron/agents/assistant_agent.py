@@ -17,27 +17,21 @@ class AssistantAgent(LLMAgent):
     def __init__(
         self,
         name: str,
-        description: Optional[str] = None,
+        description: Optional[str] = DEFAULT_DESCRIPTION,
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         **kwargs,
     ):
         super().__init__(
-            name,
-            system_message,
+            name=name,
+            system_message=system_message,
+            description=self.DEFAULT_DESCRIPTION,
             llm_config=llm_config,
-            description=description,
             **kwargs,
         )
-
-        if not isinstance(self.client, CloudBasedClient):
-            raise ValueError("The 'self.client' argument should be a CloudBasedClient instance.")
 
         if logging_enabled():
             log_new_agent(self, locals())
 
-        # Update the provided description if None, and we are using the default system_message,
-        # then use the default description.
-        if description is None:
-            if system_message == self.DEFAULT_SYSTEM_MESSAGE:
-                self.description = self.DEFAULT_DESCRIPTION
+        if not all(isinstance(client, CloudBasedClient) for client in self.client._clients):
+            raise ValueError("The client argument should be a CloudBasedClient instance.")

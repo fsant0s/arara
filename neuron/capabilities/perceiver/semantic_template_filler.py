@@ -5,23 +5,24 @@ from neuron.code_utils import content_str
 from ..agent_capability import AgentCapability
 
 from typing import Dict, Optional, Union, List
-import numpy as np
 import pandas as pd
+import numpy as np
 
 class SemanticTemplateFillerCapability(AgentCapability):
 
     "Capability responsbile for Semantically extracting information from textual descriptions and filling structured templates."
 
-    DEFAULT_DESCRIPTION_PROMPT = """
-        Task: Populate the template by extracting pertinent information from the provided text.
+    DEFAULT_SYSTEM_MESSAGE = """
+        Your task is to populate a template by extracting pertinent information from the provided text.
 
         Instructions:
-        - Identify and fill in the template fields with corresponding information from the text.
-        - If the text lacks information for a field, enter 'np.nan'.
-        - Ensure the output strictly contains the requested fields without additional details.
+
+        - Identify the relevant information in the provided text for each field in the template.
+        - If any template field lacks corresponding information in the text, enter ‘np.nan’ for that field.
+        - The output must strictly contain the requested fields without additional details.
 
         Example 1:
-        Textual Description: "João Silva, born on May 15, 1993, is 30 years old, works as a software engineer, and earns R$ 5,000.00 monthly."
+        Input: "João Silva, born on May 15, 1993, is 30 years old, works as a software engineer, and earns R$ 5,000.00 monthly."
         Template: 
             "Name": [],
             "Age": [],
@@ -37,7 +38,7 @@ class SemanticTemplateFillerCapability(AgentCapability):
         }
 
         Example 2:
-        Textual Description:"Maria Souza, born on March 20, 1985, works as a graphic designer."
+        Input:"Maria Souza, born on March 20, 1985, works as a graphic designer."
         Template:
         {
             "Name": [],
@@ -60,21 +61,13 @@ class SemanticTemplateFillerCapability(AgentCapability):
     def __init__(
         self,
         name: Optional[str] = "semantic_template_filler_capability",
-        description_prompt: Optional[str] = DEFAULT_DESCRIPTION_PROMPT,
-        row: pd.Series = None,
+        system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         llm_config: Optional[Union[Dict, bool]] = None,
         **kwargs,
     ) -> None:
-    
-        if not isinstance(row, pd.Series):
-            raise TypeError("A valid pandas Series (row) must be provided for this capability.")
-        
-        if row.empty:
-            raise ValueError("The row cannot be empty.")
-        
-        self.row = row
+
         self.name = name
-        self._description_prompt = description_prompt 
+        self._system_message = system_message 
         self._parent_agent = None
 
         if llm_config:
@@ -99,12 +92,6 @@ class SemanticTemplateFillerCapability(AgentCapability):
             + "\nYou've been given the special ability to extract information from textual descriptions and fill structured templates."
         )
 
-        # Transform the row into a dictionary with types and content
-        self.template = {
-            column: "[]"
-            for column, value in self.row.items()
-        }
-
         # Register a hook for processing the last message.
         agent.register_hook(hookable_method="process_last_received_message", hook=self.process_last_received_message)
 
@@ -113,38 +100,27 @@ class SemanticTemplateFillerCapability(AgentCapability):
         Processes the last received message and extracts information from it.
         """
         user_prompt = f"""
-        Textual Description: {content} 
-        Template: {self.template}
+        Input: {content} 
         """
         response = self.__get_response(user_prompt)
         response = response.replace("</tool_response>", "").replace("<tool_response>", "") # Remove the tool_response tags. Probably a bug in the LLM client.
-
+        
         try:
-            df_response = pd.DataFrame(eval(response))
-            if set(df_response.columns) != set(self.row.index):
-                raise ValueError("Column names in the DataFrame do not match the expected columns.\nExpected: {self.row.index}\nReceived: {df_response.columns}")
+            pd.DataFrame(eval(response))
         except Exception as e:
             raise ValueError(f"Unable to convert the response {response} to a DataFrame.") from e
 
-        
         return response
 
 
     def __get_response(self, content: str) -> dict:
-        """
-        Args:
-            img_data (str): base64 encoded image data.
-        Returns:
-            str: caption for the given image.
-        """
-        # calling client.create (ClientWrapper) to get the response
         response = self._llm_client.create(
             agent=self,
             context=None,
             messages=[
                 {
                     "role": "system",
-                    "content": self._description_prompt,
+                    "content": self._system_message,
                 },
                 {
                     "role": "user",

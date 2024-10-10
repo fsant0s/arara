@@ -5,16 +5,17 @@ from neuron.clients import CloudBasedClient
 
 from neuron.agents import  LLMAgent
 
-class ExplainableAgent(LLMAgent):
+class RecommenderAgent(LLMAgent):
     
-    DEFAULT_DESCRIPTION = "An Explainer Agent evaluates each item in a list and determines which items match the user's description. It provides an explanation of why the selected items meet the criteria."
+    DEFAULT_DESCRIPTION = "A Recommender Agent evaluates a provided list of items and selects those that best match the user's request, returning only the selected items."
+    
     DEFAULT_SYSTEM_MESSAGE = """
-    As the Explainer agent, your task is to analyze the list of items provided by the user and evaluate them one by one to determine which items match the user's description. For each matching item, provide an explanation of why it meets the user's requirements. If no items match, simply respond with 'no items match the description'.
+    As a Recommender agent, your task is to evaluate a list of items based on the user’s request. Your goal is to identify and return only the items that perfectly match the user’s criteria. Provide the exact items with all their attributes included, and omit any explanations, comments, or additional text. Focus solely on delivering the items that meet the user's request with precision.
     """
 
     def __init__(
         self,
-        name="explainer_agent",
+        name="recommender_agent",
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
         description: Optional[str] = DEFAULT_DESCRIPTION,

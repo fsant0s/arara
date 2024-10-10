@@ -29,6 +29,5 @@ class UserAgent(Agent):
         if isinstance(llm_config, CloudBasedClient):
             raise ValueError("The 'llm_config' argument should not be a CloudBasedClient instance.")
 
-
         if logging_enabled():
             log_new_agent(self, locals())

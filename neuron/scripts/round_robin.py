@@ -2,8 +2,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 
-from ..code_utils import content_str
-from ..io.base import IOStream
 from ..runtime_logging import log_new_agent, logging_enabled
 from ..agents import Agent, LLMAgent, BaseAgent
 
@@ -56,7 +54,7 @@ class RoundRobinManager(LLMAgent):
         sender: Optional[Agent] = None,
         config: Optional[RoundRobin] = None,
     ) -> Tuple[bool, Optional[str]]:
-
+        
         if messages is None:
             messages = self._oai_messages[sender]
 
@@ -79,21 +77,63 @@ class RoundRobinManager(LLMAgent):
             if agent != perceiver:
                 self.send(message, agent, request_reply=False, silent=True)
 
-        learner = round_robin.agents[2]
+        feature_imputer_agent = round_robin.agents[2]
+        reply_from_learner = feature_imputer_agent.generate_reply(sender=self)
+        feature_imputer_agent.send(reply_from_learner, self, request_reply=False, silent=False)
 
-        reply_from_learner = learner.generate_reply(sender=self)
-        learner.send(reply_from_learner, self, request_reply=False, silent=False)
-
-        message = self.last_message(learner)
+        message = self.last_message(feature_imputer_agent)
         for agent in round_robin.agents:
-            if agent != learner:
+            if agent != feature_imputer_agent:
                 self.send(message, agent, request_reply=False, silent=True)
-
 
         kr = round_robin.agents[3]
         embeddings = kr.generate_reply(sender=self)
         reply_from_kr = "Embeddings done :D. Sending to the next agent."
         kr.send(reply_from_kr, self, request_reply=False, silent=False)
+        
+        message = self.last_message(feature_imputer_agent)
+        for agent in round_robin.agents:
+            if agent != kr:
+                self.send(message, agent, request_reply=False, silent=True)
+
+        retriver_agent = round_robin.agents[4]
+        similar_users = retriver_agent.generate_reply(messages=embeddings, sender=self)
+        retriver_agent.send(similar_users, self, request_reply=False, silent=False)
+
+        #assessor
+        message = self.last_message(retriver_agent)
+        for agent in round_robin.agents:
+            if agent != retriver_agent:
+                self.send(message, agent, request_reply=False, silent=True)
+
+        #assessor
+        assessor_agent = round_robin.agents[5]
+        assessor_response = assessor_agent.generate_reply(sender=self)
+        assessor_agent.send(assessor_response, self, request_reply=False, silent=False)
+
+        message = self.last_message(assessor_agent)
+        for agent in round_robin.agents:
+            if agent != assessor_agent:
+                self.send(message, agent, request_reply=False, silent=True)
+
+        # recommender
+        if "True" in assessor_response:
+            pass
+
+        recommender_agent = round_robin.agents[6]
+        recommender_response = recommender_agent.generate_reply(sender=self)
+        recommender_agent.send(recommender_response, self, request_reply=False, silent=False)
+        
+
+        message = self.last_message(assessor_agent)
+        for agent in round_robin.agents:
+            if agent != recommender_agent:
+                self.send(message, agent, request_reply=False, silent=True)
+
+        explainer_agent = round_robin.agents[7]
+        explainer_response = explainer_agent.generate_reply(sender=self)
+        explainer_agent.send(explainer_response, self, request_reply=False, silent=False)
+      
 
         return True, None
 

@@ -1,2 +1,1 @@
 from .agent_capability import AgentCapability
-from .perceiver import SemanticTemplateFillerCapability
