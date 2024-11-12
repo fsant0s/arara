@@ -35,7 +35,7 @@ def content_str(content: Union[str, List[Union[UserMessageTextContentPart]], Non
         return content
     if not isinstance(content, list):
         raise TypeError(f"content must be None, str, or list, but got {type(content)}")
-
+    print("test")
     rst = ""
     for item in content:
         if not isinstance(item, dict):
@@ -48,4 +48,3 @@ def content_str(content: Union[str, List[Union[UserMessageTextContentPart]], Non
         else:
             raise ValueError(f"Wrong content format: unknown type {item['type']} within the content")
     return rst
-
