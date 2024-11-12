@@ -51,6 +51,34 @@ def start(
     finally:
         return session_id
 
+# SUGESTÃO DE IMPLEMENTAÇÃO PARA CAPTURAR A EXCEÇÃO DE INICILIZAR COM ERRO DENTRO DE START
+""" def start(
+    logger: Optional[BaseLogger] = None,
+    logger_type: Literal["file"] = "file",
+    config: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:  # Atualizado para retornar None em caso de erro
+    global neuron_logger
+    global is_logging
+
+    if logger:
+        neuron_logger = logger
+    else:
+        try:
+            neuron_logger = LoggerFactory.get_logger(logger_type=logger_type, config=config)
+        except Exception as e:
+            logger = logging.getLogger("neuron.runtime_logging")
+            logger.error(f"[runtime logging] Failed to start logging: {e}")
+            return None  # Retorna None em caso de erro, sem propagar a exceção
+
+    try:
+        session_id = neuron_logger.start()
+        is_logging = True
+    except Exception as e:
+        logger = logging.getLogger("neuron.runtime_logging")
+        logger.error(f"[runtime logging] Failed to start logging: {e}")
+        return None
+    return session_id """
+
 
 def log_chat_completion(
     invocation_id: uuid.UUID,
