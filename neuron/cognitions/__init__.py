@@ -1,1 +1,2 @@
-from .immediate_working_memory import ImmediateWorkingMemory
+from .shared_memory import SharedMemory
+from .episodic_memory import EpisodicMemory

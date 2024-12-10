@@ -12,7 +12,7 @@ from neuron.logger.logger_factory import LoggerFactory
 
 if TYPE_CHECKING:
     from .clients import ClientFactory
-    from .agents import Agent
+    from .neurons import Neuron
     from .clients.cloud_based import GroqClient
 
 logger = logging.getLogger(__name__)
@@ -84,7 +84,7 @@ def log_chat_completion(
     invocation_id: uuid.UUID,
     client_id: int,
     wrapper_id: int,
-    agent: Union[str, Agent],
+    neuron: Union[str, Neuron],
     request: Dict[str, Union[float, str, List[Dict[str, str]]]],
     response: Union[str, ChatCompletion],
     is_cached: int,
@@ -96,18 +96,18 @@ def log_chat_completion(
         return
 
     neuron_logger.log_chat_completion(
-        invocation_id, client_id, wrapper_id, agent, request, response, is_cached, cost, start_time
+        invocation_id, client_id, wrapper_id, neuron, request, response, is_cached, cost, start_time
     )
 
 
-def log_new_agent(agent: Agent, init_args: Dict[str, Any]) -> None:
+def log_new_neuron(neuron: Neuron, init_args: Dict[str, Any]) -> None:
     if neuron_logger is None:
-        logger.error("[runtime logging] log_new_agent: neuron logger is None")
+        logger.error("[runtime logging] log_new_neuron: neuron logger is None")
         return
-    neuron_logger.log_new_agent(agent, init_args)
+    neuron_logger.log_new_neuron(neuron, init_args)
 
 
-def log_event(source: Union[str, Agent], name: str, **kwargs: Dict[str, Any]) -> None:
+def log_event(source: Union[str, Neuron], name: str, **kwargs: Dict[str, Any]) -> None:
     if neuron_logger is None:
         logger.error("[runtime logging] log_event: neuron logger is None")
         return

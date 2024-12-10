@@ -13,10 +13,10 @@ from .helpers import PlaceHolderClient, get_client_by_type_name
 
 import logging
 import sys
-from flaml.automl.logger import logger_formatter
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     # Add the console handler.
+    from flaml.automl.logger import logger_formatter
     _ch = logging.StreamHandler(stream=sys.stdout)
     _ch.setFormatter(logger_formatter)
     logger.addHandler(_ch)
@@ -33,7 +33,7 @@ class ClientWrapper:
     """A wrapper class for AI models (custom and cloud-based)."""
 
     extra_kwargs = {
-        "agent",
+        "neuron",
         "filter_func",
         "allow_format_str_template",
         "context",
@@ -132,7 +132,6 @@ class ClientWrapper:
             logger.info(
                 f"Detected custom model client in config: {model_client_cls_name}, model client can not be used until register_model_client is called."
             )
-            # TODO: logging for custom client
         else:   
             try:
                 client = get_client_by_type_name(client_type, openai_config)
@@ -244,7 +243,7 @@ class ClientWrapper:
             
             filter_func = extra_kwargs.get("filter_func")
             context = extra_kwargs.get("context")
-            agent = extra_kwargs.get("agent")
+            neuron = extra_kwargs.get("neuron")
             price = extra_kwargs.get("price", None)
             if isinstance(price, list):
                 price = tuple(price)
@@ -264,7 +263,7 @@ class ClientWrapper:
                 logger.debug(f"config {i} timed out", exc_info=True)
                 if i == last:
                     raise TimeoutError(
-                        "OpenAI API call timed out. This could be due to congestion or too small a timeout value. The timeout can be specified by setting the 'timeout' value (in seconds) in the llm_config (if you are using agents) or the BaseClient constructor (if you are using the BaseClient directly)."
+                        "OpenAI API call timed out. This could be due to congestion or too small a timeout value. The timeout can be specified by setting the 'timeout' value (in seconds) in the llm_config (if you are using neurons) or the BaseClient constructor (if you are using the BaseClient directly)."
                     ) from err
             except APIError as err:
                 error_code = getattr(err, "code", None)
@@ -273,7 +272,7 @@ class ClientWrapper:
                         invocation_id=invocation_id,
                         client_id=id(client),
                         wrapper_id=id(self),
-                        agent=agent,
+                        neuron=neuron,
                         request=params,
                         response=f"error_code:{error_code}, config {i} failed",
                         is_cached=0,
@@ -304,7 +303,7 @@ class ClientWrapper:
                         invocation_id=invocation_id,
                         client_id=id(client),
                         wrapper_id=id(self),
-                        agent=agent,
+                        neuron=neuron,
                         request=params,
                         response=response,
                         is_cached=0,

@@ -41,7 +41,7 @@ class BaseClient(Protocol):
         Retrieve and return a list of strings or a list of Choice.Message from the response.
 
         NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
-        since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
+        since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom neuron is being used.
         """
         return [choice.message for choice in response.choices]
 

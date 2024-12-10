@@ -1,22 +1,3 @@
-"""Create an OpenAI-compatible client using Groq's API.
-
-Example:
-    llm_config={
-        "config_list": [{
-            "api_type": "groq",
-            "model": "mixtral-8x7b-32768",
-            "api_key": os.environ.get("GROQ_API_KEY")
-            }
-    ]}
-
-    agent = neuron.AssistantAgent("my_agent", llm_config=llm_config)
-
-Install Groq's python library using: pip install --upgrade groq
-
-Resources:
-- https://console.groq.com/docs/quickstart
-"""
-
 from __future__ import annotations
 
 import copy

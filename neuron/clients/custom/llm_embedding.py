@@ -1,15 +1,3 @@
-"""
-Example:
-    llm_config={
-    "config_list": [{
-        "api_type": "local",
-        "model_dir": "neuron/models/local_model",
-        "model_name": "erasmo"
-        }
-]}
-    agent = neuron.AssistantAgent("my_agent", llm_config=llm_config)
-"""
-
 from __future__ import annotations
 
 import time

@@ -1,33 +1,42 @@
 from typing import List, Any
-from ..agents import Agent
+from ..neurons import Neuron
 from .base_component import BaseComponent
 from ..io.base import IOStream
 from ..formatting_utils import colored
 
 class SequentialComponent(BaseComponent):
-    """Component that executes agents sequentially, passing messages from one agent to the next."""
+    """Component that executes neurons sequentially, passing messages from one neuron to the next."""
 
-    def __init__(self, agents: List[Agent], **kwargs) -> None:
-        self.agents = agents
+    def __init__(self, name: str, neurons: List[Neuron]) -> None:
+        """Initialize the SequentialComponent.
 
-    def execute(self, sender: Agent, message: Any, silent: bool) -> Any:
+        Args:
+            name (str): The name of the component.
+            neurons (List[Neuron]): A list of neurons to be executed sequentially.
+        """
+        super().__init__(name, neurons)
+        
+    def execute(self, sender: Neuron, message: Any, silent: bool) -> Any:
+        """Execute the sequential process, passing messages between neurons.
 
+        Args:
+            sender (Neuron): The initial neuron sending the message.
+            message (Any): The initial message to be processed.
+            silent (bool): If True, suppresses output to the IOStream.
+
+        Returns:
+            Any: The final response after all neurons have processed the message.
+        """
         speaker = sender
-        for agent in self.agents:
-            # Send the message from the current speaker to the current agent
-            speaker.send(message, agent, request_reply=False, silent=False)
+        for neuron in self.neurons:
+            speaker.send(message, neuron, request_reply=False, silent=False)
+            response = neuron.generate_reply(sender=speaker)
+            # Update the speaker to the current neuron for the next step
+            speaker = neuron
+            message = response
 
-            # The agent generates a reply in response to the message
-            response = agent.generate_reply(sender=speaker)
-
-            # Update the speaker to the current agent for the next step
-            speaker = agent
             if not silent:
                 iostream = IOStream.get_default()
                 iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
                 
-            # Update the message to the new response for the next agent
-            message = response
-
-        # Return the final message after all agents have processed it
-        return (agent, message)
+        return (neuron, message, None)

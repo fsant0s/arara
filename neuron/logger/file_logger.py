@@ -15,7 +15,7 @@ from neuron.logger.logger_utils import get_current_ts, to_dict
 from .base_logger import LLMConfig
 
 if TYPE_CHECKING:
-    from neuron import Agent, ClientWrapper
+    from neuron import Neuron, ClientWrapper
     from neuron.clients.cloud_based import GroqClient
 
 
@@ -41,7 +41,7 @@ class FileLogger(BaseLogger):
         self.session_id = str(uuid.uuid4())
 
         curr_dir = os.getcwd()
-        self.log_dir = os.path.join(curr_dir, "neuron_logs")
+        self.log_dir = os.path.join(curr_dir, "logs")
         os.makedirs(self.log_dir, exist_ok=True)
 
         self.log_file = os.path.join(self.log_dir, self.config.get("filename", "runtime.log"))
@@ -70,7 +70,7 @@ class FileLogger(BaseLogger):
         invocation_id: uuid.UUID,
         client_id: int,
         wrapper_id: int,
-        source: Union[str, Agent],
+        source: Union[str, Neuron],
         request: Dict[str, Union[float, str, List[Dict[str, str]]]],
         response: Union[str, ChatCompletion],
         is_cached: int,
@@ -107,50 +107,50 @@ class FileLogger(BaseLogger):
         except Exception as e:
             self.logger.error(f"[file_logger] Failed to log chat completion: {e}")
 
-    def log_new_agent(self, agent: Agent, init_args: Dict[str, Any] = {}) -> None:
+    def log_new_neuron(self, neuron: Neuron, init_args: Dict[str, Any] = {}) -> None:
         """
-        Log a new agent instance.
+        Log a new neuron instance.
         """
         thread_id = threading.get_ident()
         try:
             log_data = json.dumps(
                 {
-                    "id": id(agent),
-                    "agent_name": agent.name if hasattr(agent, "name") and agent.name is not None else "",
+                    "id": id(neuron),
+                    "neuron_name": neuron.name if hasattr(neuron, "name") and neuron.name is not None else "",
                     "wrapper_id": to_dict(
-                        agent.client.wrapper_id if hasattr(agent, "client") and agent.client is not None else ""
+                        neuron.client.wrapper_id if hasattr(neuron, "client") and neuron.client is not None else ""
                     ),
                     "session_id": self.session_id,
                     "current_time": get_current_ts(),
-                    "agent_type": type(agent).__name__,
+                    "neuron_type": type(neuron).__name__,
                     "args": to_dict(init_args),
                     "thread_id": thread_id,
                 }
             )
             self.logger.info(log_data)
         except Exception as e:
-            self.logger.error(f"[file_logger] Failed to log new agent: {e}")
+            self.logger.error(f"[file_logger] Failed to log new neuron: {e}")
 
-    def log_event(self, source: Union[str, Agent], name: str, **kwargs: Dict[str, Any]) -> None:
+    def log_event(self, source: Union[str, Neuron], name: str, **kwargs: Dict[str, Any]) -> None:
         """
-        Log an event from an agent or a string source.
+        Log an event from a neuron or a string source.
         """
-        from ..agents import Agent
+        from ..neurons import Neuron
 
         # This takes an object o as input and returns a string. If the object o cannot be serialized, instead of raising an error,
         # it returns a string indicating that the object is non-serializable, along with its type's qualified name obtained using __qualname__.
         json_args = json.dumps(kwargs, default=lambda o: f"<<non-serializable: {type(o).__qualname__}>>")
         thread_id = threading.get_ident()
 
-        if isinstance(source, Agent):
+        if isinstance(source, Neuron):
             try:
                 log_data = json.dumps(
                     {
                         "source_id": id(source),
                         "source_name": str(source.name) if hasattr(source, "name") else source,
                         "event_name": name,
-                        "agent_module": source.__module__,
-                        "agent_class": source.__class__.__name__,
+                        "neuron_module": source.__module__,
+                        "neuron_class": source.__class__.__name__,
                         "json_state": json_args,
                         "timestamp": get_current_ts(),
                         "thread_id": thread_id,

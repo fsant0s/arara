@@ -1,8 +1,8 @@
 from typing import Any
 
 
-class AgentNameConflict(Exception):
-    def __init__(self, msg: str = "Found multiple agents with the same name.", *args: Any, **kwargs: Any):
+class NeuronNameConflict(Exception):
+    def __init__(self, msg: str = "Found multiple neurons with the same name.", *args: Any, **kwargs: Any):
         super().__init__(msg, *args, **kwargs)
 
 class SenderRequired(Exception):

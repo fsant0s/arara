@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, TypeVar, Union
 from openai.types.chat import ChatCompletion
 
 if TYPE_CHECKING:
-    from ..agents import Agent, ClientWrapper
+    from ..neurons import Neuron, ClientWrapper
 
 F = TypeVar("F", bound=Callable[..., Any])
 ConfigItem = Dict[str, Union[str, List[str]]]
@@ -32,7 +32,7 @@ class BaseLogger(ABC):
         invocation_id: uuid.UUID,
         client_id: int,
         wrapper_id: int,
-        source: Union[str, Agent],
+        source: Union[str, Neuron],
         request: Dict[str, Union[float, str, List[Dict[str, str]]]],
         response: Union[str, ChatCompletion],
         is_cached: int,
@@ -50,7 +50,7 @@ class BaseLogger(ABC):
             invocation_id (uuid):               A unique identifier for the invocation to the ClientWrapper.create method call
             client_id (int):                    A unique identifier for the underlying OpenAI client instance
             wrapper_id (int):                   A unique identifier for the ClientWrapper instance
-            source (str or Agent):              The source/creator of the event as a string name or an Agent instance
+            source (str or Neuron):              The source/creator of the event as a string name or a Neuron instance
             request (dict):                     A dictionary representing the request or call to the OpenAI client endpoint
             response (str or ChatCompletion):   The response from OpenAI
             is_cached (int):                    1 if the response was a cache hit, 0 otherwise
@@ -60,23 +60,23 @@ class BaseLogger(ABC):
         ...
 
     @abstractmethod
-    def log_new_agent(self, agent: Agent, init_args: Dict[str, Any]) -> None:
+    def log_new_neuron(self, neuron: Neuron, init_args: Dict[str, Any]) -> None:
         """
-        Log the birth of a new agent.
+        Log the birth of a new neuron.
 
         Args:
-            agent (Agent):   The agent to log.
-            init_args (dict):           The arguments passed to the construct the conversable agent
+            neuron (Neuron):   The neuron to log.
+            init_args (dict):           The arguments passed to the construct the conversable neuron
         """
         ...
 
     @abstractmethod
-    def log_event(self, source: Union[str, Agent], name: str, **kwargs: Dict[str, Any]) -> None:
+    def log_event(self, source: Union[str, Neuron], name: str, **kwargs: Dict[str, Any]) -> None:
         """
-        Log an event for an agent.
+        Log an event for a neuron.
 
         Args:
-            source (str or Agent):      The source/creator of the event as a string name or an Agent instance
+            source (str or Neuron):      The source/creator of the event as a string name or a Neuron instance
             name (str):                 The name of the event
             kwargs (dict):              The event information to log
         """
