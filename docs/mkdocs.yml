@@ -33,6 +33,8 @@ nav:
       - Neurons: components/neurons.md
       - Capabilities: components/capabilities.md
       - Clients: components/clients.md
+  - Advanced Features:
+      - Monitoring and Observability: monitoring.md
   - Examples:
       - Product Recommendations: examples/product_recommendations.md
       - Content Recommendations: examples/content_recommendations.md

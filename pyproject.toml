@@ -21,6 +21,8 @@ dependencies = [
     "torch==2.5.1",
     # Transformers library for working with pre-trained language models
     "transformers==4.46.2",
+    # Process and system monitoring
+    "psutil==5.9.8",
 ]
 
 [tool.uv]
@@ -92,7 +94,7 @@ warn_unreachable = true
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "build", "dist"]
-skips = ["B101"]  # Skip assert statements warning
+skips = ["B101"]                                   # Skip assert statements warning
 targets = ["neuron"]
 
 [build-system]
