@@ -15,17 +15,71 @@ Go to the project directory
   cd neuron
 ~~~
 
-Install dependencies  
-Install uv package manager and python 3.12. 
+### Install dependencies
 
-~~~bash  
-uv --sync
+First, ensure you have Python 3.12 and the uv package manager installed.
+
+To set up the development environment automatically:
+
+~~~bash
+./scripts/setup_dev_env.sh
 ~~~
 
-Start the server  
+This script will:
+1. Create a virtual environment
+2. Install all dependencies
+3. Configure pre-commit hooks
+4. Set up a basic test structure
+
+Alternatively, install dependencies manually:
+
+~~~bash  
+uv pip install -e .
+~~~
+
+For development dependencies:
+
+~~~bash
+uv pip install ipykernel pytest pytest-cov black isort flake8 mypy
+~~~
+
+### Start the server  
 
 ~~~bash  
 npm run start
+~~~
+
+## Dependencies
+
+The NEURON project carefully manages its dependencies to ensure reproducibility and reliability.
+
+- All production dependencies have fixed versions to guarantee consistent behavior
+- Development dependencies are organized separately from production code
+- For a detailed description of all dependencies, see [DEPENDENCIES.md](DEPENDENCIES.md)
+
+## Development
+
+### Code Style
+
+This project uses several tools to maintain code quality:
+
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **flake8**: Code linting
+- **mypy**: Type checking
+
+Configuration for these tools is in the `pyproject.toml` file.
+
+To run these tools:
+
+~~~bash
+# Format code
+black .
+isort .
+
+# Check code
+flake8 .
+mypy .
 ~~~
 
 ## Contributing  
