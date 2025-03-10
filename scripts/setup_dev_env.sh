@@ -37,14 +37,9 @@ echo -e "${BLUE}Activating virtual environment...${NC}"
 source .venv/bin/activate
 
 # Install dependencies
-echo -e "${BLUE}Installing dependencies...${NC}"
-uv pip install -e .
-echo -e "${GREEN}Production dependencies installed.${NC}"
-
-# Install development dependencies
-echo -e "${BLUE}Installing development dependencies...${NC}"
-uv pip install ipykernel pytest pytest-cov
-echo -e "${GREEN}Development dependencies installed.${NC}"
+echo -e "${BLUE}Installing dependencies with development extras...${NC}"
+uv pip install -e ".[dev]"
+echo -e "${GREEN}All dependencies installed.${NC}"
 
 # Set up pre-commit hooks if git is initialized
 if [ -d ".git" ]; then
@@ -52,7 +47,7 @@ if [ -d ".git" ]; then
     echo -e "${BLUE}Installing pre-commit...${NC}"
     uv pip install pre-commit
   fi
-  
+
   if [ ! -f ".pre-commit-config.yaml" ]; then
     echo -e "${BLUE}Creating pre-commit configuration...${NC}"
     cat > .pre-commit-config.yaml << 'EOL'
@@ -82,7 +77,7 @@ repos:
         additional_dependencies: [flake8-docstrings]
 EOL
   fi
-  
+
   echo -e "${BLUE}Installing pre-commit hooks...${NC}"
   pre-commit install
 fi
@@ -97,4 +92,4 @@ fi
 
 echo -e "${GREEN}Development environment setup complete!${NC}"
 echo -e "${BLUE}To activate the virtual environment, run:${NC}"
-echo -e "${BLUE}source .venv/bin/activate${NC}" 
+echo -e "${BLUE}source .venv/bin/activate${NC}"

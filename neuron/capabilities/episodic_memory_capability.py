@@ -32,7 +32,7 @@ class EpisodicMemoryCapability(NeuronCapability):
         """
         Sets up hooks for the neuron to integrate episodic memory into its workflow.
         The hooks allow storing messages before sending and retrieving recent memories.
-        
+
         Args:
             neuron (BaseNeuron): The neuron receiving this capability.
         """
@@ -66,9 +66,9 @@ class EpisodicMemoryCapability(NeuronCapability):
             str: The original message, allowing the neuron to act with additional context if needed.
         """
         retrieved_episodes = self._episodic_memory._retrieve_all()  # Retrieves all memories from episodic memory.
-        if len(retrieved_episodes):
+        if not len(retrieved_episodes):
             return message
-        
+
         retrieved_episodes = "\n".join(f"{i + 1}. {item['content']}" for i, item in enumerate(retrieved_episodes))
         message += "\n\n" + self._memory_intro + "\n\n" + retrieved_episodes
         return message
