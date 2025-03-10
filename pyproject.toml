@@ -90,6 +90,11 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "build", "dist"]
+skips = ["B101"]  # Skip assert statements warning
+targets = ["neuron"]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
