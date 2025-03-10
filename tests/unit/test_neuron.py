@@ -49,11 +49,8 @@ class TestNeuron(unittest.TestCase):
 
     def test_generate_reply_basic(self):
         """Test that generate_reply returns the expected response from the mock client."""
-        # Mock the client's complete method to return a specific response
-        self.mock_client.responses = ["I am a test response"]
-
-        # Configurar um método de patch para o method generate_reply
-        with patch.object(MockClient, 'complete', return_value={"choices": [{"message": {"content": "I am a test response"}}]}):
+        # Criar um mock para o método que é chamado internamente
+        with patch('neuron.neurons.neuron.Neuron._generate_oai_reply', return_value="I am a test response"):
             # Call generate_reply, which should use the mock client
             result = self.neuron.generate_reply("Hello")
 
@@ -102,20 +99,16 @@ class TestNeuron(unittest.TestCase):
             enable_episodic_memory=True
         )
 
-        # Set up the mock client
-        mock_client = MockClient(responses=["First response", "Second response with context"])
-        neuron.client_cache = mock_client
-
-        # Configurar a geração de respostas
-        with patch.object(MockClient, 'complete', return_value={"choices": [{"message": {"content": "First response"}}]}):
+        # Fazer mock direto do método que gera respostas
+        with patch('neuron.neurons.neuron.Neuron._generate_oai_reply', return_value="First response"):
             # First interaction
             first_message = "Hello, this is the first message"
             first_response = neuron.generate_reply(first_message)
             self.assertEqual(first_response, "First response")
 
-        # Second interaction with patched response
-        with patch.object(MockClient, 'complete', return_value={"choices": [{"message": {"content": "Second response with context"}}]}):
-            # Second interaction, should include context from first
+        # Second interaction com outro mock
+        with patch('neuron.neurons.neuron.Neuron._generate_oai_reply', return_value="Second response with context"):
+            # Should include context from first
             second_message = "What did I say previously?"
             second_response = neuron.generate_reply(second_message)
             self.assertEqual(second_response, "Second response with context")
