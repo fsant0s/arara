@@ -27,31 +27,29 @@ class TestRecommendationFlow(unittest.TestCase):
         # Create specialized neurons for the recommendation flow
         self.user_profiler = Neuron(
             name="UserProfiler",
-            client=self.mock_client,
-            capabilities=[],  # Initialize with empty capabilities
             system_message="You analyze user input to identify preferences and requirements."
         )
+        self.user_profiler.client_cache = self.mock_client
 
-        # Add capabilities after neuron creation
-        EpisodicMemoryCapability(self.user_profiler)
-
+        # Create a recommender neuron
         self.recommender = Neuron(
             name="Recommender",
-            client=self.mock_client,
-            capabilities=[],  # Initialize with empty capabilities
-            system_message="You recommend products based on user preferences."
+            system_message="You provide personalized recommendations based on user preferences."
         )
-
-        # Add capabilities after neuron creation
-        EpisodicMemoryCapability(self.recommender)
-        ReflectionCapability(self.recommender)
+        self.recommender.client_cache = self.mock_client
 
         # Create a router neuron to coordinate the flow
         self.router = RouterNeuron(
-            name="RecommendationSystem",
-            client=self.mock_client,
-            neurons=[self.user_profiler, self.recommender]
+            name="Router",
+            description="Coordinates the recommendation flow",
+            llm_config=False
         )
+        self.router.client_cache = self.mock_client
+
+        # Add capabilities after neuron creation
+        EpisodicMemoryCapability(self.user_profiler)
+        EpisodicMemoryCapability(self.recommender)
+        ReflectionCapability(self.recommender)
 
     def test_simple_recommendation_flow(self):
         """Test a simple recommendation flow from user input to recommendation."""

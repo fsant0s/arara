@@ -43,13 +43,21 @@ def start(
         neuron_logger = logger
     else:
         neuron_logger = LoggerFactory.get_logger(logger_type=logger_type, config=config)
+
+    session_id = None  # Initialize session_id with a default value
     try:
         session_id = neuron_logger.start()
         is_logging = True
     except Exception as e:
-        logger.error(f"[runtime logging] Failed to start logging: {e}")
-    finally:
-        return session_id
+        # Use the Python logger instead of the neuron_logger here
+        logger_msg = f"[runtime logging] Failed to start logging: {e}"
+        if hasattr(logger, 'error'):
+            logger.error(logger_msg)
+        else:
+            # Use the module logger instead
+            logger.error(logger_msg)
+
+    return session_id
 
 # SUGESTÃO DE IMPLEMENTAÇÃO PARA CAPTURAR A EXCEÇÃO DE INICILIZAR COM ERRO DENTRO DE START
 """ def start(
@@ -121,11 +129,27 @@ def log_new_wrapper(wrapper: ClientFactory, init_args: Dict[str, Union[LLMConfig
 
     neuron_logger.log_new_wrapper(wrapper, init_args)
 
-def stop() -> None:
+def stop() -> bool:
+    """
+    Stop logging for the runtime.
+    Returns:
+        result (bool): Whether the operation was successful
+    """
+    global neuron_logger
     global is_logging
-    if neuron_logger:
-        neuron_logger.stop()
-    is_logging = False
+
+    if not is_logging:
+        logger.warning("[runtime logging] stop() called but logging is not active")
+        return False
+
+    try:
+        if neuron_logger:
+            neuron_logger.stop()
+        is_logging = False
+        return True
+    except Exception as e:
+        logger.error(f"[runtime logging] Failed to stop logging: {e}")
+        return False
 
 
 def get_connection() -> Union[None, sqlite3.Connection]:
