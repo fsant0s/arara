@@ -1,17 +1,121 @@
-# NEURON  
-A framework for agent-based recommendation systems.  
+# NEURON
+A framework for agent-based recommendation systems powered by Large Language Models (LLMs).
 
-## Run Locally  
+## Overview
 
-Clone the project  
+NEURON is a modular framework designed to build complex agent-based recommendation systems. It leverages the power of Large Language Models (LLMs) through a flexible architecture of interconnected neurons with specialized capabilities.
 
-~~~bash  
+Key features:
+- **Modular Architecture**: Build systems using interconnected neurons with specialized roles
+- **Memory Capabilities**: Episodic memory and shared memory for enhanced context awareness
+- **Reflection Mechanisms**: Self-improvement through introspection and error analysis
+- **Flexible LLM Integration**: Support for multiple LLM providers (OpenAI, Groq, etc.)
+- **Extensible Design**: Easily add custom capabilities and LLM providers
+
+## Architecture
+
+NEURON follows a modular architecture organized around these key components:
+
+```
+neuron/
+├── neurons/         # Core neuron implementations
+├── capabilities/    # Specialized abilities for neurons
+├── clients/         # LLM provider integrations
+├── cognitions/      # Higher-level thinking processes
+├── components/      # Reusable building blocks
+├── logger/          # Logging utilities
+└── io/              # Input/output handling
+```
+
+### Component Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Application                         │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────┐
+│                    Neuron Framework                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ Neurons  │◄─┤Capabilities│ │Cognitions│ │Components│ │
+│  └────┬─────┘  └──────────┘  └──────────┘  └──────────┘ │
+│       │        ┌──────────┐                             │
+│       ├───────►│    IO    │                             │
+│       │        └──────────┘                             │
+│  ┌────▼─────┐                    ┌──────────┐           │
+│  │ Clients  │────────────────────► Logger   │           │
+│  └────┬─────┘                    └──────────┘           │
+└───────┼─────────────────────────────────────────────────┘
+        │
+┌───────▼─────────────────────────────────────────────────┐
+│                    LLM Providers                         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │  OpenAI  │  │   Groq   │  │ Anthropic│  │  Custom  │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Use Cases
+
+NEURON is designed for building sophisticated recommendation systems in various domains:
+
+1. **E-commerce Product Recommendations**
+   - Personalized product recommendations based on user preferences
+   - Cross-sells and up-sells with contextual awareness
+
+2. **Content Recommendation Systems**
+   - Article and media recommendations with understanding of content themes
+   - Learning user preferences through interactions
+
+3. **Knowledge Discovery**
+   - Research assistance with relevant document identification
+   - Connecting related pieces of information across databases
+
+4. **Expert Systems**
+   - Domain-specific advice based on specialized knowledge
+   - Multi-agent collaboration for complex problem solving
+
+## Quick Start Example
+
+Here's a simple example of creating a basic recommendation agent:
+
+```python
+from neuron.neurons import Neuron
+from neuron.capabilities import EpisodicMemoryCapability, ReflectionCapability
+from neuron.clients import ClientWrapper
+
+# Configure LLM client
+client = ClientWrapper(provider="groq", model="llama3-70b-8192")
+
+# Create a recommendation neuron with memory and reflection
+recommender = Neuron(
+    name="ProductRecommender",
+    client=client,
+    capabilities=[
+        EpisodicMemoryCapability(),
+        ReflectionCapability()
+    ]
+)
+
+# Use the recommender
+user_query = "I'm looking for a smartphone with good battery life under $500"
+recommendations = recommender.process(user_query)
+print(recommendations)
+```
+
+For more complex examples, see the [notebooks](notebooks/) directory.
+
+## Run Locally
+
+Clone the project
+
+~~~bash
   git clone https://github.com/fsant0s/neuron.git
 ~~~
 
-Go to the project directory  
+Go to the project directory
 
-~~~bash  
+~~~bash
   cd neuron
 ~~~
 
@@ -33,7 +137,7 @@ This script will:
 
 Alternatively, install dependencies manually:
 
-~~~bash  
+~~~bash
 uv pip install -e .
 ~~~
 
@@ -43,11 +147,15 @@ For development dependencies:
 uv pip install ipykernel pytest pytest-cov black isort flake8 mypy
 ~~~
 
-### Start the server  
+### Environment Configuration
 
-~~~bash  
-npm run start
-~~~
+Copy the example environment file and configure your LLM API keys:
+
+```bash
+cp .env.example .env
+```
+
+Edit the .env file with your API keys for the LLM services you're using.
 
 ## Dependencies
 
@@ -82,13 +190,13 @@ flake8 .
 mypy .
 ~~~
 
-## Contributing  
+## Contributing
 
-Contributions are always welcome!  
+Contributions are always welcome!
 
-See `contributing.md` for ways to get started.  
+See [CONTRIBUTING.md](CONTRIBUTING.md) for ways to get started.
 
-Please adhere to this project's `code of conduct`.  
+Please adhere to this project's [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Versioning and Releases
 
@@ -128,6 +236,14 @@ The project includes scripts to facilitate version management:
 - `scripts/bump_version.py`: Increments the project version (major, minor, patch)
 - `scripts/generate_changelog.py`: Generates entries for CHANGELOG.md from commits
 
-## License  
+## Security
+
+Security is a priority for the NEURON project. See [SECURITY.md](SECURITY.md) for details on:
+
+- How we handle secure credentials
+- Input validation practices
+- Reporting security vulnerabilities
+
+## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
