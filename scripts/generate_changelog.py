@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script para gerar automaticamente entradas no CHANGELOG.md a partir dos commits do Git.
-Baseia-se em conventional commits para categorizar as alterações.
+Script to automatically generate entries in CHANGELOG.md from Git commits.
+Based on conventional commits to categorize changes.
 """
 
 import os
@@ -13,18 +13,18 @@ from typing import Dict, List, Optional, Tuple
 
 
 def get_current_version() -> str:
-    """Lê a versão atual do projeto a partir do pyproject.toml."""
+    """Reads the current version of the project from pyproject.toml."""
     with open("pyproject.toml", "r") as f:
         content = f.read()
         match = re.search(r'version\s*=\s*"([^"]+)"', content)
         if match:
             return match.group(1)
         else:
-            return "0.0.0"  # Versão padrão se não encontrada
+            return "0.0.0"  # Default version if not found
 
 
 def get_latest_tag() -> Optional[str]:
-    """Obtém a tag mais recente do repositório Git."""
+    """Gets the most recent tag from the Git repository."""
     try:
         result = subprocess.run(
             ["git", "describe", "--tags", "--abbrev=0"],
@@ -40,7 +40,7 @@ def get_latest_tag() -> Optional[str]:
 
 
 def get_commits_since_tag(tag: Optional[str]) -> List[str]:
-    """Obtém todos os commits desde a tag especificada."""
+    """Gets all commits since the specified tag."""
     cmd = ["git", "log", "--pretty=format:%s|%h|%an|%ad", "--date=short"]
     if tag:
         cmd.append(f"{tag}..HEAD")
@@ -50,21 +50,21 @@ def get_commits_since_tag(tag: Optional[str]) -> List[str]:
 
 
 def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
-    """Categoriza os commits seguindo o padrão de conventional commits."""
+    """Categorizes commits following the conventional commits pattern."""
     categories = {
-        "feat": {"title": "Adicionado", "items": []},
-        "fix": {"title": "Corrigido", "items": []},
-        "docs": {"title": "Documentação", "items": []},
-        "style": {"title": "Estilo", "items": []},
-        "refactor": {"title": "Refatoração", "items": []},
+        "feat": {"title": "Added", "items": []},
+        "fix": {"title": "Fixed", "items": []},
+        "docs": {"title": "Documentation", "items": []},
+        "style": {"title": "Style", "items": []},
+        "refactor": {"title": "Refactoring", "items": []},
         "perf": {"title": "Performance", "items": []},
-        "test": {"title": "Testes", "items": []},
+        "test": {"title": "Tests", "items": []},
         "build": {"title": "Build", "items": []},
         "ci": {"title": "CI", "items": []},
-        "chore": {"title": "Manutenção", "items": []},
-        "revert": {"title": "Revertido", "items": []},
-        "security": {"title": "Segurança", "items": []},
-        "other": {"title": "Outros", "items": []},
+        "chore": {"title": "Maintenance", "items": []},
+        "revert": {"title": "Reverted", "items": []},
+        "security": {"title": "Security", "items": []},
+        "other": {"title": "Others", "items": []},
     }
 
     for commit in commits:
@@ -77,25 +77,25 @@ def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
 
         message, hash_id = parts[0], parts[1]
         
-        # Ignora commits de merge
+        # Ignores merge commits
         if message.startswith("Merge"):
             continue
 
-        # Extrai tipo do commit (feat, fix, etc.)
+        # Extracts commit type (feat, fix, etc.)
         match = re.match(r'^(\w+)(\(.*\))?!?:', message)
         
         if match:
             commit_type = match.group(1)
             scope = match.group(2) if match.group(2) else ""
             
-            # Remove os parênteses do escopo se existir
+            # Removes parentheses from scope if it exists
             if scope:
-                scope = scope[1:-1]  # Remove ( e )
+                scope = scope[1:-1]  # Removes ( and )
                 formatted_message = f"{message[match.end():].strip()} [{scope}]"
             else:
                 formatted_message = message[match.end():].strip()
             
-            # Adiciona link para o commit
+            # Adds link to the commit
             entry = f"{formatted_message} ([{hash_id[:7]}](https://github.com/fsant0s/neuron/commit/{hash_id}))"
             
             if commit_type in categories:
@@ -103,7 +103,7 @@ def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
             else:
                 categories["other"]["items"].append(entry)
         else:
-            # Commits que não seguem o padrão
+            # Commits that don't follow the pattern
             entry = f"{message} ([{hash_id[:7]}](https://github.com/fsant0s/neuron/commit/{hash_id}))"
             categories["other"]["items"].append(entry)
 
@@ -111,7 +111,7 @@ def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
 
 
 def generate_changelog_entry(version: str, categories: Dict[str, Dict]) -> str:
-    """Gera a entrada do changelog para a versão especificada."""
+    """Generates the changelog entry for the specified version."""
     today = datetime.now().strftime("%Y-%m-%d")
     
     lines = [f"## [{version}] - {today}\n"]
@@ -121,37 +121,39 @@ def generate_changelog_entry(version: str, categories: Dict[str, Dict]) -> str:
             lines.append(f"### {data['title']}")
             for item in data["items"]:
                 lines.append(f"- {item}")
-            lines.append("")  # Linha em branco
+            lines.append("")  # Blank line
     
     return "\n".join(lines)
 
 
 def update_changelog(new_entry: str) -> None:
-    """Atualiza o arquivo CHANGELOG.md com a nova entrada."""
+    """Updates the CHANGELOG.md file with the new entry."""
     changelog_path = "CHANGELOG.md"
     
     if not os.path.exists(changelog_path):
-        # Cria um novo arquivo CHANGELOG se não existir
+        # Creates a new CHANGELOG file if it doesn't exist
         with open(changelog_path, "w") as f:
             f.write("# Changelog\n\n")
-            f.write("Todas as mudanças notáveis no projeto NEURON serão documentadas neste arquivo.\n\n")
-            f.write("O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),\n")
-            f.write("e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).\n\n")
+            f.write("All notable changes to the NEURON project will be documented in this file.\n\n")
+            f.write("The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\n")
+            f.write("and this project adheres to [Semantic Versioning](https://semver.org/).\n\n")
             f.write(new_entry)
         return
     
     with open(changelog_path, "r") as f:
         content = f.read()
     
-    # Encontra onde inserir a nova entrada (após o cabeçalho)
-    unreleased_match = re.search(r"## \[Não lançado\]", content)
+    # Finds where to insert the new entry (after the header)
+    unreleased_match = re.search(r"## \[Unreleased\]", content)
+    if not unreleased_match:
+        unreleased_match = re.search(r"## \[Não lançado\]", content)
     first_version_match = re.search(r"## \[\d+\.\d+\.\d+\]", content)
     
     if unreleased_match:
-        # Insere após a seção "Não lançado"
+        # Inserts after the "Unreleased" section
         unreleased_section_end = content.find("\n\n", unreleased_match.end())
         if unreleased_section_end == -1:
-            # Se não encontrar o fim da seção, usa o início da próxima versão
+            # If the end of the section is not found, use the beginning of the next version
             if first_version_match:
                 insertion_point = first_version_match.start()
             else:
@@ -161,10 +163,10 @@ def update_changelog(new_entry: str) -> None:
         
         new_content = content[:insertion_point] + new_entry + "\n" + content[insertion_point:]
     elif first_version_match:
-        # Insere antes da primeira versão
+        # Inserts before the first version
         new_content = content[:first_version_match.start()] + new_entry + "\n" + content[first_version_match.start():]
     else:
-        # Adiciona ao final
+        # Adds to the end
         new_content = content + "\n" + new_entry
     
     with open(changelog_path, "w") as f:
@@ -172,37 +174,37 @@ def update_changelog(new_entry: str) -> None:
 
 
 def main() -> None:
-    """Função principal."""
+    """Main function."""
     version = get_current_version()
     latest_tag = get_latest_tag()
     
-    print(f"Gerando changelog para a versão {version}...")
+    print(f"Generating changelog for version {version}...")
     if latest_tag:
-        print(f"Commits desde a tag {latest_tag}")
+        print(f"Commits since tag {latest_tag}")
     else:
-        print("Analisando todos os commits (nenhuma tag encontrada)")
+        print("Analyzing all commits (no tag found)")
     
     commits = get_commits_since_tag(latest_tag)
     
     if not commits or (len(commits) == 1 and not commits[0]):
-        print("Nenhum commit encontrado para incluir no changelog.")
+        print("No commits found to include in the changelog.")
         return
     
     categories = categorize_commits(commits)
     
-    # Conta o número total de entradas
+    # Counts the total number of entries
     total_entries = sum(len(data["items"]) for data in categories.values())
     
     if total_entries == 0:
-        print("Nenhuma entrada para adicionar ao changelog.")
+        print("No entries to add to the changelog.")
         return
     
-    print(f"Encontradas {total_entries} entradas para o changelog.")
+    print(f"Found {total_entries} entries for the changelog.")
     
     changelog_entry = generate_changelog_entry(version, categories)
     update_changelog(changelog_entry)
     
-    print(f"Changelog atualizado com sucesso para a versão {version}!")
+    print(f"Changelog successfully updated for version {version}!")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # NEURON  
-A framework agent-based system recomendation.  
+A framework for agent-based recommendation systems.  
 
 ## Run Locally  
 
@@ -36,43 +36,43 @@ See `contributing.md` for ways to get started.
 
 Please adhere to this project's `code of conduct`.  
 
-## Versionamento e Releases
+## Versioning and Releases
 
 ### Conventional Commits
 
-Este projeto segue o padrão [Conventional Commits](https://www.conventionalcommits.org/) para mensagens de commit, permitindo gerar automaticamente o CHANGELOG e facilitar o versionamento semântico.
+This project follows the [Conventional Commits](https://www.conventionalcommits.org/) pattern for commit messages, allowing automatic CHANGELOG generation and facilitating semantic versioning.
 
-Formato básico das mensagens de commit:
+Basic format for commit messages:
 
 ```
-<tipo>[escopo opcional]: <descrição>
+<type>[optional scope]: <description>
 
-[corpo opcional]
+[optional body]
 
-[rodapé(s) opcional(is)]
+[optional footer(s)]
 ```
 
-Tipos de commit comuns:
-- **feat**: Nova funcionalidade
-- **fix**: Correção de bug
-- **docs**: Alterações na documentação
-- **style**: Alterações que não afetam o significado do código
-- **refactor**: Alterações de código que não corrigem bugs nem adicionam recursos
-- **perf**: Alterações para melhorar performance
-- **test**: Adição ou correção de testes
-- **build**: Alterações no sistema de build ou dependências
-- **ci**: Alterações em arquivos de CI
+Common commit types:
+- **feat**: New feature
+- **fix**: Bug fix
+- **docs**: Documentation changes
+- **style**: Changes that do not affect code meaning
+- **refactor**: Code changes that neither fix bugs nor add features
+- **perf**: Performance improvements
+- **test**: Adding or fixing tests
+- **build**: Changes to the build system or dependencies
+- **ci**: Changes to CI configuration files
 
 ### Semantic Versioning
 
-Este projeto segue o [Semantic Versioning](https://semver.org/lang/pt-BR/). Para mais detalhes, consulte o arquivo [VERSIONING.md](VERSIONING.md).
+This project follows [Semantic Versioning](https://semver.org/). For more details, see the [VERSIONING.md](VERSIONING.md) file.
 
-### Scripts de Versionamento
+### Versioning Scripts
 
-O projeto inclui scripts para facilitar o gerenciamento de versões:
+The project includes scripts to facilitate version management:
 
-- `scripts/bump_version.py`: Incrementa a versão do projeto (major, minor, patch)
-- `scripts/generate_changelog.py`: Gera entradas para o CHANGELOG.md a partir dos commits
+- `scripts/bump_version.py`: Increments the project version (major, minor, patch)
+- `scripts/generate_changelog.py`: Generates entries for CHANGELOG.md from commits
 
 ## License  
 

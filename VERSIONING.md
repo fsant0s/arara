@@ -1,57 +1,57 @@
-# Política de Versionamento do Projeto NEURON
+# Versioning Policy for NEURON Project
 
-Este documento descreve a política de versionamento para o projeto NEURON, seguindo os princípios do [Semantic Versioning 2.0.0](https://semver.org/).
+This document describes the versioning policy for the NEURON project, following the principles of [Semantic Versioning 2.0.0](https://semver.org/).
 
-## Formato de Versão
+## Version Format
 
-As versões do NEURON seguem o formato `MAJOR.MINOR.PATCH` onde:
+NEURON versions follow the `MAJOR.MINOR.PATCH` format where:
 
-1. **MAJOR**: Incrementado quando há mudanças incompatíveis na API pública.
-2. **MINOR**: Incrementado quando há adição de funcionalidades de forma compatível com versões anteriores.
-3. **PATCH**: Incrementado quando há correções de bugs compatíveis com versões anteriores.
+1. **MAJOR**: Incremented when making incompatible changes to the public API.
+2. **MINOR**: Incremented when adding functionality in a backward-compatible manner.
+3. **PATCH**: Incremented when making backward-compatible bug fixes.
 
-## Regras
+## Rules
 
-- Incrementamos o número de versão **MAJOR** quando fazemos alterações incompatíveis na API pública.
-- Incrementamos o número de versão **MINOR** quando adicionamos funcionalidades mantendo compatibilidade com versões anteriores.
-- Incrementamos o número de versão **PATCH** quando fazemos correções de bugs mantendo compatibilidade com versões anteriores.
-- Versões com numeração 0.y.z são consideradas em desenvolvimento inicial e podem ter mudanças a qualquer momento.
+- We increment the **MAJOR** version number when we make incompatible changes to the public API.
+- We increment the **MINOR** version number when we add functionality while maintaining compatibility with previous versions.
+- We increment the **PATCH** version number when we make bug fixes while maintaining compatibility with previous versions.
+- Versions with numbering 0.y.z are considered in initial development and may have changes at any time.
 
-## Versionamento de Pré-lançamento
+## Pre-release Versioning
 
-Para versões de pré-lançamento, usamos sufixos seguindo o formato:
+For pre-release versions, we use suffixes following the format:
 
-- `alpha`: Versões iniciais para teste interno
-- `beta`: Versões para teste por usuários externos selecionados
-- `rc`: Candidatos a lançamento, prontos para testes finais
+- `alpha`: Initial versions for internal testing
+- `beta`: Versions for testing by selected external users
+- `rc`: Release candidates, ready for final testing
 
-Exemplo: `1.0.0-alpha.1`, `1.0.0-beta.2`, `1.0.0-rc.1`
+Example: `1.0.0-alpha.1`, `1.0.0-beta.2`, `1.0.0-rc.1`
 
-## Processo de Release
+## Release Process
 
-1. **Preparação**: 
-   - Atualização do CHANGELOG.md com as mudanças da nova versão
-   - Atualização da versão no arquivo `pyproject.toml`
+1. **Preparation**: 
+   - Update CHANGELOG.md with changes for the new version
+   - Update the version in the `pyproject.toml` file
 
-2. **Testes**:
-   - Executar todos os testes automatizados
-   - Realizar testes manuais para verificar que a versão está pronta
+2. **Testing**:
+   - Run all automated tests
+   - Perform manual tests to verify that the version is ready
 
-3. **Lançamento**:
-   - Criar uma tag Git para a versão (ex: `v1.0.0`)
-   - Fazer o merge para a branch principal
-   - Publicar o pacote nos repositórios relevantes
+3. **Release**:
+   - Create a Git tag for the version (e.g., `v1.0.0`)
+   - Merge to the main branch
+   - Publish the package to relevant repositories
 
-4. **Anúncio**:
-   - Anunciar o lançamento nos canais apropriados
-   - Destacar as principais mudanças e melhorias
+4. **Announcement**:
+   - Announce the release in appropriate channels
+   - Highlight the main changes and improvements
 
-## Atualizando a Versão
+## Updating the Version
 
-Para atualizar a versão do projeto:
+To update the project version:
 
-1. Modifique o campo `version` no arquivo `pyproject.toml`
-2. Atualize o CHANGELOG.md com as mudanças detalhadas
-3. Crie um commit com a mensagem `release: bump version to vX.Y.Z`
-4. Crie uma tag Git: `git tag vX.Y.Z`
-5. Envie as alterações e a tag para o repositório remoto 
+1. Modify the `version` field in the `pyproject.toml` file
+2. Update CHANGELOG.md with detailed changes
+3. Create a commit with the message `release: bump version to vX.Y.Z`
+4. Create a Git tag: `git tag vX.Y.Z`
+5. Push the changes and tag to the remote repository 

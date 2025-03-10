@@ -1,32 +1,32 @@
-# Changelog
+<think>Vou traduzir o arquivo CHANGELOG.md para o inglês, mantendo apenas em português o que fizer sentido específico ao contexto português. No caso, parece que tudo pode ser traduzido para o inglês sem perder contexto importante.</think># Changelog
 
-Todas as mudanças notáveis no projeto NEURON serão documentadas neste arquivo.
+All notable changes to the NEURON project will be documented in this file.
 
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Não lançado]
+## [Unreleased]
 
-### Adicionado
-- Framework base para sistema de recomendação baseado em agentes
-- Implementação de neurônios para processamento distribuído
-- Capacidades como memória episódica, memória compartilhada e reflexão
-- Integração com provedores de LLM como OpenAI e Groq
-- Utilitários para logging, formatação e tratamento de exceções
+### Added
+- Base framework for agent-based recommendation system
+- Implementation of neurons for distributed processing
+- Capabilities such as episodic memory, shared memory, and reflection
+- Integration with LLM providers such as OpenAI and Groq
+- Utilities for logging, formatting, and exception handling
 
-### Modificado
+### Changed
 
-### Removido
+### Removed
 
-### Corrigido
+### Fixed
 
-### Segurança
+### Security
 
 ## [0.1.0] - 2024-03-08
 
-### Adicionado
-- Versão inicial do framework
-- Estrutura básica de neurônios
-- Implementação de capacidades base
-- Clientes para serviços de LLM
-- Utilitários para logging e formatação 
+### Added
+- Initial framework version
+- Basic neuron structure
+- Implementation of base capabilities
+- Clients for LLM services
+- Utilities for logging and formatting
