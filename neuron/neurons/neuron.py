@@ -7,7 +7,7 @@ import warnings
 
 from .base_neuron import BaseNeuron
 from ..capabilities import (
-    EpisodicMemoryCapability, 
+    EpisodicMemoryCapability,
     SharedMemoryIOCapability,
     ReflectionCapability
 )
@@ -15,9 +15,9 @@ from ..capabilities import (
 from .helpers import (
     validate_llm_config,
     append_oai_message,
-    process_message_before_send, 
-    process_received_message, 
-    process_last_received_message, 
+    process_message_before_send,
+    process_received_message,
+    process_last_received_message,
     process_all_messages_before_reply,
     prepare_chat,
     chat_messages,
@@ -28,43 +28,75 @@ from ..runtime_logging import logging_enabled, log_event
 logger = logging.getLogger(__name__)
 
 class Neuron(BaseNeuron):
+    """
+    A neural agent capable of processing requests and generating responses using LLMs.
+
+    Neurons are the core components of the NEURON framework. They can be equipped with
+    various capabilities, communicate with each other, and interact with LLM providers.
+
+    Attributes:
+        llm_config: Configuration for LLM inference.
+        DEFAULT_CONFIG: Default configuration for LLM inference.
+    """
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
 
     @property
     def name(self) -> str:
-        """Get the name of the neuron."""
+        """
+        Get the name of the neuron.
+
+        Returns:
+            str: The name of the neuron.
+        """
         return self._name
 
     @property
     def description(self) -> str:
-        """Get the description of the neuron."""
+        """
+        Get the description of the neuron.
+
+        Returns:
+            str: The description of the neuron.
+        """
         return self._description
 
     @description.setter
     def description(self, description: str):
-        """Set the description of the neuron."""
-        self._description = description
-
-    def update_description(self, description: str) -> None:
-        """Update the description of the neuron.
+        """
+        Set the description of the neuron.
 
         Args:
-            description (str): description of the neuron.
+            description (str): The new description.
         """
         self._description = description
 
+    def update_description(self, description: str) -> None:
+        """
+        Update the description of the neuron.
+
+        Args:
+            description (str): The new description.
+        """
+        self.description = description
+
     @property
     def system_message(self) -> str:
-        """Return the system message."""
+        """
+        Get the system message for this neuron.
+
+        Returns:
+            str: The system message.
+        """
         return self._oai_system_message[0]["content"]
 
     def update_system_message(self, system_message: str) -> None:
-        """Update the system message.
+        """
+        Update the system message for this neuron.
 
         Args:
-            system_message (str): system message for the ChatCompletion inference.
+            system_message (str): The new system message.
         """
         self._oai_system_message[0]["content"] = system_message
 
@@ -72,7 +104,7 @@ class Neuron(BaseNeuron):
     def __init__(
         self,
         name: str,
-        llm_config: Optional[Union[Dict, Literal[False]]] = None, 
+        llm_config: Optional[Union[Dict, Literal[False]]] = None,
         description: Optional[str] = None,
         chat_messages: Optional[Dict[BaseNeuron, List[Dict]]] = None,
         default_auto_reply: Union[str, Dict] = "",
@@ -83,13 +115,31 @@ class Neuron(BaseNeuron):
         enable_reflection: bool = False,
         system_message: str = "",
     ):
-        """Initialize a neuron.
+        """
+        Initialize a Neuron.
 
         Args:
-            name (str): the name of the neuron.
-        description (str): the description of the neuron.
-            llm_config (dict): the configuration of the LLM model.
-            chat_messages (dict): the chat messages of the neuron.
+            name (str): The name of the neuron.
+            llm_config (Optional[Union[Dict, Literal[False]]], optional):
+                Configuration for LLM inference. Defaults to None.
+            description (Optional[str], optional):
+                A description of the neuron. Defaults to None.
+            chat_messages (Optional[Dict[BaseNeuron, List[Dict]]], optional):
+                Chat messages for the neuron. Defaults to None.
+            default_auto_reply (Union[str, Dict], optional):
+                Default auto-reply message. Defaults to "".
+            enable_episodic_memory (bool, optional):
+                Whether to enable episodic memory. Defaults to False.
+            shared_memory_write_keys (Optional[List[str]], optional):
+                Keys for shared memory writing. Defaults to None.
+            shared_memory_read_keys (Optional[List[str]], optional):
+                Keys for shared memory reading. Defaults to None.
+            shared_memory_transition_message (Optional[List[str]], optional):
+                Transition messages for shared memory. Defaults to None.
+            enable_reflection (bool, optional):
+                Whether to enable reflection capability. Defaults to False.
+            system_message (str, optional):
+                System message for the neuron. Defaults to "".
         """
         # a dictionary of conversations, default value is list
         if chat_messages is None:
@@ -101,7 +151,7 @@ class Neuron(BaseNeuron):
         self.client_cache = None #TODO: To be implemented
         self.llm_config = self.DEFAULT_CONFIG if llm_config is None else llm_config
         self.reply_at_receive = defaultdict(bool)
-        self._name = name   
+        self._name = name
         self._description = description
         self._reply_func_list = []
         self._enable_episodic_memory = enable_episodic_memory
@@ -128,7 +178,7 @@ class Neuron(BaseNeuron):
         }
         self.client = validate_llm_config(self.llm_config, llm_config, self.DEFAULT_CONFIG)
         self.register_reply([BaseNeuron, None], Neuron._generate_oai_reply)
-        
+
         # Register capabilities
         if enable_reflection:
             self._reflection_capability = ReflectionCapability(self)
@@ -137,7 +187,7 @@ class Neuron(BaseNeuron):
 
         if self._enable_episodic_memory:
             self._episodic_memory_capability = EpisodicMemoryCapability(self)
-        
+
     def initiate_chat(
         self,
         recipient: "Neuron",
@@ -146,12 +196,24 @@ class Neuron(BaseNeuron):
         message: Optional[Union[Dict, str, Callable]] = None,
         **kwargs,
     ) -> None:
-        
+        """
+        Initiate a chat with another neuron.
+
+        Args:
+            recipient (Neuron): The neuron to chat with.
+            should_clear_history (bool, optional):
+                Whether to clear chat history. Defaults to True.
+            silent (Optional[bool], optional):
+                Whether to send messages silently. Defaults to True.
+            message (Optional[Union[Dict, str, Callable]], optional):
+                Initial message to send. Defaults to None.
+            **kwargs: Additional arguments.
+        """
         _chat_info = locals().copy()
         _chat_info["sender"] = self
 
         prepare_chat(self, recipient, should_clear_history)
-        msg2send = message 
+        msg2send = message
         self.send(msg2send, recipient, silent=silent)
 
     def send(
@@ -161,6 +223,20 @@ class Neuron(BaseNeuron):
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
     ):
+        """
+        Send a message to another neuron.
+
+        Args:
+            message (Union[Dict, str]): The message to send.
+            recipient (BaseNeuron): The recipient neuron.
+            request_reply (Optional[bool], optional):
+                Whether to request a reply. Defaults to None.
+            silent (Optional[bool], optional):
+                Whether to send silently. Defaults to False.
+
+        Returns:
+            Union[str, Dict, None]: The reply from the recipient if requested.
+        """
         message = process_message_before_send(self, message, recipient, silent)
         valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
         if valid:
@@ -169,7 +245,7 @@ class Neuron(BaseNeuron):
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
             )
-    
+
     def receive(
         self,
         message: Union[Dict, str],
@@ -177,6 +253,20 @@ class Neuron(BaseNeuron):
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
     ):
+        """
+        Receive a message from another neuron.
+
+        Args:
+            message (Union[Dict, str]): The received message.
+            sender (BaseNeuron): The sender neuron.
+            request_reply (Optional[bool], optional):
+                Whether a reply is requested. Defaults to None.
+            silent (Optional[bool], optional):
+                Whether to process silently. Defaults to False.
+
+        Returns:
+            Union[str, Dict, None]: The reply if requested.
+        """
         process_received_message(self, message, sender, silent)
         if request_reply is False or request_reply is None and self.reply_at_receive[sender] is False:
             return
@@ -190,6 +280,19 @@ class Neuron(BaseNeuron):
         sender: Optional["BaseNeuron"] = None,
         **kwargs: Any,
     ) -> Union[str, Dict, None]:
+        """
+        Generate a reply based on provided messages.
+
+        Args:
+            messages (Optional[List[Dict[str, Any]]], optional):
+                Messages to generate a reply for. Defaults to None.
+            sender (Optional[BaseNeuron], optional):
+                The sender neuron. Defaults to None.
+            **kwargs: Additional arguments.
+
+        Returns:
+            Union[str, Dict, None]: The generated reply.
+        """
         if all((messages is None, sender is None)):
             error_msg = f"Either {messages=} or {sender=} must be provided."
             logger.error(error_msg)
@@ -197,7 +300,7 @@ class Neuron(BaseNeuron):
 
         if messages is None:
             messages = self._oai_messages[sender]
-        
+
         # Call the hookable method that gives registered hooks a chance to process the last message.
         # Message modifications do not affect the incoming messages or self._oai_messages.
         messages = process_last_received_message(self, messages)
@@ -221,7 +324,7 @@ class Neuron(BaseNeuron):
                 if final:
                     return reply
         return self._default_auto_reply
-    
+
 
     def _generate_oai_reply(
         self,
@@ -249,17 +352,17 @@ class Neuron(BaseNeuron):
         all_messages = []
         for message in messages:
             all_messages.append(message)
-            
+
         response = llm_client.create(
             context=messages[-1].pop("context", None), messages=all_messages, cache=cache, neuron=self
         )
         extracted_response = llm_client.extract_text_or_completion_object(response)[0]
         if extracted_response is None:
             warnings.warn(f"Extracted_response from {response} is None.", UserWarning)
-            return None 
-        
+            return None
+
         return extracted_response.model_dump()
-    
+
     def register_reply(
         self,
         trigger: Union[Type[BaseNeuron], str, BaseNeuron, Callable[[BaseNeuron], bool], List],
@@ -334,4 +437,3 @@ class Neuron(BaseNeuron):
                 f"The neuron '{neuron.name}' is not present in any conversation. No history available for this neuron."
             )
         return self._oai_messages[neuron][-1]
-    
