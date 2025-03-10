@@ -1,23 +1,44 @@
 [project]
 name = "neuron"
 version = "0.1.0"
-description = "Add your description here"
+description = "A framework for agent-based recommendation systems"
 readme = "README.md"
 requires-python = "==3.12.6"
 dependencies = [
-    "be-great>=0.0.8",
-    "flaml>=2.3.2",
-    "groq>=0.11.0",
-    "openai>=1.54.3",
-    "pandas>=2.2.3",
-    "termcolor>=2.5.0",
-    "torch>=2.5.1",
-    "transformers>=4.46.2",
+    # Framework for building agents with memory and reasoning capabilities
+    "be-great==0.0.8",
+    # Automated machine learning library for efficient model selection and tuning
+    "flaml==2.3.2",
+    # Client for Groq LLM API access
+    "groq==0.11.0",
+    # Client for OpenAI API access
+    "openai==1.54.3",
+    # Data manipulation and analysis library
+    "pandas==2.2.3",
+    # Colored terminal text output
+    "termcolor==2.5.0",
+    # Deep learning framework
+    "torch==2.5.1",
+    # Transformers library for working with pre-trained language models
+    "transformers==4.46.2",
 ]
 
 [tool.uv]
 dev-dependencies = [
-    "ipykernel>=6.29.5",
-    "pytest-cov>=6.0.0",
-    "pytest>=8.3.3",
+    # Jupyter kernel for Python
+    "ipykernel==6.29.5",
+    # Test coverage reporting
+    "pytest-cov==6.0.0",
+    # Testing framework
+    "pytest==8.3.3",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = "Test*"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
