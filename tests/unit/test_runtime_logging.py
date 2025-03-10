@@ -24,6 +24,7 @@ class MockLogger(BaseLogger):
         self.logs = []
         self.started = False
         self.session_id = str(uuid.uuid4())
+        self.connection = None
 
     def start(self):
         self.started = True
@@ -47,6 +48,10 @@ class MockLogger(BaseLogger):
 
     def log_new_client(self, *args, **kwargs):
         self.logs.append(("new_client", args, kwargs))
+
+    def get_connection(self):
+        """Return a mock connection to the logging database."""
+        return self.connection
 
 
 class TestRuntimeLogging(unittest.TestCase):
