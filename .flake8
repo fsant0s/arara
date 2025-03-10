@@ -1,0 +1,25 @@
+[flake8]
+max-line-length = 88
+exclude = .git,__pycache__,build,dist,.venv
+ignore = 
+    # Allow whitespace before colon (conflicts with Black)
+    E203,
+    # Allow line break before binary operator (conflicts with Black)
+    W503,
+    # Missing docstring in public module
+    D100,
+    # Missing docstring in public package
+    D104,
+    # One-line docstring should fit on one line
+    D200,
+    # Missing blank line after last section
+    D413
+per-file-ignores =
+    # Allow unused imports in __init__.py files
+    __init__.py: F401
+    # Allow assertions in tests
+    tests/*: S101
+    # No need for docstrings in tests
+    tests/*: D103
+docstring-convention = google
+max-complexity = 10 
