@@ -12,6 +12,7 @@ from openai.types.chat.chat_completion import ChatCompletionMessage, Choice
 from openai.types.completion_usage import CompletionUsage
 
 from neuron.clients.helpers import validate_parameter
+
 from .. import CloudBasedClient
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
@@ -22,8 +23,8 @@ GROQ_PRICING_1K = {
     "llama3-8b-8192": (0.00005, 0.00008),
     "gemma-7b-it": (0.00007, 0.00007),
     "llama3-groq-70b-8192-tool-use-preview": (0.00089, 0.00089),
-
 }
+
 
 class GroqClient(CloudBasedClient):
     """Client for Groq's API."""
@@ -43,7 +44,6 @@ class GroqClient(CloudBasedClient):
             self.api_key
         ), "Please include the api_key in your config list entry for Groq or set the GROQ_API_KEY env variable."
 
-    
     def parse_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Loads the parameters for Groq API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults"""
         groq_params = {}
@@ -60,14 +60,20 @@ class GroqClient(CloudBasedClient):
         groq_params["frequency_penalty"] = validate_parameter(
             params, "frequency_penalty", (int, float), True, None, (-2, 2), None
         )
-        groq_params["max_tokens"] = validate_parameter(params, "max_tokens", int, True, None, (0, None), None)
+        groq_params["max_tokens"] = validate_parameter(
+            params, "max_tokens", int, True, None, (0, None), None
+        )
         groq_params["presence_penalty"] = validate_parameter(
             params, "presence_penalty", (int, float), True, None, (-2, 2), None
         )
         groq_params["seed"] = validate_parameter(params, "seed", int, True, None, None, None)
         groq_params["stream"] = validate_parameter(params, "stream", bool, True, False, None, None)
-        groq_params["temperature"] = validate_parameter(params, "temperature", (int, float), True, 1, (0, 2), None)
-        groq_params["top_p"] = validate_parameter(params, "top_p", (int, float), True, None, None, None)
+        groq_params["temperature"] = validate_parameter(
+            params, "temperature", (int, float), True, 1, (0, 2), None
+        )
+        groq_params["top_p"] = validate_parameter(
+            params, "top_p", (int, float), True, None, None, None
+        )
 
         # Groq parameters not supported by their models yet, ignoring
         # logit_bias, logprobs, top_logprobs
@@ -85,18 +91,18 @@ class GroqClient(CloudBasedClient):
 
         # Convert NEURON messages to Groq messages
         groq_messages = oai_messages_to_groq_messages(messages)
-        
+
         # Parse parameters to the Groq API's parameters
         groq_params = self.parse_params(params)
 
         groq_params["messages"] = groq_messages
-        
+
         # Token counts will be returned
         prompt_tokens = 0
         completion_tokens = 0
         total_tokens = 0
 
-        # In case you put the client in __init__ it wll cause crash 
+        # In case you put the client in __init__ it wll cause crash
         client = Groq(api_key=self.api_key, max_retries=5)
 
         try:
@@ -117,10 +123,7 @@ class GroqClient(CloudBasedClient):
             raise RuntimeError("Failed to get response from Groq after retrying 5 times.")
 
         # 3. convert output
-        message = ChatCompletionMessage(
-            role="assistant",
-            content=response_content
-        )
+        message = ChatCompletionMessage(role="assistant", content=response_content)
 
         choices = [Choice(finish_reason=groq_finish, index=0, message=message)]
 

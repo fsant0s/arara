@@ -1,22 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import inspect
+import logging
+import sys
 import uuid
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from neuron.runtime_logging import log_chat_completion, log_new_client, log_new_wrapper, logging_enabled
-from neuron.logger.logger_utils import get_current_ts
 from neuron.io.base import IOStream
+from neuron.logger.logger_utils import get_current_ts
+from neuron.runtime_logging import (
+    log_chat_completion,
+    log_new_client,
+    log_new_wrapper,
+    logging_enabled,
+)
 
 from .base_client import BaseClient
 from .helpers import PlaceHolderClient, get_client_by_type_name
 
-import logging
-import sys
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     # Add the console handler.
     from flaml.automl.logger import logger_formatter
+
     _ch = logging.StreamHandler(stream=sys.stdout)
     _ch.setFormatter(logger_formatter)
     logger.addHandler(_ch)
@@ -28,6 +34,7 @@ except ImportError:
     raise ImportError("Please install openai>=1 and diskcache to use neuron.ClientWrapper.")
 else:
     from openai import APIError, APITimeoutError, OpenAI
+
 
 class ClientWrapper:
     """A wrapper class for AI models (custom and cloud-based)."""
@@ -92,26 +99,35 @@ class ClientWrapper:
             for config in config_list:
                 self._register_default_client(config, openai_config)  # could modify the config
                 self._config_list.append(
-                    {**extra_kwargs, **{k: v for k, v in config.items() if k not in self.openai_kwargs}}
+                    {
+                        **extra_kwargs,
+                        **{k: v for k, v in config.items() if k not in self.openai_kwargs},
+                    }
                 )
         else:
             self._register_default_client(extra_kwargs, openai_config)
             self._config_list = [extra_kwargs]
         self.wrapper_id = id(self)
 
-    def _separate_openai_config(self, config: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _separate_openai_config(
+        self, config: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Separate the config into openai_config and extra_kwargs."""
         openai_config = {k: v for k, v in config.items() if k in self.openai_kwargs}
         extra_kwargs = {k: v for k, v in config.items() if k not in self.openai_kwargs}
         return openai_config, extra_kwargs
 
-    def _separate_create_config(self, config: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _separate_create_config(
+        self, config: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Separate the config into create_config and extra_kwargs."""
         create_config = {k: v for k, v in config.items() if k not in self.extra_kwargs}
         extra_kwargs = {k: v for k, v in config.items() if k in self.extra_kwargs}
         return create_config, extra_kwargs
 
-    def _register_default_client(self, config: Dict[str, Any], openai_config: Dict[str, Any]) -> None:
+    def _register_default_client(
+        self, config: Dict[str, Any], openai_config: Dict[str, Any]
+    ) -> None:
         """Create a client with the given config to override openai_config,
         after removing extra kwargs.
 
@@ -120,9 +136,12 @@ class ClientWrapper:
         "gpt-35-turbo" and define model "gpt-3.5-turbo" in the config the function will remove the dot
         from the name and create a client that connects to "gpt-35-turbo" Azure deployment.
         """
-        openai_config = {**openai_config, **{k: v for k, v in config.items() if k in self.openai_kwargs}}
+        openai_config = {
+            **openai_config,
+            **{k: v for k, v in config.items() if k in self.openai_kwargs},
+        }
         openai_config = config if not openai_config else openai_config
-        
+
         client_type = config.get("client")
         model_client_cls_name = config.get("model_client_cls")
         if model_client_cls_name is not None:
@@ -132,14 +151,17 @@ class ClientWrapper:
             logger.info(
                 f"Detected custom model client in config: {model_client_cls_name}, model client can not be used until register_model_client is called."
             )
-        else:   
+        else:
             try:
                 client = get_client_by_type_name(client_type, openai_config)
                 self._clients.append(client)
                 if logging_enabled():
                     log_new_client(client, self, openai_config)
             except Exception as e:
-                logger.error(f"Failed to create client with config: {config}. Error: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to create client with config: {config}. Error: {e}",
+                    exc_info=True,
+                )
                 raise
 
     def register_model_client(self, model_client_cls: BaseClient, **kwargs):
@@ -183,7 +205,9 @@ class ClientWrapper:
             return template.format(**context) if allow_format_str_template else template
         return template(context)
 
-    def _construct_create_params(self, create_config: Dict[str, Any], extra_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    def _construct_create_params(
+        self, create_config: Dict[str, Any], extra_kwargs: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Prime the create_config with additional_kwargs."""
         # Validate the config
         prompt: Optional[str] = create_config.get("prompt")
@@ -207,7 +231,9 @@ class ClientWrapper:
                 (
                     {
                         **m,
-                        "content": self.instantiate(m["content"], context, allow_format_str_template),
+                        "content": self.instantiate(
+                            m["content"], context, allow_format_str_template
+                        ),
                     }
                     if m.get("content")
                     else m
@@ -221,12 +247,14 @@ class ClientWrapper:
         Besides the kwargs allowed in openai's [or other] client, we allow the following additional kwargs.
         The config in each client will be overridden by the config.
         """
-        
+
         invocation_id = str(uuid.uuid4())
         last = len(self._clients) - 1
         # Check if all configs in config list are activated
         non_activated = [
-            client.config["model_client_cls"] for client in self._clients if isinstance(client, PlaceHolderClient)
+            client.config["model_client_cls"]
+            for client in self._clients
+            if isinstance(client, PlaceHolderClient)
         ]
         if non_activated:
             raise RuntimeError(
@@ -237,10 +265,10 @@ class ClientWrapper:
             full_config = {**config, **self._config_list[i]}
             # separate the config into create_config and extra_kwargs
             create_config, extra_kwargs = self._separate_create_config(full_config)
-            
+
             # construct the create params
             params = self._construct_create_params(create_config, extra_kwargs)
-            
+
             filter_func = extra_kwargs.get("filter_func")
             context = extra_kwargs.get("context")
             neuron = extra_kwargs.get("neuron")
@@ -296,7 +324,7 @@ class ClientWrapper:
                 actual_usage = client.get_usage(response)
                 total_usage = actual_usage.copy() if actual_usage is not None else total_usage
                 self._update_usage(actual_usage=actual_usage, total_usage=total_usage)
-        
+
                 if logging_enabled():
                     # TODO: log the config_id and pass_filter etc.
                     log_chat_completion(
@@ -332,7 +360,6 @@ class ClientWrapper:
             n_output_tokens = 0
         return (n_input_tokens * price_1k[0] + n_output_tokens * price_1k[1]) / 1000
 
-    
     def _update_usage(self, actual_usage, total_usage):
         def update_usage(usage_summary, response_usage):
             # go through RESPONSE_USAGE_KEYS and check that they are in response_usage and if not just return usage_summary
@@ -355,8 +382,10 @@ class ClientWrapper:
 
             usage_summary[model] = {
                 "cost": usage_summary.get(model, {}).get("cost", 0) + cost,
-                "prompt_tokens": usage_summary.get(model, {}).get("prompt_tokens", 0) + prompt_tokens,
-                "completion_tokens": usage_summary.get(model, {}).get("completion_tokens", 0) + completion_tokens,
+                "prompt_tokens": usage_summary.get(model, {}).get("prompt_tokens", 0)
+                + prompt_tokens,
+                "completion_tokens": usage_summary.get(model, {}).get("completion_tokens", 0)
+                + completion_tokens,
                 "total_tokens": usage_summary.get(model, {}).get("total_tokens", 0) + total_tokens,
             }
             return usage_summary
@@ -373,7 +402,10 @@ class ClientWrapper:
         def print_usage(usage_summary: Optional[Dict[str, Any]], usage_type: str = "total") -> None:
             word_from_type = "including" if usage_type == "total" else "excluding"
             if usage_summary is None:
-                iostream.print("No actual cost incurred (all completions are using cache).", flush=True)
+                iostream.print(
+                    "No actual cost incurred (all completions are using cache).",
+                    flush=True,
+                )
                 return
 
             iostream.print(f"Usage summary {word_from_type} cached usage: ", flush=True)
@@ -392,7 +424,9 @@ class ClientWrapper:
 
         if isinstance(mode, list):
             if len(mode) == 0 or len(mode) > 2:
-                raise ValueError(f'Invalid mode: {mode}, choose from "actual", "total", ["actual", "total"]')
+                raise ValueError(
+                    f'Invalid mode: {mode}, choose from "actual", "total", ["actual", "total"]'
+                )
             if "actual" in mode and "total" in mode:
                 mode = "both"
             elif "actual" in mode:
@@ -416,7 +450,9 @@ class ClientWrapper:
         elif mode == "actual":
             print_usage(self.actual_usage_summary, "actual")
         else:
-            raise ValueError(f'Invalid mode: {mode}, choose from "actual", "total", ["actual", "total"]')
+            raise ValueError(
+                f'Invalid mode: {mode}, choose from "actual", "total", ["actual", "total"]'
+            )
         iostream.print("-" * 100, flush=True)
 
     def clear_usage_summary(self) -> None:

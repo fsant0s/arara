@@ -1,14 +1,16 @@
 from neuron.neurons.helpers import message_to_dict
-from ...io import IOStream
+
 from ...formatting_utils import colored
+from ...io import IOStream
+
 
 def print_router_message(
-        router: "Router", 
-        previous_component_name: str, 
-        router_recived_message: str, 
-        router_output: str, 
-        next_component_name: str
-    ) -> None:
+    router: "Router",
+    previous_component_name: str,
+    router_recived_message: str,
+    router_output: str,
+    next_component_name: str,
+) -> None:
 
     router_name = router.name
     iostream = IOStream.get_default()
@@ -33,5 +35,3 @@ def print_router_message(
 
     iostream.print(colored(content, "light_green"), flush=True)
     iostream.print("\n", "-" * 80, flush=True, sep="")
-
- 

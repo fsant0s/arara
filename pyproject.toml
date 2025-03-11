@@ -29,6 +29,7 @@ dependencies = [
     "mypy>=1.9.0",
     "types-psutil>=7.0.0.20250218",
     "pandas-stubs>=2.2.3.250308",
+    "bandit>=1.8.3",
 ]
 
 [project.optional-dependencies]
@@ -68,7 +69,7 @@ python_functions = "test_*"
 python_classes = "Test*"
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py312"]
 include = '\.pyi?$'
 exclude = '''
@@ -87,7 +88,7 @@ exclude = '''
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 100
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0

@@ -2,9 +2,9 @@
 Unit tests for formatting_utils module.
 """
 
-import unittest
 import os
 import sys
+import unittest
 from unittest.mock import patch
 
 # Import the module to test
@@ -65,16 +65,18 @@ class TestFormattingUtils(unittest.TestCase):
         text = "Test text"
 
         # Save the original environment variable value
-        original_no_color = os.environ.get('NO_COLOR')
+        original_no_color = os.environ.get("NO_COLOR")
 
         try:
             # Set the NO_COLOR environment variable
-            os.environ['NO_COLOR'] = '1'
+            os.environ["NO_COLOR"] = "1"
 
             # Import the module again to register the new environment value
             # We need to reload the module to ensure it sees the new environment variable
             import importlib
+
             import neuron.formatting_utils
+
             importlib.reload(neuron.formatting_utils)
 
             # Now get the colored function from the reloaded module
@@ -87,12 +89,13 @@ class TestFormattingUtils(unittest.TestCase):
         finally:
             # Restore the original environment variable
             if original_no_color is None:
-                del os.environ['NO_COLOR']
+                del os.environ["NO_COLOR"]
             else:
-                os.environ['NO_COLOR'] = original_no_color
+                os.environ["NO_COLOR"] = original_no_color
 
             # Reload the module again to reset to the original state
             import neuron.formatting_utils
+
             importlib.reload(neuron.formatting_utils)
 
 

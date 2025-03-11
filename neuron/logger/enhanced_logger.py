@@ -6,23 +6,24 @@ capabilities with additional context, consistent formatting, and integration wit
 monitoring metrics.
 """
 
+import inspect
+import json
 import logging
 import os
-import json
-import traceback
+import socket
+import sys
 import threading
 import time
-import sys
-from typing import Dict, Any, Optional, Union, List
+import traceback
 from datetime import datetime
-import inspect
-import socket
-from uuid import uuid4
 from functools import wraps
+from typing import Any, Dict, List, Optional, Union
+from uuid import uuid4
 
 # Configure standard logging
-DEFAULT_LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s - %(message)s'
-DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+DEFAULT_LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 
 class ContextualLogger:
     """
@@ -58,10 +59,7 @@ class ContextualLogger:
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
         handler = logging.FileHandler(log_file)
-        formatter = logging.Formatter(
-            log_format or DEFAULT_LOG_FORMAT,
-            DEFAULT_DATE_FORMAT
-        )
+        formatter = logging.Formatter(log_format or DEFAULT_LOG_FORMAT, DEFAULT_DATE_FORMAT)
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
 
@@ -73,10 +71,7 @@ class ContextualLogger:
             log_format: Format string for log messages (optional)
         """
         handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            log_format or DEFAULT_LOG_FORMAT,
-            DEFAULT_DATE_FORMAT
-        )
+        formatter = logging.Formatter(log_format or DEFAULT_LOG_FORMAT, DEFAULT_DATE_FORMAT)
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
 
@@ -105,18 +100,16 @@ class ContextualLogger:
 
     def end_request(self) -> None:
         """End the current request context and log the total request time."""
-        if hasattr(self._thread_local, 'start_time') and hasattr(self._thread_local, 'request_id'):
+        if hasattr(self._thread_local, "start_time") and hasattr(self._thread_local, "request_id"):
             elapsed_ms = (time.time() - self._thread_local.start_time) * 1000
             self.info(
                 f"Request {self._thread_local.request_id} completed",
-                extra={
-                    'elapsed_ms': elapsed_ms
-                }
+                extra={"elapsed_ms": elapsed_ms},
             )
 
             # Clean up
-            delattr(self._thread_local, 'request_id')
-            delattr(self._thread_local, 'start_time')
+            delattr(self._thread_local, "request_id")
+            delattr(self._thread_local, "start_time")
 
     def _add_default_context(self, extra: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -132,22 +125,22 @@ class ContextualLogger:
         ctx = {} if extra is None else extra.copy()
 
         # Add request ID if available
-        if hasattr(self._thread_local, 'request_id'):
-            ctx['request_id'] = self._thread_local.request_id
+        if hasattr(self._thread_local, "request_id"):
+            ctx["request_id"] = self._thread_local.request_id
 
         # Add hostname
-        ctx['hostname'] = socket.gethostname()
+        ctx["hostname"] = socket.gethostname()
 
         # Add timestamp
-        ctx['timestamp'] = datetime.now().isoformat()
+        ctx["timestamp"] = datetime.now().isoformat()
 
         # Add caller information
         caller_frame = inspect.currentframe().f_back.f_back
         if caller_frame:
-            ctx['caller'] = {
-                'file': os.path.basename(caller_frame.f_code.co_filename),
-                'line': caller_frame.f_lineno,
-                'function': caller_frame.f_code.co_name
+            ctx["caller"] = {
+                "file": os.path.basename(caller_frame.f_code.co_filename),
+                "line": caller_frame.f_lineno,
+                "function": caller_frame.f_code.co_name,
             }
 
         # Add global context
@@ -155,7 +148,7 @@ class ContextualLogger:
 
         return ctx
 
-    def with_context(self, **kwargs) -> 'ContextualLogger':
+    def with_context(self, **kwargs) -> "ContextualLogger":
         """
         Create a new logger with additional context.
 
@@ -181,7 +174,7 @@ class ContextualLogger:
         """
         ctx = self._add_default_context(extra or {})
         ctx.update(kwargs)
-        self._logger.debug(msg, *args, extra={'ctx': json.dumps(ctx)})
+        self._logger.debug(msg, *args, extra={"ctx": json.dumps(ctx)})
 
     def info(self, msg: str, *args, extra: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         """
@@ -195,7 +188,7 @@ class ContextualLogger:
         """
         ctx = self._add_default_context(extra or {})
         ctx.update(kwargs)
-        self._logger.info(msg, *args, extra={'ctx': json.dumps(ctx)})
+        self._logger.info(msg, *args, extra={"ctx": json.dumps(ctx)})
 
     def warning(self, msg: str, *args, extra: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         """
@@ -209,9 +202,16 @@ class ContextualLogger:
         """
         ctx = self._add_default_context(extra or {})
         ctx.update(kwargs)
-        self._logger.warning(msg, *args, extra={'ctx': json.dumps(ctx)})
+        self._logger.warning(msg, *args, extra={"ctx": json.dumps(ctx)})
 
-    def error(self, msg: str, *args, exc_info: bool = False, extra: Optional[Dict[str, Any]] = None, **kwargs) -> None:
+    def error(
+        self,
+        msg: str,
+        *args,
+        exc_info: bool = False,
+        extra: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> None:
         """
         Log an error message with context.
 
@@ -229,15 +229,22 @@ class ContextualLogger:
         if exc_info:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             if exc_type is not None:
-                ctx['exception'] = {
-                    'type': exc_type.__name__,
-                    'message': str(exc_value),
-                    'traceback': traceback.format_exc()
+                ctx["exception"] = {
+                    "type": exc_type.__name__,
+                    "message": str(exc_value),
+                    "traceback": traceback.format_exc(),
                 }
 
-        self._logger.error(msg, *args, exc_info=exc_info, extra={'ctx': json.dumps(ctx)})
+        self._logger.error(msg, *args, exc_info=exc_info, extra={"ctx": json.dumps(ctx)})
 
-    def critical(self, msg: str, *args, exc_info: bool = True, extra: Optional[Dict[str, Any]] = None, **kwargs) -> None:
+    def critical(
+        self,
+        msg: str,
+        *args,
+        exc_info: bool = True,
+        extra: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> None:
         """
         Log a critical message with context.
 
@@ -255,13 +262,13 @@ class ContextualLogger:
         if exc_info:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             if exc_type is not None:
-                ctx['exception'] = {
-                    'type': exc_type.__name__,
-                    'message': str(exc_value),
-                    'traceback': traceback.format_exc()
+                ctx["exception"] = {
+                    "type": exc_type.__name__,
+                    "message": str(exc_value),
+                    "traceback": traceback.format_exc(),
                 }
 
-        self._logger.critical(msg, *args, exc_info=exc_info, extra={'ctx': json.dumps(ctx)})
+        self._logger.critical(msg, *args, exc_info=exc_info, extra={"ctx": json.dumps(ctx)})
 
 
 def log_operation(logger: ContextualLogger, level: int = logging.INFO):
@@ -275,6 +282,7 @@ def log_operation(logger: ContextualLogger, level: int = logging.INFO):
     Returns:
         Decorated function
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -289,7 +297,7 @@ def log_operation(logger: ContextualLogger, level: int = logging.INFO):
             logger.info(
                 f"Started {func.__name__}({arg_str})",
                 operation=func.__name__,
-                request_id=request_id
+                request_id=request_id,
             )
 
             start_time = time.time()
@@ -303,7 +311,7 @@ def log_operation(logger: ContextualLogger, level: int = logging.INFO):
                     f"Completed {func.__name__} in {elapsed_ms:.2f}ms",
                     operation=func.__name__,
                     elapsed_ms=elapsed_ms,
-                    request_id=request_id
+                    request_id=request_id,
                 )
 
                 return result
@@ -315,7 +323,7 @@ def log_operation(logger: ContextualLogger, level: int = logging.INFO):
                     exc_info=True,
                     operation=func.__name__,
                     elapsed_ms=elapsed_ms,
-                    request_id=request_id
+                    request_id=request_id,
                 )
                 raise
             finally:
@@ -323,11 +331,13 @@ def log_operation(logger: ContextualLogger, level: int = logging.INFO):
                 logger.end_request()
 
         return wrapper
+
     return decorator
 
 
 # Create a global logger manager
 _loggers: Dict[str, ContextualLogger] = {}
+
 
 def get_logger(name: str) -> ContextualLogger:
     """
@@ -343,11 +353,12 @@ def get_logger(name: str) -> ContextualLogger:
         _loggers[name] = ContextualLogger(name)
     return _loggers[name]
 
+
 def configure_all_loggers(
     level: int = logging.INFO,
     log_file: Optional[str] = None,
     console: bool = True,
-    log_format: Optional[str] = None
+    log_format: Optional[str] = None,
 ) -> None:
     """
     Configure all loggers with the same settings.
@@ -372,20 +383,14 @@ def configure_all_loggers(
             os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
         file_handler = logging.FileHandler(log_file)
-        file_formatter = logging.Formatter(
-            log_format or DEFAULT_LOG_FORMAT,
-            DEFAULT_DATE_FORMAT
-        )
+        file_formatter = logging.Formatter(log_format or DEFAULT_LOG_FORMAT, DEFAULT_DATE_FORMAT)
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
 
     # Add console handler if requested
     if console:
         console_handler = logging.StreamHandler()
-        console_formatter = logging.Formatter(
-            log_format or DEFAULT_LOG_FORMAT,
-            DEFAULT_DATE_FORMAT
-        )
+        console_formatter = logging.Formatter(log_format or DEFAULT_LOG_FORMAT, DEFAULT_DATE_FORMAT)
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
 

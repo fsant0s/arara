@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Protocol, Union, runtime_checkable
 
+
 @runtime_checkable
 class BaseNeuron(Protocol):
     """(In preview) A protocol for Neuron.
@@ -35,7 +36,6 @@ class BaseNeuron(Protocol):
         """
         ...
 
-
     def receive(
         self,
         message: Union[Dict[str, Any], str],
@@ -68,4 +68,3 @@ class BaseNeuron(Protocol):
         Returns:
             str or dict or None: the generated reply. If None, no reply is generated.
         """
-        

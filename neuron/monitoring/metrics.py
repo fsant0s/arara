@@ -5,16 +5,18 @@ This module provides utilities for measuring and tracking various performance me
 of the NEURON framework, such as response times, resource usage, and operation counts.
 """
 
-import time
-import threading
 import logging
-from typing import Dict, List, Optional, Any, Callable, Union
-from functools import wraps
-import psutil
 import os
+import threading
+import time
 from datetime import datetime
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, Union
+
+import psutil
 
 logger = logging.getLogger(__name__)
+
 
 class MetricsCollector:
     """
@@ -70,10 +72,15 @@ class MetricsCollector:
             Average response time in milliseconds or None if no data
         """
         with self._lock:
-            if operation_name not in self._response_times or not self._response_times[operation_name]:
+            if (
+                operation_name not in self._response_times
+                or not self._response_times[operation_name]
+            ):
                 return None
 
-            return sum(self._response_times[operation_name]) / len(self._response_times[operation_name])
+            return sum(self._response_times[operation_name]) / len(
+                self._response_times[operation_name]
+            )
 
     def get_operation_count(self, operation_name: str) -> int:
         """
@@ -102,12 +109,12 @@ class MetricsCollector:
                         "avg": sum(times) / len(times) if times else 0,
                         "min": min(times) if times else 0,
                         "max": max(times) if times else 0,
-                        "count": len(times)
+                        "count": len(times),
                     }
                     for op, times in self._response_times.items()
                 },
                 "operation_counts": dict(self._operation_counts),
-                "resource_usage": self._resource_usage[-10:] if self._resource_usage else []
+                "resource_usage": (self._resource_usage[-10:] if self._resource_usage else []),
             }
             return metrics
 
@@ -144,11 +151,13 @@ class MetricsCollector:
                     timestamp = datetime.now().isoformat()
 
                     with self._lock:
-                        self._resource_usage.append({
-                            "timestamp": timestamp,
-                            "cpu_percent": cpu_percent,
-                            "memory_mb": memory_mb
-                        })
+                        self._resource_usage.append(
+                            {
+                                "timestamp": timestamp,
+                                "cpu_percent": cpu_percent,
+                                "memory_mb": memory_mb,
+                            }
+                        )
 
                         # Limit the number of samples stored
                         if len(self._resource_usage) > 1000:
@@ -186,6 +195,7 @@ def measure_time(operation_name: Optional[str] = None):
     Returns:
         Decorated function that records timing metrics
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -208,7 +218,9 @@ def measure_time(operation_name: Optional[str] = None):
             logger.debug(f"{op_name} executed in {elapsed_ms:.2f}ms")
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -223,6 +235,7 @@ def count_operation(operation_name: Optional[str] = None):
     Returns:
         Decorated function that increments the operation count
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -233,5 +246,7 @@ def count_operation(operation_name: Optional[str] = None):
 
             # Execute the function
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

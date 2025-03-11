@@ -4,12 +4,13 @@ Shared fixtures for pytest.
 This module contains fixtures that can be reused across tests.
 """
 
-import pytest
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
+import pytest
+
+from neuron.capabilities import EpisodicMemoryCapability, ReflectionCapability
 from neuron.neurons import Neuron
 from neuron.neurons.user import User
-from neuron.capabilities import EpisodicMemoryCapability, ReflectionCapability
 from tests.unit.mock_client import MockClient
 
 
@@ -25,7 +26,7 @@ def basic_neuron(mock_client):
     return Neuron(
         name="TestNeuron",
         client=mock_client,
-        description="A test neuron for unit tests"
+        description="A test neuron for unit tests",
     )
 
 
@@ -36,7 +37,7 @@ def memory_neuron(mock_client):
         name="MemoryNeuron",
         client=mock_client,
         capabilities=[EpisodicMemoryCapability()],
-        description="A test neuron with episodic memory"
+        description="A test neuron with episodic memory",
     )
 
 
@@ -46,11 +47,8 @@ def advanced_neuron(mock_client):
     return Neuron(
         name="AdvancedNeuron",
         client=mock_client,
-        capabilities=[
-            EpisodicMemoryCapability(),
-            ReflectionCapability()
-        ],
-        description="A test neuron with multiple capabilities"
+        capabilities=[EpisodicMemoryCapability(), ReflectionCapability()],
+        description="A test neuron with multiple capabilities",
     )
 
 
@@ -66,8 +64,11 @@ def conversation_history():
     return [
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Hello, how are you?"},
-        {"role": "assistant", "content": "I'm doing well, thank you. How can I help you today?"},
-        {"role": "user", "content": "I need some information about neural networks."}
+        {
+            "role": "assistant",
+            "content": "I'm doing well, thank you. How can I help you today?",
+        },
+        {"role": "user", "content": "I need some information about neural networks."},
     ]
 
 
@@ -77,7 +78,7 @@ def preset_responses():
     return [
         "This is the first response.",
         "This is the second response.",
-        "This is the third response."
+        "This is the third response.",
     ]
 
 

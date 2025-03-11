@@ -7,10 +7,11 @@ which allows neurons to store and retrieve past interactions.
 
 import unittest
 from unittest import mock
+
 from neuron.capabilities import EpisodicMemoryCapability
 from neuron.cognitions import EpisodicMemory
-from neuron.neurons.neuron import Neuron
 from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.neuron import Neuron
 from tests.unit.mock_neuron import MockNeuron
 
 
@@ -73,7 +74,7 @@ class TestEpisodicMemoryCapability(unittest.TestCase):
 
         self.assertEqual(capability._memory_intro, custom_intro)
 
-    @mock.patch.object(EpisodicMemory, '_store')
+    @mock.patch.object(EpisodicMemory, "_store")
     def test_store_message(self, mock_store):
         """Test that messages are stored in episodic memory."""
         capability = EpisodicMemoryCapability(self.neuron)
@@ -89,7 +90,7 @@ class TestEpisodicMemoryCapability(unittest.TestCase):
         # Verify that the message is returned unchanged
         self.assertEqual(result, message)
 
-    @mock.patch.object(EpisodicMemory, '_retrieve_all')
+    @mock.patch.object(EpisodicMemory, "_retrieve_all")
     def test_retrieve_all_with_no_memories(self, mock_retrieve_all):
         """Test retrieval when there are no memories."""
         mock_retrieve_all.return_value = []
@@ -105,13 +106,10 @@ class TestEpisodicMemoryCapability(unittest.TestCase):
         # With no memories, the message should be returned unchanged
         self.assertEqual(result, message)
 
-    @mock.patch.object(EpisodicMemory, '_retrieve_all')
+    @mock.patch.object(EpisodicMemory, "_retrieve_all")
     def test_retrieve_all_with_memories(self, mock_retrieve_all):
         """Test retrieval when there are memories."""
-        mock_memories = [
-            {'content': 'Memory 1'},
-            {'content': 'Memory 2'}
-        ]
+        mock_memories = [{"content": "Memory 1"}, {"content": "Memory 2"}]
         mock_retrieve_all.return_value = mock_memories
 
         capability = EpisodicMemoryCapability(self.neuron)
@@ -124,10 +122,7 @@ class TestEpisodicMemoryCapability(unittest.TestCase):
 
         # Verifica que o resultado inclui a mensagem original e as memórias
         expected_result = (
-            f"Current message\n\n"
-            f"{capability._memory_intro}\n\n"
-            f"1. Memory 1\n"
-            f"2. Memory 2"
+            f"Current message\n\n" f"{capability._memory_intro}\n\n" f"1. Memory 1\n" f"2. Memory 2"
         )
         self.assertEqual(result, expected_result)
 
@@ -138,12 +133,12 @@ class TestEpisodicMemoryCapability(unittest.TestCase):
             name="TestNeuron",
             llm_config=False,
             description="Test neuron",
-            enable_episodic_memory=True  # Ativar a memória episódica
+            enable_episodic_memory=True,  # Ativar a memória episódica
         )
 
         # Verificar que a Neuron tem os hooks registrados
-        self.assertIn('process_message_before_send', neuron.hook_lists)
-        self.assertTrue(len(neuron.hook_lists['process_message_before_send']) > 0)
+        self.assertIn("process_message_before_send", neuron.hook_lists)
+        self.assertTrue(len(neuron.hook_lists["process_message_before_send"]) > 0)
 
         # O teste é positivo se os hooks foram registrados
         # Não precisamos testar o fluxo completo

@@ -1,6 +1,6 @@
-from .cycle import CycleComponent
-from .sequence import SequentialComponent
 from .base_component import BaseComponent
+from .cycle import CycleComponent
 from .pipeline import Pipeline
+from .sequence import SequentialComponent
 
 __all__ = ["Cycle", "Sequential", "Pipeline"]

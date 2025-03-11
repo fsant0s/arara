@@ -1,14 +1,14 @@
-from typing import Callable, List, Any
+from typing import Any, Callable, List
+
 from ..neurons import Neuron
+
 
 class RouterNeuron(Neuron):
     """
     A Router is a Neuron responsible for determining the next component to execute.
     """
 
-    def __init__(self, 
-                 route_mapping_function: Callable[[Any, List], int],
-                 **kwargs: Any) -> None:
+    def __init__(self, route_mapping_function: Callable[[Any, List], int], **kwargs: Any) -> None:
         """
         Initialize the router with a routing function.
 

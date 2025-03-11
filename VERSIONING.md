@@ -29,7 +29,7 @@ Example: `1.0.0-alpha.1`, `1.0.0-beta.2`, `1.0.0-rc.1`
 
 ## Release Process
 
-1. **Preparation**: 
+1. **Preparation**:
    - Update CHANGELOG.md with changes for the new version
    - Update the version in the `pyproject.toml` file
 
@@ -54,4 +54,4 @@ To update the project version:
 2. Update CHANGELOG.md with detailed changes
 3. Create a commit with the message `release: bump version to vX.Y.Z`
 4. Create a Git tag: `git tag vX.Y.Z`
-5. Push the changes and tag to the remote repository 
+5. Push the changes and tag to the remote repository

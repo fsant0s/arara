@@ -15,18 +15,21 @@ from neuron.clients.base_client import BaseClient
 @dataclass
 class MockMessage:
     """Mock implementation of the Message protocol."""
+
     content: Optional[str]
 
 
 @dataclass
 class MockChoice:
     """Mock implementation of the Choice protocol."""
+
     message: MockMessage
 
 
 @dataclass
 class MockUsage:
     """Mock implementation of Usage for responses."""
+
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
@@ -35,6 +38,7 @@ class MockUsage:
 @dataclass
 class MockResponse:
     """Mock implementation of the BaseClientResponseProtocol."""
+
     choices: List[MockChoice]
     model: str
     usage: MockUsage
@@ -50,21 +54,15 @@ class MockBaseClient:
         """Create a mock response."""
         message = MockMessage(content=params.get("content", "Mock response"))
         choice = MockChoice(message=message)
-        usage = MockUsage(
-            prompt_tokens=10,
-            completion_tokens=20,
-            total_tokens=30
-        )
+        usage = MockUsage(prompt_tokens=10, completion_tokens=20, total_tokens=30)
         return MockResponse(
             choices=[choice],
             model=params.get("model", "mock-model"),
             usage=usage,
-            cost=0.01
+            cost=0.01,
         )
 
-    def message_retrieval(
-        self, response: Any
-    ) -> Union[List[str], List[Any]]:
+    def message_retrieval(self, response: Any) -> Union[List[str], List[Any]]:
         """Retrieve messages from the response."""
         return [choice.message for choice in response.choices]
 
@@ -90,10 +88,7 @@ class TestBaseClient(unittest.TestCase):
     def setUp(self):
         """Set up the test case."""
         self.client = MockBaseClient()
-        self.params = {
-            "content": "Test content",
-            "model": "test-model"
-        }
+        self.params = {"content": "Test content", "model": "test-model"}
 
     def test_create(self):
         """Test that create returns a response with the expected structure."""

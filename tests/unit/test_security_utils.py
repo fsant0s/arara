@@ -9,8 +9,8 @@ This module tests the functionality of the security utilities, including:
 
 import os
 import unittest
-from unittest import mock
 import warnings
+from unittest import mock
 
 from neuron.security_utils import CredentialManager, sanitize_input, validate_file_path
 
@@ -45,7 +45,9 @@ class TestCredentialManager(unittest.TestCase):
 
     def test_validate_api_key_openai_valid(self):
         """Test validation of a valid OpenAI API key."""
-        self.assertTrue(CredentialManager.validate_api_key("sk-validopenaiapikey12345678901234", "OPENAI"))
+        self.assertTrue(
+            CredentialManager.validate_api_key("sk-validopenaiapikey12345678901234", "OPENAI")
+        )
 
     def test_validate_api_key_openai_invalid(self):
         """Test validation of an invalid OpenAI API key."""
@@ -54,12 +56,16 @@ class TestCredentialManager(unittest.TestCase):
 
     def test_validate_api_key_groq_valid(self):
         """Test validation of a valid Groq API key."""
-        self.assertTrue(CredentialManager.validate_api_key("gsk_validgroqapikey123456789012345", "GROQ"))
+        self.assertTrue(
+            CredentialManager.validate_api_key("gsk_validgroqapikey123456789012345", "GROQ")
+        )
 
     def test_validate_api_key_groq_invalid(self):
         """Test validation of an invalid Groq API key."""
         self.assertFalse(CredentialManager.validate_api_key("invalid", "GROQ"))
-        self.assertFalse(CredentialManager.validate_api_key("invalid-prefix-12345678901234567890", "GROQ"))
+        self.assertFalse(
+            CredentialManager.validate_api_key("invalid-prefix-12345678901234567890", "GROQ")
+        )
 
     def test_get_endpoint_url_when_present(self):
         """Test retrieving an endpoint URL when it's present in environment variables."""
@@ -101,14 +107,8 @@ class TestSanitizeInput(unittest.TestCase):
 
     def test_sanitize_dict(self):
         """Test sanitizing a dictionary with nested values."""
-        input_dict = {
-            "text": "Hello\x00World",
-            "nested": {"value": "Test\x1FValue"}
-        }
-        expected = {
-            "text": "HelloWorld",
-            "nested": {"value": "TestValue"}
-        }
+        input_dict = {"text": "Hello\x00World", "nested": {"value": "Test\x1FValue"}}
+        expected = {"text": "HelloWorld", "nested": {"value": "TestValue"}}
         self.assertEqual(sanitize_input(input_dict), expected)
 
     def test_sanitize_list(self):
@@ -140,10 +140,10 @@ class TestValidateFilePath(unittest.TestCase):
 
     def test_file_extension_validation(self):
         """Test validation of file extensions."""
-        self.assertTrue(validate_file_path("data/file.txt", allowed_extensions=['.txt', '.csv']))
-        self.assertTrue(validate_file_path("data/file.csv", allowed_extensions=['.txt', '.csv']))
-        self.assertFalse(validate_file_path("data/file.exe", allowed_extensions=['.txt', '.csv']))
-        self.assertFalse(validate_file_path("data/file.js", allowed_extensions=['.txt', '.csv']))
+        self.assertTrue(validate_file_path("data/file.txt", allowed_extensions=[".txt", ".csv"]))
+        self.assertTrue(validate_file_path("data/file.csv", allowed_extensions=[".txt", ".csv"]))
+        self.assertFalse(validate_file_path("data/file.exe", allowed_extensions=[".txt", ".csv"]))
+        self.assertFalse(validate_file_path("data/file.js", allowed_extensions=[".txt", ".csv"]))
 
 
 if __name__ == "__main__":

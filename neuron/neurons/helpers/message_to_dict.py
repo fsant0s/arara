@@ -1,5 +1,6 @@
 from typing import Dict, Union
 
+
 def message_to_dict(message: Union[Dict, str]) -> Dict:
     """Convert a message to a dictionary.
 
@@ -10,4 +11,4 @@ def message_to_dict(message: Union[Dict, str]) -> Dict:
     elif isinstance(message, dict):
         return message
     else:
-        return dict(message)   
+        return dict(message)

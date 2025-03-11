@@ -1,5 +1,6 @@
 from .clear_history import clear_history
 
+
 def prepare_chat(
     self,
     recipient: "BaseNeuron",

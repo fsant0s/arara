@@ -12,8 +12,8 @@ from neuron.logger.logger_factory import LoggerFactory
 
 if TYPE_CHECKING:
     from .clients import ClientFactory
-    from .neurons import Neuron
     from .clients.cloud_based import GroqClient
+    from .neurons import Neuron
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ neuron_logger = None
 is_logging = False
 
 F = TypeVar("F", bound=Callable[..., Any])
+
 
 def start(
     logger: Optional[BaseLogger] = None,
@@ -51,13 +52,14 @@ def start(
     except Exception as e:
         # Use the Python logger instead of the neuron_logger here
         logger_msg = f"[runtime logging] Failed to start logging: {e}"
-        if hasattr(logger, 'error'):
+        if hasattr(logger, "error"):
             logger.error(logger_msg)
         else:
             # Use the module logger instead
             logger.error(logger_msg)
 
     return session_id
+
 
 # SUGESTÃO DE IMPLEMENTAÇÃO PARA CAPTURAR A EXCEÇÃO DE INICILIZAR COM ERRO DENTRO DE START
 """ def start(
@@ -104,7 +106,15 @@ def log_chat_completion(
         return
 
     neuron_logger.log_chat_completion(
-        invocation_id, client_id, wrapper_id, neuron, request, response, is_cached, cost, start_time
+        invocation_id,
+        client_id,
+        wrapper_id,
+        neuron,
+        request,
+        response,
+        is_cached,
+        cost,
+        start_time,
     )
 
 
@@ -122,12 +132,15 @@ def log_event(source: Union[str, Neuron], name: str, **kwargs: Dict[str, Any]) -
     neuron_logger.log_event(source, name, **kwargs)
 
 
-def log_new_wrapper(wrapper: ClientFactory, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
+def log_new_wrapper(
+    wrapper: ClientFactory, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]
+) -> None:
     if neuron_logger is None:
         logger.error("[runtime logging] log_new_wrapper: neuron logger is None")
         return
 
     neuron_logger.log_new_wrapper(wrapper, init_args)
+
 
 def stop() -> bool:
     """
@@ -167,7 +180,7 @@ def logging_enabled() -> bool:
 def log_new_client(
     client: Union[
         GroqClient
-        #TODO: AzureOpenAI, OpenAI, GeminiClient, AnthropicClient, MistralAIClient, TogetherClient, GroqClient, CohereClient
+        # TODO: AzureOpenAI, OpenAI, GeminiClient, AnthropicClient, MistralAIClient, TogetherClient, GroqClient, CohereClient
     ],
     wrapper: ClientFactory,
     init_args: Dict[str, Any],

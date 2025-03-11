@@ -1,6 +1,8 @@
-from .neuron_capability import NeuronCapability
-from ..cognitions import EpisodicMemory
 from neuron.neurons.base_neuron import BaseNeuron
+
+from ..cognitions import EpisodicMemory
+from .neuron_capability import NeuronCapability
+
 
 class EpisodicMemoryCapability(NeuronCapability):
     """
@@ -25,7 +27,7 @@ class EpisodicMemoryCapability(NeuronCapability):
         """
         super().__init__()
         self._episodic_memory = EpisodicMemory()  # Initializes a new episodic memory instance.
-        self._memory_intro = memory_intro # Sets the introduction for retrieved memories.
+        self._memory_intro = memory_intro  # Sets the introduction for retrieved memories.
         self.add_to_neuron(neuron)  # Attaches this capability to the specified neuron.
 
     def on_add_to_neuron(self, neuron: BaseNeuron):
@@ -36,8 +38,12 @@ class EpisodicMemoryCapability(NeuronCapability):
         Args:
             neuron (BaseNeuron): The neuron receiving this capability.
         """
-        neuron.register_hook(hookable_method="process_message_before_send", hook=self._store)  # Hook to store messages.
-        neuron.register_hook(hookable_method="process_last_received_message", hook=self._retrieve_all)  # Hook to retrieve memory.
+        neuron.register_hook(
+            hookable_method="process_message_before_send", hook=self._store
+        )  # Hook to store messages.
+        neuron.register_hook(
+            hookable_method="process_last_received_message", hook=self._retrieve_all
+        )  # Hook to retrieve memory.
 
     def _store(self, sender: BaseNeuron, message: str, recipient: BaseNeuron, silent: bool):
         """
@@ -65,10 +71,14 @@ class EpisodicMemoryCapability(NeuronCapability):
         Returns:
             str: The original message, allowing the neuron to act with additional context if needed.
         """
-        retrieved_episodes = self._episodic_memory._retrieve_all()  # Retrieves all memories from episodic memory.
+        retrieved_episodes = (
+            self._episodic_memory._retrieve_all()
+        )  # Retrieves all memories from episodic memory.
         if not len(retrieved_episodes):
             return message
 
-        retrieved_episodes = "\n".join(f"{i + 1}. {item['content']}" for i, item in enumerate(retrieved_episodes))
+        retrieved_episodes = "\n".join(
+            f"{i + 1}. {item['content']}" for i, item in enumerate(retrieved_episodes)
+        )
         message += "\n\n" + self._memory_intro + "\n\n" + retrieved_episodes
         return message

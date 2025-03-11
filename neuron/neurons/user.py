@@ -1,8 +1,9 @@
 from typing import Dict, Literal, Optional, Union
 
-from ..runtime_logging import log_new_neuron, logging_enabled
 from ..clients import CloudBasedClient
+from ..runtime_logging import log_new_neuron, logging_enabled
 from . import Neuron
+
 
 class User(Neuron):
 
@@ -19,9 +20,9 @@ class User(Neuron):
     ):
         super().__init__(
             name=name,
-            description=
+            description=(
                 description if description is not None else self.DEFAULT_USER_DESCRIPTIONS
-            ,
+            ),
             llm_config=llm_config,
             **kwargs,
         )

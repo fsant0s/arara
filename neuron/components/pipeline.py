@@ -1,7 +1,9 @@
-from typing import List, Dict, Tuple, Union, Optional, Any
-from ..neurons import Neuron, BaseNeuron, RouterNeuron
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from ..neurons import BaseNeuron, Neuron, RouterNeuron
 from ..neurons.helpers import get_next_component
 from .base_component import BaseComponent
+
 
 class Pipeline(Neuron):
     def __init__(self, **kwargs):
@@ -25,7 +27,6 @@ class Pipeline(Neuron):
             component (BaseComponent): The component to add.
         """
         self._nodes.add(component)
-
 
     def add_edge(self, from_component: Any, to_component: Any) -> None:
         """
@@ -53,7 +54,9 @@ class Pipeline(Neuron):
         Args:
             component (Any): The component to set as the entry point.
         """
-        self._nodes.add(component) # This is necessary to ensure that the entry point is in the graph.
+        self._nodes.add(
+            component
+        )  # This is necessary to ensure that the entry point is in the graph.
         self._entry_point = component
 
     def execute(
@@ -83,9 +86,11 @@ class Pipeline(Neuron):
         user = sender
 
         while current_component:
-            neuron, message, default_component= current_component.execute(sender, message, silent=True)
+            neuron, message, default_component = current_component.execute(
+                sender, message, silent=True
+            )
             sender = neuron
-        
+
             if default_component is not None:
                 current_component = default_component
                 continue
@@ -101,13 +106,15 @@ class Pipeline(Neuron):
                 if isinstance(next_component, RouterNeuron):
                     # Use router to decide the next component if multiple options exist
                     router = next_component
-                    next_component_name = get_next_component(router, current_component.name ,message, neuron)
+                    next_component_name = get_next_component(
+                        router, current_component.name, message, neuron
+                    )
                     if next_component not in self._nodes:
                         raise ValueError("RouterNeuron returned an invalid component.")
                     current_component = next_component_name
                 else:
                     raise ValueError("Invalid component type in the pipeline.")
-                
+
             # Send the message to the user at the end of the pipeline
         if reply_to_user:
             neuron.send(message, user, request_reply=False, silent=False)

@@ -29,10 +29,10 @@ fi
 
 # Format code
 echo -e "${BLUE}Running Black formatter...${NC}"
-black neuron scripts tests
+black neuron --exclude "scripts/.*\.sh$" --line-length=100
 
 echo -e "${BLUE}Running isort for import sorting...${NC}"
-isort neuron scripts tests
+isort neuron --skip-glob "scripts/*.sh"
 
 # Check if pre-commit is installed and run appropriate hooks
 if command -v pre-commit &> /dev/null; then
@@ -42,4 +42,4 @@ fi
 
 echo -e "${GREEN}Code formatting complete!${NC}"
 echo -e "${BLUE}Run the following to check for linting issues:${NC}"
-echo -e "${BLUE}flake8 neuron scripts tests${NC}"
+echo -e "${BLUE}flake8 neuron${NC}"

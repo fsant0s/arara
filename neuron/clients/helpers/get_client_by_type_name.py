@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Importing cloud based apis
 try:
@@ -11,6 +11,7 @@ try:
     from neuron.clients.custom import *
 except ImportError as e:
     raise ImportError(e)
+
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """
@@ -38,7 +39,7 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
         client_constructors = {
             "groq": GroqClient,
             "begreat": BeGreatClient,
-            "llmembedding": LLMEmbedding
+            "llmembedding": LLMEmbedding,
         }
 
         # Retrieve the appropriate client class from the mapping

@@ -20,15 +20,26 @@ def to_dict(
         return inspect.getsource(obj).strip()
     elif isinstance(obj, dict):
         return {
-            str(k): to_dict(str(v)) if isinstance(v, no_recursive) else to_dict(v, exclude, no_recursive)
+            str(k): (
+                to_dict(str(v))
+                if isinstance(v, no_recursive)
+                else to_dict(v, exclude, no_recursive)
+            )
             for k, v in obj.items()
             if k not in exclude
         }
     elif isinstance(obj, (list, tuple)):
-        return [to_dict(str(v)) if isinstance(v, no_recursive) else to_dict(v, exclude, no_recursive) for v in obj]
+        return [
+            (to_dict(str(v)) if isinstance(v, no_recursive) else to_dict(v, exclude, no_recursive))
+            for v in obj
+        ]
     elif hasattr(obj, "__dict__"):
         return {
-            str(k): to_dict(str(v)) if isinstance(v, no_recursive) else to_dict(v, exclude, no_recursive)
+            str(k): (
+                to_dict(str(v))
+                if isinstance(v, no_recursive)
+                else to_dict(v, exclude, no_recursive)
+            )
             for k, v in vars(obj).items()
             if k not in exclude
         }

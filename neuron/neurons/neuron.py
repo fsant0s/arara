@@ -1,31 +1,26 @@
-from typing import Optional, Dict, List, Union, Literal, Callable, Any, Tuple, Type
 import copy
 import logging
-from collections import defaultdict
 import warnings
+from collections import defaultdict
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
-
+from ..capabilities import EpisodicMemoryCapability, ReflectionCapability, SharedMemoryIOCapability
+from ..runtime_logging import log_event, logging_enabled
 from .base_neuron import BaseNeuron
-from ..capabilities import (
-    EpisodicMemoryCapability,
-    SharedMemoryIOCapability,
-    ReflectionCapability
-)
-
 from .helpers import (
-    validate_llm_config,
     append_oai_message,
+    chat_messages,
+    match_trigger,
+    prepare_chat,
+    process_all_messages_before_reply,
+    process_last_received_message,
     process_message_before_send,
     process_received_message,
-    process_last_received_message,
-    process_all_messages_before_reply,
-    prepare_chat,
-    chat_messages,
-    match_trigger
+    validate_llm_config,
 )
 
-from ..runtime_logging import logging_enabled, log_event
 logger = logging.getLogger(__name__)
+
 
 class Neuron(BaseNeuron):
     """
@@ -100,7 +95,6 @@ class Neuron(BaseNeuron):
         """
         self._oai_system_message[0]["content"] = system_message
 
-
     def __init__(
         self,
         name: str,
@@ -148,7 +142,7 @@ class Neuron(BaseNeuron):
             self._oai_messages = chat_messages
 
         self._default_auto_reply = default_auto_reply
-        self.client_cache = None #TODO: To be implemented
+        self.client_cache = None  # TODO: To be implemented
         self.llm_config = self.DEFAULT_CONFIG if llm_config is None else llm_config
         self.reply_at_receive = defaultdict(bool)
         self._name = name
@@ -183,7 +177,12 @@ class Neuron(BaseNeuron):
         if enable_reflection:
             self._reflection_capability = ReflectionCapability(self)
 
-        self._shared_memory_capability = SharedMemoryIOCapability(self, shared_memory_write_keys,shared_memory_read_keys, shared_memory_transition_message)
+        self._shared_memory_capability = SharedMemoryIOCapability(
+            self,
+            shared_memory_write_keys,
+            shared_memory_read_keys,
+            shared_memory_transition_message,
+        )
 
         if self._enable_episodic_memory:
             self._episodic_memory_capability = EpisodicMemoryCapability(self)
@@ -268,7 +267,11 @@ class Neuron(BaseNeuron):
             Union[str, Dict, None]: The reply if requested.
         """
         process_received_message(self, message, sender, silent)
-        if request_reply is False or request_reply is None and self.reply_at_receive[sender] is False:
+        if (
+            request_reply is False
+            or request_reply is None
+            and self.reply_at_receive[sender] is False
+        ):
             return
         reply = self.generate_reply(messages=chat_messages(self, sender), sender=sender)
         if reply is not None:
@@ -311,7 +314,12 @@ class Neuron(BaseNeuron):
         for reply_func_tuple in self._reply_func_list:
             reply_func = reply_func_tuple["reply_func"]
             if match_trigger(self, reply_func_tuple["trigger"], sender):
-                final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
+                final, reply = reply_func(
+                    self,
+                    messages=messages,
+                    sender=sender,
+                    config=reply_func_tuple["config"],
+                )
                 if logging_enabled() and final is not None and reply is not None:
                     log_event(
                         self,
@@ -325,12 +333,11 @@ class Neuron(BaseNeuron):
                     return reply
         return self._default_auto_reply
 
-
     def _generate_oai_reply(
         self,
         messages: Optional[List[Dict]] = None,
         sender: Optional[BaseNeuron] = None,
-        config: Optional[None] = None, #APIProtocol
+        config: Optional[None] = None,  # APIProtocol
     ) -> Tuple[bool, Union[str, Dict, None]]:
         """Generate a reply using neuron.clients."""
         client = self.client if config is None else config
@@ -343,7 +350,9 @@ class Neuron(BaseNeuron):
         )
         return (False, None) if extracted_response is None else (True, extracted_response)
 
-    def _generate_oai_reply_from_client(self, llm_client, messages, cache) -> Union[str, Dict, None]:
+    def _generate_oai_reply_from_client(
+        self, llm_client, messages, cache
+    ) -> Union[str, Dict, None]:
         # unroll tool_responses
 
         if self._oai_system_message is not None:
@@ -354,7 +363,10 @@ class Neuron(BaseNeuron):
             all_messages.append(message)
 
         response = llm_client.create(
-            context=messages[-1].pop("context", None), messages=all_messages, cache=cache, neuron=self
+            context=messages[-1].pop("context", None),
+            messages=all_messages,
+            cache=cache,
+            neuron=self,
         )
         extracted_response = llm_client.extract_text_or_completion_object(response)[0]
         if extracted_response is None:
@@ -398,7 +410,6 @@ class Neuron(BaseNeuron):
             if f["reply_func"] == old_reply_func:
                 f["reply_func"] = new_reply_func
 
-
     def register_hook(self, hookable_method: str, hook: Callable):
         """
         Registers a hook to be called by a hookable method, in order to add a capability to the neuron.
@@ -431,7 +442,9 @@ class Neuron(BaseNeuron):
             if n_conversations == 1:
                 for conversation in self._oai_messages.values():
                     return conversation[-1]
-            raise ValueError("More than one conversation is found. Please specify the sender to get the last message.")
+            raise ValueError(
+                "More than one conversation is found. Please specify the sender to get the last message."
+            )
         if neuron not in self._oai_messages.keys():
             raise KeyError(
                 f"The neuron '{neuron.name}' is not present in any conversation. No history available for this neuron."

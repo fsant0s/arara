@@ -3,10 +3,10 @@ from __future__ import annotations
 import time
 import uuid
 from typing import Dict
-import torch
+
 import numpy as np
 import pandas as pd
-
+import torch
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import ChatCompletionMessage, Choice
 from openai.types.completion_usage import CompletionUsage
@@ -18,10 +18,11 @@ try:
 except ImportError:
     raise ImportError("Please install the 'be_great' library to proceed.")
 
+
 class BeGreatClient(CustomClient):
 
     def __init__(self, **kwargs):
-     
+
         self._model_dir = kwargs.get("model_dir")
         self._model_name = kwargs.get("model")
 
@@ -43,25 +44,30 @@ class BeGreatClient(CustomClient):
 
     def create(self, params: Dict) -> ChatCompletion:
         messages = params.get("messages", [])
-        last_message = messages[-1]['content'] if messages else None
-        parsed_data  = self._convert_str_to_dataframe(last_message)
+        last_message = messages[-1]["content"] if messages else None
+        parsed_data = self._convert_str_to_dataframe(last_message)
         try:
-            response = self._model.impute(parsed_data, temperature=0.7, k=100, max_length=200, device=self._get_device())
+            response = self._model.impute(
+                parsed_data,
+                temperature=0.7,
+                k=100,
+                max_length=200,
+                device=self._get_device(),
+            )
             response_id = str(uuid.uuid4())
         except Exception as e:
-            raise RuntimeError(f"BeGreat exception occurred: {e}")        
+            raise RuntimeError(f"BeGreat exception occurred: {e}")
 
         if response is not None:
             local_llm_finish = "stop"
-            response_content = ', '.join([f"{col} is {response.at[0, col]}" for col in response.columns])
+            response_content = ", ".join(
+                [f"{col} is {response.at[0, col]}" for col in response.columns]
+            )
             response_id = response_id
         else:
             raise RuntimeError("Failed to get response from Local LLM.")
-    
-        message = ChatCompletionMessage(
-            role="assistant",
-            content=response_content
-        )
+
+        message = ChatCompletionMessage(role="assistant", content=response_content)
 
         choices = [Choice(finish_reason=local_llm_finish, index=0, message=message)]
         response_oai = ChatCompletion(
@@ -78,12 +84,11 @@ class BeGreatClient(CustomClient):
             cost=0,
         )
         return response_oai
-    
+
     def _impute(self, message: str) -> str:
         """Impute missing values in the message."""
         # make imputations here
         return message
-
 
     def _convert_str_to_dataframe(self, input_str: str) -> dict:
         """
@@ -101,4 +106,6 @@ class BeGreatClient(CustomClient):
         try:
             return pd.DataFrame(eval(input_str))
         except Exception:
-            raise ValueError("Unable to convert the string to a `pd.DataFrame`. Please check the format of `input_str`.")
+            raise ValueError(
+                "Unable to convert the string to a `pd.DataFrame`. Please check the format of `input_str`."
+            )

@@ -3,8 +3,10 @@ Mock client for use in unit tests.
 This client simulates responses without making actual API calls.
 """
 
-from typing import Dict, List, Any, Optional, Generator, Union
+from typing import Any, Dict, Generator, List, Optional, Union
+
 from neuron.clients.base_client import BaseClient
+
 
 class MockClient(BaseClient):
     """
@@ -49,17 +51,20 @@ class MockClient(BaseClient):
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": response_text
-                    },
-                    "finish_reason": "stop"
+                    "message": {"role": "assistant", "content": response_text},
+                    "finish_reason": "stop",
                 }
             ],
-            "usage": {"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150}
+            "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 50,
+                "total_tokens": 150,
+            },
         }
 
-    def stream_complete(self, messages: List[Dict[str, Any]], **kwargs) -> Generator[Dict[str, Any], None, None]:
+    def stream_complete(
+        self, messages: List[Dict[str, Any]], **kwargs
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Yield mock streaming responses.
         Simulates streaming behavior by splitting responses into words.
@@ -89,12 +94,10 @@ class MockClient(BaseClient):
                 "choices": [
                     {
                         "index": 0,
-                        "delta": {
-                            "content": word + (" " if i < len(words) - 1 else "")
-                        },
-                        "finish_reason": "stop" if i == len(words) - 1 else None
+                        "delta": {"content": word + (" " if i < len(words) - 1 else "")},
+                        "finish_reason": "stop" if i == len(words) - 1 else None,
                     }
-                ]
+                ],
             }
 
     def reset(self):

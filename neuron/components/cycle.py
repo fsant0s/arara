@@ -1,19 +1,22 @@
-from typing import List, Any
+from typing import Any, List
+
+from ..formatting_utils import colored
+from ..io.base import IOStream
 from ..neurons import Neuron
 from .base_component import BaseComponent
-from ..io.base import IOStream
-from ..formatting_utils import colored
+
 
 class CycleComponent(BaseComponent):
     """Component that executes neurons in a cyclical fashion, with early stopping if the response is satisfactory."""
 
-    def __init__(self, 
-                 name: str, 
-                 neurons: List[Neuron], 
-                 repetitions: int = 3,
-                 cycle_router_neuron: Neuron = None,
-                 default_component: BaseComponent = None,
-        ) -> None:
+    def __init__(
+        self,
+        name: str,
+        neurons: List[Neuron],
+        repetitions: int = 3,
+        cycle_router_neuron: Neuron = None,
+        default_component: BaseComponent = None,
+    ) -> None:
         """Initialize the CycleComponent.
 
         Args:
@@ -27,8 +30,9 @@ class CycleComponent(BaseComponent):
         self._default_component = default_component
 
         if self._cycle_router_neuron is not None and self._default_component is None:
-            raise ValueError("A `default_component` must be specified to proceed. This error occurred because `_cycle_router_neuron` is not None. Please define a `default_component` before continuing.")
-
+            raise ValueError(
+                "A `default_component` must be specified to proceed. This error occurred because `_cycle_router_neuron` is not None. Please define a `default_component` before continuing."
+            )
 
     def execute(self, sender: Neuron, message: Any, silent: bool) -> Any:
         """Execute neurons in a cycle for a specified number of repetitions, with early stopping.
@@ -54,13 +58,16 @@ class CycleComponent(BaseComponent):
 
                 if not silent:
                     iostream = IOStream.get_default()
-                    iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
+                    iostream.print(
+                        colored(f"\nNext speaker: {speaker.name}\n", "green"),
+                        flush=True,
+                    )
 
-            #TODO: Implement a clearer and more effective early stopping condition
+            # TODO: Implement a clearer and more effective early stopping condition
             if self._cycle_router_neuron:
                 neuron.send(message, self._cycle_router_neuron, request_reply=False, silent=True)
-                reply = self._cycle_router_neuron.generate_reply(sender=neuron)['content']
+                reply = self._cycle_router_neuron.generate_reply(sender=neuron)["content"]
                 if "TERMINATE" in reply:
                     return (neuron, message, None)
-                
+
         return (neuron, message, self._default_component)

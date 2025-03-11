@@ -4,10 +4,10 @@ Unit tests for the Neuron class.
 
 import unittest
 from unittest import mock
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from neuron.neurons.neuron import Neuron
 from neuron.capabilities import EpisodicMemoryCapability
+from neuron.neurons.neuron import Neuron
 from tests.unit.mock_client import MockClient
 
 
@@ -20,11 +20,7 @@ class TestNeuron(unittest.TestCase):
         self.mock_client = MockClient(responses=["I am a test response"])
 
         # Create a test neuron
-        self.neuron = Neuron(
-            name="TestNeuron",
-            llm_config=False,
-            description="A test neuron"
-        )
+        self.neuron = Neuron(name="TestNeuron", llm_config=False, description="A test neuron")
 
         # Assign the mock client to the neuron
         self.neuron.client_cache = self.mock_client
@@ -52,7 +48,7 @@ class TestNeuron(unittest.TestCase):
         """Test that generate_reply returns the expected response from the mock client."""
         # Ao invés de patchear a classe, vamos injetar uma resposta diretamente na instância
         # Criar um spy para espiar o método generate_reply
-        with patch.object(self.neuron, 'generate_reply', return_value="I am a test response"):
+        with patch.object(self.neuron, "generate_reply", return_value="I am a test response"):
             # Chamar o método
             result = self.neuron.generate_reply("Hello")
 
@@ -66,22 +62,18 @@ class TestNeuron(unittest.TestCase):
             name="TestCapabilityNeuron",
             llm_config=False,
             description="A test neuron with capabilities",
-            enable_episodic_memory=True
+            enable_episodic_memory=True,
         )
 
         # Neuron inicializa a capability como hook_lists
-        self.assertTrue(hasattr(neuron, 'hook_lists'))
-        self.assertIn('process_message_before_send', neuron.hook_lists)
-        self.assertIn('process_last_received_message', neuron.hook_lists)
+        self.assertTrue(hasattr(neuron, "hook_lists"))
+        self.assertIn("process_message_before_send", neuron.hook_lists)
+        self.assertIn("process_last_received_message", neuron.hook_lists)
 
     def test_neuron_communication(self):
         """Test that two neurons can communicate with each other."""
         # Create a second neuron
-        neuron2 = Neuron(
-            name="TestNeuron2",
-            llm_config=False,
-            description="Another test neuron"
-        )
+        neuron2 = Neuron(name="TestNeuron2", llm_config=False, description="Another test neuron")
         neuron2.client_cache = MockClient(responses=["Response from neuron2"])
 
         # Send a message from neuron1 to neuron2
@@ -89,7 +81,9 @@ class TestNeuron(unittest.TestCase):
         response = self.neuron.send(message, neuron2)
 
         # Now the format of messages is different, check the content instead
-        self.assertTrue(any(msg['content'] == message for msg in self.neuron._oai_messages[neuron2]))
+        self.assertTrue(
+            any(msg["content"] == message for msg in self.neuron._oai_messages[neuron2])
+        )
 
     def test_neuron_with_episodic_memory(self):
         """Test that a neuron with episodic memory maintains conversation history."""
@@ -98,11 +92,13 @@ class TestNeuron(unittest.TestCase):
             name="MemoryNeuron",
             llm_config=False,
             description="A neuron with episodic memory",
-            enable_episodic_memory=True
+            enable_episodic_memory=True,
         )
 
         # Monkeypatching direto na instância em vez de usar patch
-        neuron.generate_reply = MagicMock(side_effect=["First response", "Second response with context"])
+        neuron.generate_reply = MagicMock(
+            side_effect=["First response", "Second response with context"]
+        )
 
         # First interaction
         first_message = "Hello, this is the first message"
@@ -114,14 +110,12 @@ class TestNeuron(unittest.TestCase):
         second_response = neuron.generate_reply(second_message)
         self.assertEqual(second_response, "Second response with context")
 
-    @patch('neuron.neurons.neuron.append_oai_message')
+    @patch("neuron.neurons.neuron.append_oai_message")
     def test_send_message_appends_to_history(self, mock_append):
         """Test that sending a message appends it to the conversation history."""
         # Create a recipient neuron
         recipient = Neuron(
-            name="RecipientNeuron",
-            llm_config=False,
-            description="A recipient neuron"
+            name="RecipientNeuron", llm_config=False, description="A recipient neuron"
         )
 
         # Send a message

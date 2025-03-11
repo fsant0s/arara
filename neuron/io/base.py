@@ -43,7 +43,9 @@ class IOStream(InputStream, OutputStream, Protocol):
     """A protocol for input/output streams."""
 
     # ContextVar must be used in multithreaded or async environments
-    _default_io_stream: ContextVar[Optional["IOStream"]] = ContextVar("default_iostream", default=None)
+    _default_io_stream: ContextVar[Optional["IOStream"]] = ContextVar(
+        "default_iostream", default=None
+    )
     _default_io_stream.set(None)
     _global_default: Optional["IOStream"] = None
 

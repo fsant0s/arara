@@ -15,7 +15,7 @@ from neuron.logger.logger_utils import get_current_ts, to_dict
 from .base_logger import LLMConfig
 
 if TYPE_CHECKING:
-    from neuron import Neuron, ClientWrapper
+    from neuron import ClientWrapper, Neuron
     from neuron.clients.cloud_based import GroqClient
 
 
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 F = TypeVar("F", bound=Callable[..., Any])
 
 __all__ = ("FileLogger",)
+
 
 def safe_serialize(obj: Any) -> str:
     def default(o: Any) -> str:
@@ -116,9 +117,13 @@ class FileLogger(BaseLogger):
             log_data = json.dumps(
                 {
                     "id": id(neuron),
-                    "neuron_name": neuron.name if hasattr(neuron, "name") and neuron.name is not None else "",
+                    "neuron_name": (
+                        neuron.name if hasattr(neuron, "name") and neuron.name is not None else ""
+                    ),
                     "wrapper_id": to_dict(
-                        neuron.client.wrapper_id if hasattr(neuron, "client") and neuron.client is not None else ""
+                        neuron.client.wrapper_id
+                        if hasattr(neuron, "client") and neuron.client is not None
+                        else ""
                     ),
                     "session_id": self.session_id,
                     "current_time": get_current_ts(),
@@ -139,7 +144,9 @@ class FileLogger(BaseLogger):
 
         # This takes an object o as input and returns a string. If the object o cannot be serialized, instead of raising an error,
         # it returns a string indicating that the object is non-serializable, along with its type's qualified name obtained using __qualname__.
-        json_args = json.dumps(kwargs, default=lambda o: f"<<non-serializable: {type(o).__qualname__}>>")
+        json_args = json.dumps(
+            kwargs, default=lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
+        )
         thread_id = threading.get_ident()
 
         if isinstance(source, Neuron):
@@ -147,7 +154,7 @@ class FileLogger(BaseLogger):
                 log_data = json.dumps(
                     {
                         "source_id": id(source),
-                        "source_name": str(source.name) if hasattr(source, "name") else source,
+                        "source_name": (str(source.name) if hasattr(source, "name") else source),
                         "event_name": name,
                         "neuron_module": source.__module__,
                         "neuron_class": source.__class__.__name__,
@@ -164,7 +171,7 @@ class FileLogger(BaseLogger):
                 log_data = json.dumps(
                     {
                         "source_id": id(source),
-                        "source_name": str(source.name) if hasattr(source, "name") else source,
+                        "source_name": (str(source.name) if hasattr(source, "name") else source),
                         "event_name": name,
                         "json_state": json_args,
                         "timestamp": get_current_ts(),
@@ -176,7 +183,9 @@ class FileLogger(BaseLogger):
                 self.logger.error(f"[file_logger] Failed to log event {e}")
 
     def log_new_wrapper(
-        self, wrapper: ClientWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]] = {}
+        self,
+        wrapper: ClientWrapper,
+        init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]] = {},
     ) -> None:
         """
         Log a new wrapper instance.
@@ -212,13 +221,13 @@ class FileLogger(BaseLogger):
         self,
         client: (
             GroqClient
-            #AzureOpenAI #TODO: to be added in the future
-            #| OpenAI #TODO: to be added in the future
-            #| GeminiClient #TODO: to be added in the future
-            #| AnthropicClient #TODO: to be added in the future
-            #| MistralAIClient #TODO: to be added in the future
-            #| TogetherClient #TODO: to be added in the future
-            #| CohereClient #TODO: to be added in the future
+            # AzureOpenAI #TODO: to be added in the future
+            # | OpenAI #TODO: to be added in the future
+            # | GeminiClient #TODO: to be added in the future
+            # | AnthropicClient #TODO: to be added in the future
+            # | MistralAIClient #TODO: to be added in the future
+            # | TogetherClient #TODO: to be added in the future
+            # | CohereClient #TODO: to be added in the future
         ),
         wrapper: ClientWrapper,
         init_args: Dict[str, Any],
@@ -242,4 +251,4 @@ class FileLogger(BaseLogger):
             )
             self.logger.info(log_data)
         except Exception as e:
-            self.logger.error(f"[file_logger] Failed to log event {e}")                
+            self.logger.error(f"[file_logger] Failed to log event {e}")

@@ -7,11 +7,11 @@ This module tests the functionality of the runtime logging system, including:
 - Logging events and neuron creation
 """
 
-import unittest
-from unittest import mock
-import uuid
 import logging
+import unittest
+import uuid
 from datetime import datetime
+from unittest import mock
 
 import neuron.runtime_logging as runtime_logging
 from neuron.logger.base_logger import BaseLogger, LLMConfig
@@ -82,7 +82,7 @@ class TestRuntimeLogging(unittest.TestCase):
         self.assertTrue(runtime_logging.is_logging)
         self.assertEqual(runtime_logging.neuron_logger, self.mock_logger)
 
-    @mock.patch('neuron.runtime_logging.LoggerFactory.get_logger')
+    @mock.patch("neuron.runtime_logging.LoggerFactory.get_logger")
     def test_start_with_default_logger(self, mock_get_logger):
         """Test starting logging with the default logger."""
         mock_get_logger.return_value = self.mock_logger
@@ -91,7 +91,7 @@ class TestRuntimeLogging(unittest.TestCase):
         self.assertTrue(runtime_logging.is_logging)
         mock_get_logger.assert_called_once_with(logger_type="file", config=None)
 
-    @mock.patch('neuron.runtime_logging.LoggerFactory.get_logger')
+    @mock.patch("neuron.runtime_logging.LoggerFactory.get_logger")
     def test_start_with_logger_type_and_config(self, mock_get_logger):
         """Test starting logging with a specific logger type and config."""
         mock_get_logger.return_value = self.mock_logger
@@ -101,7 +101,7 @@ class TestRuntimeLogging(unittest.TestCase):
         self.assertTrue(runtime_logging.is_logging)
         mock_get_logger.assert_called_once_with(logger_type="file", config=config)
 
-    @mock.patch('neuron.runtime_logging.logger.error')
+    @mock.patch("neuron.runtime_logging.logger.error")
     def test_start_with_exception(self, mock_error):
         """Test handling of exceptions when starting logging."""
         # Configure the mock to raise an exception
@@ -154,28 +154,36 @@ class TestRuntimeLogging(unittest.TestCase):
         client_id = 1
         wrapper_id = 2
         neuron_name = "TestNeuron"
-        request = {"messages": [{"role": "user", "content": "Hello"}], "temperature": 0.7}
+        request = {
+            "messages": [{"role": "user", "content": "Hello"}],
+            "temperature": 0.7,
+        }
         response = "Hello, how can I help you?"
         is_cached = 0
         cost = 0.01
         start_time = datetime.now().isoformat()
 
         runtime_logging.log_chat_completion(
-            invocation_id, client_id, wrapper_id, neuron_name,
-            request, response, is_cached, cost, start_time
+            invocation_id,
+            client_id,
+            wrapper_id,
+            neuron_name,
+            request,
+            response,
+            is_cached,
+            cost,
+            start_time,
         )
 
         self.assertEqual(len(self.mock_logger.events), 1)
         log_type, args, kwargs = self.mock_logger.events[0]
         self.assertEqual(log_type, "chat_completion")
 
-    @mock.patch('neuron.runtime_logging.logging_enabled')
+    @mock.patch("neuron.runtime_logging.logging_enabled")
     def test_log_chat_completion_when_disabled(self, mock_enabled):
         """Test that log_chat_completion does nothing when logging is disabled."""
         mock_enabled.return_value = False
-        runtime_logging.log_chat_completion(
-            uuid.uuid4(), 1, 2, "TestNeuron", {}, "", 0, 0.0, ""
-        )
+        runtime_logging.log_chat_completion(uuid.uuid4(), 1, 2, "TestNeuron", {}, "", 0, 0.0, "")
         self.assertEqual(len(self.mock_logger.events), 0)
 
     def test_log_event(self):
@@ -188,7 +196,7 @@ class TestRuntimeLogging(unittest.TestCase):
         log_type, args, kwargs = self.mock_logger.events[0]
         self.assertEqual(log_type, "event")
 
-    @mock.patch('neuron.runtime_logging.logging_enabled')
+    @mock.patch("neuron.runtime_logging.logging_enabled")
     def test_log_event_when_disabled(self, mock_enabled):
         """Test that log_event does nothing when logging is disabled."""
         mock_enabled.return_value = False

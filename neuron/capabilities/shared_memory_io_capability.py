@@ -1,14 +1,14 @@
-from ..capabilities.neuron_capability import NeuronCapability
-from ..neurons.base_neuron import BaseNeuron
-from ..cognitions import SharedMemory
-
 from itertools import zip_longest
-from typing import Optional, List
+from typing import List, Optional
+
+from ..capabilities.neuron_capability import NeuronCapability
+from ..cognitions import SharedMemory
+from ..neurons.base_neuron import BaseNeuron
 
 
 class SharedMemoryIOCapability(NeuronCapability):
     """
-    Provides shared memory capabilities to a neuron. 
+    Provides shared memory capabilities to a neuron.
     Enables neurons to read from and write to shared memory, facilitating inter-neuron communication and collaboration.
 
     Shared memory operations are divided into:
@@ -51,10 +51,19 @@ class SharedMemoryIOCapability(NeuronCapability):
             neuron (BaseNeuron): The neuron to which this capability is being added.
         """
         if self._shared_memory_write_keys is not None:
-            neuron.register_hook(hookable_method="process_message_before_send", hook=self._write_to_shared_memory)
-            
-        if self._shared_memory_read_keys is not None and self._shared_memory_transition_messages is not None:
-            neuron.register_hook(hookable_method="process_last_received_message", hook=self._read_to_shared_memory)
+            neuron.register_hook(
+                hookable_method="process_message_before_send",
+                hook=self._write_to_shared_memory,
+            )
+
+        if (
+            self._shared_memory_read_keys is not None
+            and self._shared_memory_transition_messages is not None
+        ):
+            neuron.register_hook(
+                hookable_method="process_last_received_message",
+                hook=self._read_to_shared_memory,
+            )
 
     def _write_to_shared_memory(self, sender, message, recipient, silent):
         """
@@ -77,7 +86,7 @@ class SharedMemoryIOCapability(NeuronCapability):
         """
         Combines the input message with content retrieved from shared memory.
 
-        The retrieved content is appended to the message using transition messages if provided, 
+        The retrieved content is appended to the message using transition messages if provided,
         or an empty string as the default.
 
         Args:
@@ -87,9 +96,13 @@ class SharedMemoryIOCapability(NeuronCapability):
             A new message that includes the original input and retrieved memory content.
         """
         message_with_retrieved_memory = message
-        for key, msg in zip_longest(self._shared_memory_read_keys, self._shared_memory_transition_messages, fillvalue=""):
+        for key, msg in zip_longest(
+            self._shared_memory_read_keys,
+            self._shared_memory_transition_messages,
+            fillvalue="",
+        ):
             retrieved_memory = self._shared_memory._retrieve_all(key)
-            retrieved_memory_content = retrieved_memory[0]['content']
+            retrieved_memory_content = retrieved_memory[0]["content"]
             message_with_retrieved_memory += f"\n\n{msg}\n\n{retrieved_memory_content}"
-        
+
         return message_with_retrieved_memory

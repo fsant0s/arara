@@ -20,7 +20,13 @@ class BaseClient(Protocol):
     The message_retrieval method must be implemented to return a list of str or a list of messages from the response.
     """
 
-    RESPONSE_USAGE_KEYS = ["prompt_tokens", "completion_tokens", "total_tokens", "cost", "model"]
+    RESPONSE_USAGE_KEYS = [
+        "prompt_tokens",
+        "completion_tokens",
+        "total_tokens",
+        "cost",
+        "model",
+    ]
 
     class BaseClientResponseProtocol(Protocol):
         class Choice(Protocol):
@@ -58,4 +64,3 @@ class BaseClient(Protocol):
             "cost": response.cost,
             "model": response.model,
         }
-

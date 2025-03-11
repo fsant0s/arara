@@ -3,9 +3,9 @@ Unit tests for code_utils module.
 """
 
 import unittest
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from neuron.code_utils import content_str, UserMessageTextContentPart
+from neuron.code_utils import UserMessageTextContentPart, content_str
 
 
 class TestCodeUtils(unittest.TestCase):
@@ -26,7 +26,7 @@ class TestCodeUtils(unittest.TestCase):
         """Test that content_str handles a list of text items correctly."""
         content: List[Dict[str, Any]] = [
             {"type": "text", "text": "Hello, "},
-            {"type": "text", "text": "world!"}
+            {"type": "text", "text": "world!"},
         ]
         result = content_str(content)
         self.assertEqual(result, "Hello, world!")
@@ -35,8 +35,11 @@ class TestCodeUtils(unittest.TestCase):
         """Test that content_str handles mixed text and image_url content correctly."""
         content: List[Dict[str, Any]] = [
             {"type": "text", "text": "Check out this image: "},
-            {"type": "image_url", "image_url": {"url": "https://example.com/image.jpg"}},
-            {"type": "text", "text": " Isn't it nice?"}
+            {
+                "type": "image_url",
+                "image_url": {"url": "https://example.com/image.jpg"},
+            },
+            {"type": "text", "text": " Isn't it nice?"},
         ]
         result = content_str(content)
         self.assertEqual(result, "Check out this image: <image> Isn't it nice?")

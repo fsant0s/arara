@@ -1,4 +1,3 @@
-
 from .base import InputStream, IOStream, OutputStream
 from .console import IOConsole
 

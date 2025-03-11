@@ -3,14 +3,15 @@ Unit tests for exception_utils module.
 """
 
 import unittest
+
 from neuron.exception_utils import (
-    NeuronNameConflict,
-    SenderRequired,
-    SecurityError,
     CredentialError,
+    FileTypeError,
     InputValidationError,
+    NeuronNameConflict,
     PathTraversalError,
-    FileTypeError
+    SecurityError,
+    SenderRequired,
 )
 
 

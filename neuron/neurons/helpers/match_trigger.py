@@ -1,8 +1,15 @@
-from typing import Union, Optional, Callable, List 
+from typing import Callable, List, Optional, Union
+
 from neuron.neurons.base_neuron import BaseNeuron
+
 from ...exception_utils import SenderRequired
 
-def match_trigger(self: BaseNeuron, trigger: Union[None, str, type, BaseNeuron, Callable, List], sender: Optional[BaseNeuron]) -> bool:
+
+def match_trigger(
+    self: BaseNeuron,
+    trigger: Union[None, str, type, BaseNeuron, Callable, List],
+    sender: Optional[BaseNeuron],
+) -> bool:
     """Check if the sender matches the trigger.
 
     Args:

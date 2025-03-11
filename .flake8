@@ -1,7 +1,7 @@
 [flake8]
 max-line-length = 88
 exclude = .git,__pycache__,build,dist,.venv
-ignore = 
+ignore =
     # Allow whitespace before colon (conflicts with Black)
     E203,
     # Allow line break before binary operator (conflicts with Black)
@@ -22,4 +22,4 @@ per-file-ignores =
     # No need for docstrings in tests
     tests/*: D103
 docstring-convention = google
-max-complexity = 10 
+max-complexity = 10

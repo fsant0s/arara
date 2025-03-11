@@ -2,8 +2,10 @@
 Mock implementation of a neuron for testing purposes.
 """
 
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
+
 from neuron.neurons.base_neuron import BaseNeuron
+
 
 class MockNeuron(BaseNeuron):
     """
@@ -42,12 +44,24 @@ class MockNeuron(BaseNeuron):
             self.hook_lists[hookable_method] = []
         self.hook_lists[hookable_method].append(hook)
 
-    def send(self, message: Any, recipient: 'BaseNeuron', request_reply: bool = False, silent: bool = False):
+    def send(
+        self,
+        message: Any,
+        recipient: "BaseNeuron",
+        request_reply: bool = False,
+        silent: bool = False,
+    ):
         """Mock sending a message to another neuron."""
         self.messages_sent.append((message, recipient, silent))
         return "Mock response" if request_reply else None
 
-    def receive(self, message: Any, sender: 'BaseNeuron', request_reply: bool = False, silent: bool = False):
+    def receive(
+        self,
+        message: Any,
+        sender: "BaseNeuron",
+        request_reply: bool = False,
+        silent: bool = False,
+    ):
         """Mock receiving a message from another neuron."""
         self.messages_received.append((message, sender))
         return "Mock reply" if request_reply else None

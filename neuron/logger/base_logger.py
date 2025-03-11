@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, TypeVar, Union
 from openai.types.chat import ChatCompletion
 
 if TYPE_CHECKING:
-    from ..neurons import Neuron, ClientWrapper
+    from ..neurons import ClientWrapper, Neuron
 
 F = TypeVar("F", bound=Callable[..., Any])
 ConfigItem = Dict[str, Union[str, List[str]]]
@@ -83,7 +83,11 @@ class BaseLogger(ABC):
         ...
 
     @abstractmethod
-    def log_new_wrapper(self, wrapper: ClientWrapper, init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]]) -> None:
+    def log_new_wrapper(
+        self,
+        wrapper: ClientWrapper,
+        init_args: Dict[str, Union[LLMConfig, List[LLMConfig]]],
+    ) -> None:
         """
         Log the birth of a new ClientWrapper.
 

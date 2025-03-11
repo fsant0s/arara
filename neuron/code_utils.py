@@ -1,13 +1,16 @@
 import logging
 from typing import List, Union
-from typing_extensions import TypedDict, Literal
+
+from typing_extensions import Literal, TypedDict
 
 logger = logging.getLogger(__name__)
 
-#TODO: Use type and text variables directly in the 'content_str' function signature
+
+# TODO: Use type and text variables directly in the 'content_str' function signature
 class UserMessageTextContentPart(TypedDict):
     type: Literal["text"]
     text: str
+
 
 def content_str(content: Union[str, List[Union[UserMessageTextContentPart]], None]) -> str:
     """Converts the `content` field of an OpenAI message into a string format.
@@ -39,12 +42,16 @@ def content_str(content: Union[str, List[Union[UserMessageTextContentPart]], Non
     rst = ""
     for item in content:
         if not isinstance(item, dict):
-            raise TypeError("Wrong content format: every element should be dict if the content is a list.")
+            raise TypeError(
+                "Wrong content format: every element should be dict if the content is a list."
+            )
         assert "type" in item, "Wrong content format. Missing 'type' key in content's dict."
         if item["type"] == "text":
             rst += item["text"]
         elif item["type"] == "image_url":
             rst += "<image>"
         else:
-            raise ValueError(f"Wrong content format: unknown type {item['type']} within the content")
+            raise ValueError(
+                f"Wrong content format: unknown type {item['type']} within the content"
+            )
     return rst

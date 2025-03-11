@@ -84,4 +84,4 @@ When adding new dependencies to the project:
 2. Check for active maintenance, security, and compatibility
 3. Pin the version to ensure reproducibility
 4. Document the dependency in this file with the purpose, usage, and justification
-5. Update requirements.txt using `uv export` 
+5. Update requirements.txt using `uv export`

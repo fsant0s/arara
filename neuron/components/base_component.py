@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
+
 from ..neurons import Neuron
+
 
 class BaseComponent(ABC):
     """Base abstract class for components that define an execution process.

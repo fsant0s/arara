@@ -10,28 +10,18 @@ This example shows how to:
 """
 
 import logging
-import time
 import random
+import time
 from pathlib import Path
 
-from neuron.logger.enhanced_logger import (
-    get_logger,
-    configure_all_loggers,
-    log_operation
-)
-from neuron.monitoring.metrics import (
-    metrics_collector,
-    measure_time,
-    count_operation
-)
+from neuron.logger.enhanced_logger import configure_all_loggers, get_logger, log_operation
+from neuron.monitoring.metrics import count_operation, measure_time, metrics_collector
 
 # Configure logging
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
 configure_all_loggers(
-    level=logging.INFO,
-    log_file=str(log_dir / "monitoring_example.log"),
-    console=True
+    level=logging.INFO, log_file=str(log_dir / "monitoring_example.log"), console=True
 )
 
 # Get a contextual logger
@@ -75,9 +65,11 @@ def process_user_request(request_id: str, input_text: str):
     Returns:
         The processed result
     """
-    logger.info(f"Processing request {request_id}",
-               request_type="user_input",
-               input_length=len(input_text))
+    logger.info(
+        f"Processing request {request_id}",
+        request_type="user_input",
+        input_length=len(input_text),
+    )
 
     try:
         # Simulate request processing
@@ -89,21 +81,19 @@ def process_user_request(request_id: str, input_text: str):
         # Simulate post-processing
         logger.debug(f"Post-processing response", response_length=len(response))
 
-        return {
-            "request_id": request_id,
-            "result": response,
-            "status": "success"
-        }
+        return {"request_id": request_id, "result": response, "status": "success"}
     except Exception as e:
-        logger.error(f"Error processing request {request_id}: {str(e)}",
-                    exc_info=True,
-                    input_text=input_text)
+        logger.error(
+            f"Error processing request {request_id}: {str(e)}",
+            exc_info=True,
+            input_text=input_text,
+        )
 
         return {
             "request_id": request_id,
             "result": None,
             "status": "error",
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -133,7 +123,9 @@ def main():
     response_times = all_metrics["response_times"]
     if "llm_operation" in response_times:
         rt = response_times["llm_operation"]
-        print(f"  LLM Operation: avg={rt['avg']:.2f}ms, min={rt['min']:.2f}ms, max={rt['max']:.2f}ms")
+        print(
+            f"  LLM Operation: avg={rt['avg']:.2f}ms, min={rt['min']:.2f}ms, max={rt['max']:.2f}ms"
+        )
 
     # Stop resource monitoring
     metrics_collector.stop_resource_monitoring()

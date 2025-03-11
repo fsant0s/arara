@@ -1,24 +1,26 @@
-from typing import Dict, Union, List
+from typing import Dict, List, Union
 
-from .print_received_message import print_received_message
-from .append_oai_message import append_oai_message
-
-from ...runtime_logging import logging_enabled, log_event
 from neuron.neurons.base_neuron import BaseNeuron
 
+from ...runtime_logging import log_event, logging_enabled
+from .append_oai_message import append_oai_message
+from .print_received_message import print_received_message
+
+
 def process_message_before_send(
-        self: BaseNeuron, message: Union[Dict, str], recipient: BaseNeuron, silent: bool
-    ) -> Union[Dict, str]:
-        """Process the message before sending it to the recipient."""
-        hook_list = self.hook_lists["process_message_before_send"]
-        for hook in hook_list:
-            message = hook(sender=self, message=message, recipient=recipient, silent=silent)
-        return message
+    self: BaseNeuron, message: Union[Dict, str], recipient: BaseNeuron, silent: bool
+) -> Union[Dict, str]:
+    """Process the message before sending it to the recipient."""
+    hook_list = self.hook_lists["process_message_before_send"]
+    for hook in hook_list:
+        message = hook(sender=self, message=message, recipient=recipient, silent=silent)
+    return message
+
 
 def process_received_message(
-        self: BaseNeuron, message: Union[Dict, str], sender: BaseNeuron, silent: bool
-    ) -> None:
-    # When the neuron receives a message, the role of the message is "user". 
+    self: BaseNeuron, message: Union[Dict, str], sender: BaseNeuron, silent: bool
+) -> None:
+    # When the neuron receives a message, the role of the message is "user".
     valid = append_oai_message(self, message, "user", sender, is_sending=False)
     if logging_enabled():
         log_event(self, "received_message", message=message, sender=sender.name, valid=valid)
@@ -29,6 +31,7 @@ def process_received_message(
         )
     if not silent:
         print_received_message(message, sender, self.name, self.llm_config)
+
 
 def process_last_received_message(self: BaseNeuron, messages: List[Dict]) -> List[Dict]:
     """
@@ -69,6 +72,7 @@ def process_last_received_message(self: BaseNeuron, messages: List[Dict]) -> Lis
     messages = messages.copy()
     messages[-1]["content"] = processed_user_content
     return messages
+
 
 def process_all_messages_before_reply(self: BaseNeuron, messages: List[Dict]) -> List[Dict]:
     """

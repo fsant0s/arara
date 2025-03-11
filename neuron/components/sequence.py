@@ -1,8 +1,10 @@
-from typing import List, Any
+from typing import Any, List
+
+from ..formatting_utils import colored
+from ..io.base import IOStream
 from ..neurons import Neuron
 from .base_component import BaseComponent
-from ..io.base import IOStream
-from ..formatting_utils import colored
+
 
 class SequentialComponent(BaseComponent):
     """Component that executes neurons sequentially, passing messages from one neuron to the next."""
@@ -15,7 +17,7 @@ class SequentialComponent(BaseComponent):
             neurons (List[Neuron]): A list of neurons to be executed sequentially.
         """
         super().__init__(name, neurons)
-        
+
     def execute(self, sender: Neuron, message: Any, silent: bool) -> Any:
         """Execute the sequential process, passing messages between neurons.
 
@@ -38,5 +40,5 @@ class SequentialComponent(BaseComponent):
             if not silent:
                 iostream = IOStream.get_default()
                 iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
-                
+
         return (neuron, message, None)

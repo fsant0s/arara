@@ -6,15 +6,12 @@ work together to process a recommendation request.
 """
 
 import unittest
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 from unittest import mock
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+from neuron.capabilities import EpisodicMemoryCapability, ReflectionCapability
 from neuron.neurons import Neuron, RouterNeuron, User
-from neuron.capabilities import (
-    EpisodicMemoryCapability,
-    ReflectionCapability
-)
 from tests.unit.mock_client import MockClient
 
 
@@ -35,25 +32,25 @@ class TestRecommendationFlow(unittest.TestCase):
 
         # Configurar o MockClient para retornar respostas no formato correto
         def mock_complete(*args, **kwargs):
-            response_text = self.mock_client.responses[self.mock_client.current_response_index % len(self.mock_client.responses)]
+            response_text = self.mock_client.responses[
+                self.mock_client.current_response_index % len(self.mock_client.responses)
+            ]
             self.mock_client.current_response_index += 1
-            return {
-                "choices": [{"message": {"content": response_text}}]
-            }
+            return {"choices": [{"message": {"content": response_text}}]}
 
         self.mock_client.complete = mock_complete
 
         # Create specialized neurons for the recommendation flow
         self.user_profiler = Neuron(
             name="UserProfiler",
-            system_message="You analyze user input to identify preferences and requirements."
+            system_message="You analyze user input to identify preferences and requirements.",
         )
         self.user_profiler.client_cache = self.mock_client
 
         # Create a recommender neuron
         self.recommender = Neuron(
             name="Recommender",
-            system_message="You provide personalized recommendations based on user preferences."
+            system_message="You provide personalized recommendations based on user preferences.",
         )
         self.recommender.client_cache = self.mock_client
 
@@ -62,7 +59,7 @@ class TestRecommendationFlow(unittest.TestCase):
             route_mapping_function=self.routing_function,
             name="Router",
             description="Coordinates the recommendation flow",
-            llm_config=False
+            llm_config=False,
         )
         self.router.client_cache = self.mock_client
 
@@ -91,10 +88,9 @@ class TestRecommendationFlow(unittest.TestCase):
         """Test handling a follow-up question that references previous context."""
         # Monkeypatch direto na instância de router
         original_generate_reply = self.router.generate_reply
-        self.router.generate_reply = MagicMock(side_effect=[
-            "Initial laptop recommendation",
-            "Follow-up battery life info"
-        ])
+        self.router.generate_reply = MagicMock(
+            side_effect=["Initial laptop recommendation", "Follow-up battery life info"]
+        )
 
         try:
             # Primeira pergunta

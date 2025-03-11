@@ -2,7 +2,12 @@ from typing import Any, List, Optional
 
 
 class NeuronNameConflict(Exception):
-    def __init__(self, msg: str = "Found multiple neurons with the same name.", *args: Any, **kwargs: Any):
+    def __init__(
+        self,
+        msg: str = "Found multiple neurons with the same name.",
+        *args: Any,
+        **kwargs: Any,
+    ):
         super().__init__(msg, *args, **kwargs)
 
 
@@ -25,7 +30,11 @@ class SecurityError(Exception):
 class CredentialError(SecurityError):
     """Exception raised for errors related to API keys and credentials."""
 
-    def __init__(self, message: str = "Invalid or missing credential.", provider: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Invalid or missing credential.",
+        provider: Optional[str] = None,
+    ):
         self.provider = provider
         self.message = f"{message} Provider: {provider}" if provider else message
         super().__init__(self.message)
@@ -43,7 +52,11 @@ class InputValidationError(SecurityError):
 class PathTraversalError(SecurityError):
     """Exception raised when a potential path traversal attack is detected."""
 
-    def __init__(self, message: str = "Potential path traversal detected.", path: Optional[str] = None):
+    def __init__(
+        self,
+        message: str = "Potential path traversal detected.",
+        path: Optional[str] = None,
+    ):
         self.path = path
         self.message = f"{message} Path: {path}" if path else message
         super().__init__(self.message)
@@ -56,7 +69,7 @@ class FileTypeError(SecurityError):
         self,
         message: str = "Invalid or disallowed file type.",
         file_path: Optional[str] = None,
-        allowed_types: Optional[List[str]] = None
+        allowed_types: Optional[List[str]] = None,
     ):
         self.file_path = file_path
         self.allowed_types = allowed_types
@@ -69,4 +82,3 @@ class FileTypeError(SecurityError):
             self.message = message
 
         super().__init__(self.message)
-

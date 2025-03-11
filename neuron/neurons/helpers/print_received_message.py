@@ -1,15 +1,20 @@
-from typing import Union, Dict, Literal
+from typing import Dict, Literal, Union
 
 from neuron.clients import ClientWrapper
 from neuron.neurons.base_neuron import BaseNeuron
 
+from ...code_utils import content_str
+from ...formatting_utils import colored
+from ...io import IOStream
 from .message_to_dict import message_to_dict
 
-from ...io import IOStream
-from ...formatting_utils import colored
-from ...code_utils import content_str
 
-def print_received_message(message: Union[Dict, str], sender: BaseNeuron, name: str, llm_config : Union[Dict, Literal[False]]) -> None:
+def print_received_message(
+    message: Union[Dict, str],
+    sender: BaseNeuron,
+    name: str,
+    llm_config: Union[Dict, Literal[False]],
+) -> None:
     iostream = IOStream.get_default()
     # print the message received
     iostream.print(colored(sender.name, "yellow"), "(to", f"{name}):\n", flush=True)
@@ -37,9 +42,7 @@ def print_received_message(message: Union[Dict, str], sender: BaseNeuron, name: 
             iostream.print(content_str(content), flush=True)
         if "function_call" in message and message["function_call"]:
             function_call = dict(message["function_call"])
-            func_print = (
-                f"***** Suggested function call: {function_call.get('name', '(No function name found)')} *****"
-            )
+            func_print = f"***** Suggested function call: {function_call.get('name', '(No function name found)')} *****"
             iostream.print(colored(func_print, "green"), flush=True)
             iostream.print(
                 "Arguments: \n",
@@ -63,5 +66,3 @@ def print_received_message(message: Union[Dict, str], sender: BaseNeuron, name: 
                 iostream.print(colored("*" * len(func_print), "green"), flush=True)
 
     iostream.print("\n", "-" * 80, flush=True, sep="")
-
- 

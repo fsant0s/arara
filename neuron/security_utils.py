@@ -5,10 +5,10 @@ This module provides utilities for secure handling of API keys, secrets,
 and other security-related functionality.
 """
 
-import os
 import logging
+import os
 import warnings
-from typing import Dict, Optional, Any, List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class CredentialManager:
             warnings.warn(
                 f"API key {env_var_name} not found in environment variables.",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
         return api_key
@@ -139,7 +139,9 @@ def sanitize_input(input_data: Any) -> Any:
     """
     if isinstance(input_data, str):
         # Remove potentially dangerous control characters
-        return "".join(char for char in input_data if ord(char) >= 32 or char == "\n" or char == "\t")
+        return "".join(
+            char for char in input_data if ord(char) >= 32 or char == "\n" or char == "\t"
+        )
     elif isinstance(input_data, dict):
         return {k: sanitize_input(v) for k, v in input_data.items()}
     elif isinstance(input_data, list):
