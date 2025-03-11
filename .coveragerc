@@ -1,0 +1,35 @@
+[run]
+source = neuron
+omit =
+    # Omit test files
+    */tests/*
+    # Omit initialization files
+    */__init__.py
+    # Omit configuration files
+    */conf.py
+    # Omit scripts
+    */scripts/*
+
+[report]
+# Exclude lines that don't need to be tested
+exclude_lines =
+    # Skip pragma lines
+    pragma: no cover
+
+    # Don't test debug code
+    def __repr__
+
+    # Don't test code that only runs when module is imported
+    if __name__ == .__main__.:
+
+    # Don't test code that only runs in specific conditions
+    if TYPE_CHECKING:
+
+    # Don't test code that raises NotImplementedError
+    raise NotImplementedError
+
+    # Don't test abstract code
+    @abstractmethod
+
+[html]
+directory = reports/coverage_html
