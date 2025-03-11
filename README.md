@@ -138,13 +138,11 @@ This script will:
 Alternatively, install dependencies manually:
 
 ~~~bash
+# Install package in development mode (without dev dependencies)
 uv pip install -e .
-~~~
 
-For development dependencies:
-
-~~~bash
-uv pip install ipykernel pytest pytest-cov black isort flake8 mypy
+# Install with development dependencies
+uv pip install -e ".[dev]"
 ~~~
 
 ### Environment Configuration
@@ -189,6 +187,22 @@ isort .
 flake8 .
 mypy .
 ~~~
+
+### Testing
+
+NEURON uses automated tests to ensure code quality and reliability:
+
+- **Unit Tests**: Verify individual components
+- **Integration Tests**: Validate interaction between components
+- **Coverage Reports**: Monitor test coverage
+
+To run all tests and generate coverage reports:
+
+~~~bash
+./scripts/run_tests.sh
+~~~
+
+For more details about the test structure and how to add new tests, see [tests/README.md](tests/README.md).
 
 ## Contributing
 

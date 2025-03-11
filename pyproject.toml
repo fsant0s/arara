@@ -8,7 +8,7 @@ dependencies = [
     # Framework for building agents with memory and reasoning capabilities
     "be-great==0.0.8",
     # Automated machine learning library for efficient model selection and tuning
-    "flaml==2.3.2",
+    "flaml[automl]==2.3.2",
     # Client for Groq LLM API access
     "groq==0.11.0",
     # Client for OpenAI API access
@@ -23,6 +23,12 @@ dependencies = [
     "transformers==4.46.2",
     # Process and system monitoring
     "psutil==5.9.8",
+    "cohere>=5.14.0",
+    "pytest-cov>=6.0.0",
+    "flake8>=7.0.0",
+    "mypy>=1.9.0",
+    "types-psutil>=7.0.0.20250218",
+    "pandas-stubs>=2.2.3.250308",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +51,15 @@ dev = [
     "types-termcolor==1.1.6",
     "types-requests==2.31.0.10",
 ]
+
+[tool.setuptools]
+packages = ["neuron"]
+
+[tool.setuptools.package-data]
+neuron = ["py.typed"]
+
+[tool.setuptools.exclude-package-data]
+neuron = ["logs", "reports"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
