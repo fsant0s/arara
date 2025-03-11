@@ -23,13 +23,13 @@ dependencies = [
     "transformers==4.46.2",
     # Process and system monitoring
     "psutil==5.9.8",
-    "cohere>=5.14.0",
-    "pytest-cov>=6.0.0",
-    "flake8>=7.0.0",
-    "mypy>=1.9.0",
-    "types-psutil>=7.0.0.20250218",
-    "pandas-stubs>=2.2.3.250308",
-    "bandit>=1.8.3",
+    "cohere==5.14.0",
+    "pytest-cov==6.0.0",
+    "flake8==7.0.0",
+    "mypy==1.9.0",
+    "types-psutil==7.0.0.20250218",
+    "pandas-stubs==2.2.3.250308",
+    "bandit==1.8.3",
 ]
 
 [project.optional-dependencies]
