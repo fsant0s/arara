@@ -13,7 +13,8 @@ from openai.types.completion_usage import CompletionUsage
 
 from neuron.clients.helpers import validate_parameter
 
-from .. import CloudBasedClient
+# Substituição para quebrar a importação circular
+from neuron.clients.cloud_based_client import CloudBasedClient
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost

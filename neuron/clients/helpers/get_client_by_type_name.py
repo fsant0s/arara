@@ -1,16 +1,16 @@
 from typing import Any, Dict
 
-# Importing cloud based apis
-try:
-    from neuron.clients.cloud_based import *
-except ImportError as e:
-    raise ImportError(e)
+# Importações específicas em vez de importação em massa
+# para evitar o ciclo de importação
+from neuron.clients.cloud_based.groq import GroqClient
 
-# Importing custom apis
+# Importação condicional dos clientes personalizados
 try:
-    from neuron.clients.custom import *
-except ImportError as e:
-    raise ImportError(e)
+    from neuron.clients.custom import BeGreatClient, LLMEmbedding
+except ImportError:
+    # Valores vazios para caso os módulos não estejam disponíveis
+    BeGreatClient = None
+    LLMEmbedding = None
 
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
