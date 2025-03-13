@@ -11,14 +11,13 @@ from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import ChatCompletionMessage, Choice
 from openai.types.completion_usage import CompletionUsage
 
-from neuron.clients.helpers import validate_parameter
-
-# Substituição para quebrar a importação circular
+from neuron.clients.helpers.validate_parameter import validate_parameter
 from neuron.clients.cloud_based_client import CloudBasedClient
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost
 GROQ_PRICING_1K = {
+    "llama-3.3-70b-versatile": (0.00059, 0.00079),
     "llama3-70b-8192": (0.00059, 0.00079),
     "mixtral-8x7b-32768": (0.00024, 0.00024),
     "llama3-8b-8192": (0.00005, 0.00008),
@@ -115,7 +114,6 @@ class GroqClient(CloudBasedClient):
             prompt_tokens = response.usage.prompt_tokens
             completion_tokens = response.usage.completion_tokens
             total_tokens = response.usage.total_tokens
-
         if response is not None:
             groq_finish = "stop"
             response_content = response.choices[0].message.content

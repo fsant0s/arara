@@ -1,5 +1,5 @@
 # NEURON
-A framework for agent-based recommendation systems powered by Large Language Models (LLMs).
+A framework for agent-based conversational recommendation systems powered by Large Language Models (LLMs).
 
 ## Overview
 

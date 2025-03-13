@@ -26,6 +26,12 @@ class SecurityError(Exception):
         self.message = message
         super().__init__(self.message)
 
+class NoEligibleSpeaker(Exception):
+    """Exception raised for early termination of a GroupChat."""
+
+    def __init__(self, message: str = "No eligible speakers."):
+        self.message = message
+        super().__init__(self.message)
 
 class CredentialError(SecurityError):
     """Exception raised for errors related to API keys and credentials."""
@@ -81,4 +87,11 @@ class FileTypeError(SecurityError):
         else:
             self.message = message
 
+        super().__init__(self.message)
+
+class UndefinedNextNeuron(Exception):
+    """Exception raised when the provided next agents list does not overlap with agents in the group."""
+
+    def __init__(self, message: str = "The provided agents list does not overlap with agents in the group."):
+        self.message = message
         super().__init__(self.message)

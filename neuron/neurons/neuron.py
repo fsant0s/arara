@@ -1,6 +1,7 @@
 import copy
 import logging
 import warnings
+import inspect
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
@@ -11,13 +12,20 @@ from .helpers import (
     append_oai_message,
     chat_messages,
     match_trigger,
-    prepare_chat,
     process_all_messages_before_reply,
     process_last_received_message,
     process_message_before_send,
     process_received_message,
     validate_llm_config,
+    content_str,
+    prepare_chat,
 )
+
+from .chat import ChatResult
+from .utils import gather_usage_summary, consolidate_chat_info
+from ..cache.cache import AbstractCache
+
+from openai import BadRequestError
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +44,8 @@ class Neuron(BaseNeuron):
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
+    DEFAULT_SUMMARY_METHOD = "last_msg"
+    DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation. Do not add any introductory phrases."
 
     @property
     def name(self) -> str:
@@ -95,6 +105,32 @@ class Neuron(BaseNeuron):
         """
         self._oai_system_message[0]["content"] = system_message
 
+    @property
+    def chat_messages(self) -> Dict["Neuron", List[Dict]]:
+        """A dictionary of conversations from agent to list of messages."""
+        return self._oai_messages
+
+    def max_consecutive_auto_reply(self, sender: Optional["Neuron"] = None) -> int:
+        """
+            The maximum number of consecutive auto replies.
+        """
+        return self._max_consecutive_auto_reply if sender is None else self._max_consecutive_auto_reply_dict[sender]
+
+    def update_max_consecutive_auto_reply(self, value: int, sender: Optional["Neuron"] = None):
+        """
+        Update the maximum number of consecutive auto replies.
+
+        Args:
+            value (int): the maximum number of consecutive auto replies.
+            sender (Agent): when the sender is provided, only update the max_consecutive_auto_reply for that sender.
+        """
+        if sender is None:
+            self._max_consecutive_auto_reply = value
+            for k in self._max_consecutive_auto_reply_dict:
+                self._max_consecutive_auto_reply_dict[k] = value
+        else:
+            self._max_consecutive_auto_reply_dict[sender] = value
+
     def __init__(
         self,
         name: str,
@@ -108,6 +144,9 @@ class Neuron(BaseNeuron):
         shared_memory_transition_message: Optional[List[str]] = None,
         enable_reflection: bool = False,
         system_message: str = "",
+        is_termination_msg: Optional[Callable[[Dict], bool]] = None,
+        human_input_mode: Literal["ALWAYS", "NEVER"] = "ALWAYS",
+        max_consecutive_auto_reply: int = 0,
     ):
         """
         Initialize a Neuron.
@@ -134,6 +173,14 @@ class Neuron(BaseNeuron):
                 Whether to enable reflection capability. Defaults to False.
             system_message (str, optional):
                 System message for the neuron. Defaults to "".
+            human_input_mode (str, optional):
+                NEVER: Human intervention is never requested.
+                ALWAYS: Human input is always requested. The human can skip to an automatic response, provide feedback, or end the conversation. max_consecutive_auto_reply is ignored in this mode.
+            max_consecutive_auto_reply (int):
+                the maximum number of consecutive auto replies.
+            is_termination_msg (function): a function that takes a message in the form of a dictionary
+                and returns a boolean value indicating if this received message is a termination message.
+                The dict can contain the following keys: "content", "role", "name", "function_call".
         """
         # a dictionary of conversations, default value is list
         if chat_messages is None:
@@ -153,6 +200,18 @@ class Neuron(BaseNeuron):
 
         if system_message:
             self._oai_system_message = [{"content": system_message, "role": "system"}]
+
+        # HUMAN IN THE LOOP
+        self._max_consecutive_auto_reply = max_consecutive_auto_reply
+        self._consecutive_auto_reply_counter = defaultdict(int)
+        self._max_consecutive_auto_reply_dict = defaultdict(self.max_consecutive_auto_reply)
+        self.human_input_mode = human_input_mode
+        self._human_input = []
+        self._is_termination_msg = (
+            is_termination_msg
+            if is_termination_msg is not None
+            else (lambda x: content_str(x.get("content")) == "TERMINATE")
+        )
 
         # Take a copy to avoid modifying the given dict
         if isinstance(llm_config, dict):
@@ -191,8 +250,11 @@ class Neuron(BaseNeuron):
         self,
         recipient: "Neuron",
         should_clear_history: bool = True,
-        silent: Optional[bool] = True,
+        silent: Optional[bool] = False,
         message: Optional[Union[Dict, str, Callable]] = None,
+        summary_method: Optional[Union[str, Callable]] = DEFAULT_SUMMARY_METHOD,
+        summary_args: Optional[dict] = {},
+        cache: Optional[AbstractCache] = None,
         **kwargs,
     ) -> None:
         """
@@ -210,10 +272,35 @@ class Neuron(BaseNeuron):
         """
         _chat_info = locals().copy()
         _chat_info["sender"] = self
+        consolidate_chat_info(_chat_info, uniform_sender=self)
+        for agent in [self, recipient]:
+            agent._raise_exception_on_async_reply_functions()
+            agent.previous_cache = agent.client_cache
+            agent.client_cache = cache
+
 
         prepare_chat(self, recipient, should_clear_history)
         msg2send = message
         self.send(msg2send, recipient, silent=silent)
+
+        summary = self._summarize_chat(
+            summary_method,
+            summary_args,
+            recipient,
+            cache=cache,
+        )
+        for agent in [self, recipient]:
+            agent.client_cache = agent.previous_cache
+            agent.previous_cache = None
+        chat_result = ChatResult(
+            chat_history=self.chat_messages[recipient],
+            summary=summary,
+            cost=gather_usage_summary([self, recipient]),
+            human_input=self._human_input,
+        )
+        return chat_result
+
+
 
     def send(
         self,
@@ -273,6 +360,7 @@ class Neuron(BaseNeuron):
             and self.reply_at_receive[sender] is False
         ):
             return
+
         reply = self.generate_reply(messages=chat_messages(self, sender), sender=sender)
         if reply is not None:
             self.send(reply, sender, silent=silent)
@@ -450,3 +538,144 @@ class Neuron(BaseNeuron):
                 f"The neuron '{neuron.name}' is not present in any conversation. No history available for this neuron."
             )
         return self._oai_messages[neuron][-1]
+
+    def _summarize_chat(
+        self,
+        summary_method,
+        summary_args,
+        recipient: Optional["Neuron"] = None,
+        cache: Optional[AbstractCache] = None,
+    ) -> str:
+        """Get a chat summary from an agent participating in a chat.
+
+        Args:
+            summary_method (str or callable): the summary_method to get the summary.
+                The callable summary_method should take the recipient and sender agent in a chat as input and return a string of summary. E.g,
+                ```python
+                def my_summary_method(
+                    sender: ConversableAgent,
+                    recipient: ConversableAgent,
+                    summary_args: dict,
+                ):
+                    return recipient.last_message(sender)["content"]
+                ```
+            summary_args (dict): a dictionary of arguments to be passed to the summary_method.
+            recipient: the recipient agent in a chat.
+            prompt (str): the prompt used to get a summary when summary_method is "reflection_with_llm".
+
+        Returns:
+            str: a chat summary from the agent.
+        """
+        summary = ""
+        if summary_method is None:
+            return summary
+        if "cache" not in summary_args:
+            summary_args["cache"] = cache
+        if summary_method == "reflection_with_llm":
+            summary_method = self._reflection_with_llm_as_summary
+        elif summary_method == "last_msg":
+            summary_method = self._last_msg_as_summary
+
+        if isinstance(summary_method, Callable):
+            summary = summary_method(self, recipient, summary_args)
+        else:
+            raise ValueError(
+                "If not None, the summary_method must be a string from [`reflection_with_llm`, `last_msg`] or a callable."
+            )
+        return summary
+
+    @staticmethod
+    def _last_msg_as_summary(sender, recipient, summary_args) -> str:
+        """Get a chat summary from the last message of the recipient."""
+        summary = ""
+        try:
+            content = recipient.last_message(sender)["content"]
+            if isinstance(content, str):
+                summary = content.replace("TERMINATE", "")
+            elif isinstance(content, list):
+                # Remove the `TERMINATE` word in the content list.
+                summary = "\n".join(
+                    x["text"].replace("TERMINATE", "") for x in content if isinstance(x, dict) and "text" in x
+                )
+        except (IndexError, AttributeError) as e:
+            warnings.warn(f"Cannot extract summary using last_msg: {e}. Using an empty str as summary.", UserWarning)
+        return summary
+
+    @staticmethod
+    def _reflection_with_llm_as_summary(sender, recipient, summary_args):
+        prompt = summary_args.get("summary_prompt")
+        prompt = Neuron.DEFAULT_SUMMARY_PROMPT if prompt is None else prompt
+        if not isinstance(prompt, str):
+            raise ValueError("The summary_prompt must be a string.")
+        msg_list = recipient.chat_messages_for_summary(sender)
+        agent = sender if recipient is None else recipient
+        role = summary_args.get("summary_role", None)
+        if role and not isinstance(role, str):
+            raise ValueError("The summary_role in summary_arg must be a string.")
+        try:
+            summary = sender._reflection_with_llm(
+                prompt, msg_list, llm_agent=agent, cache=summary_args.get("cache"), role=role
+            )
+        except BadRequestError as e:
+            warnings.warn(
+                f"Cannot extract summary using reflection_with_llm: {e}. Using an empty str as summary.", UserWarning
+            )
+            summary = ""
+        return summary
+
+
+    def _reflection_with_llm(
+        self,
+        prompt,
+        messages,
+        llm_agent: Optional["Neuron"] = None,
+        cache: Optional[AbstractCache] = None,
+        role: Union[str, None] = None,
+    ) -> str:
+        """Get a chat summary using reflection with an llm client based on the conversation history.
+
+        Args:
+            prompt (str): The prompt (in this method it is used as system prompt) used to get the summary.
+            messages (list): The messages generated as part of a chat conversation.
+            llm_agent: the agent with an llm client.
+            cache (AbstractCache or None): the cache client to be used for this conversation.
+            role (str): the role of the message, usually "system" or "user". Default is "system".
+        """
+        if not role:
+            role = "system"
+
+        system_msg = [
+            {
+                "role": role,
+                "content": prompt,
+            }
+        ]
+
+        messages = messages + system_msg
+        if llm_agent and llm_agent.client is not None:
+            llm_client = llm_agent.client
+        elif self.client is not None:
+            llm_client = self.client
+        else:
+            raise ValueError("No OpenAIWrapper client is found.")
+        response = self._generate_oai_reply_from_client(llm_client=llm_client, messages=messages, cache=cache)
+        return response
+
+    def _raise_exception_on_async_reply_functions(self) -> None:
+        """Raise an exception if any async reply functions are registered.
+
+        Raises:
+            RuntimeError: if any async reply functions are registered.
+        """
+        reply_functions = {
+            f["reply_func"] for f in self._reply_func_list if not f.get("ignore_async_in_sync_chat", False)
+        }
+
+        async_reply_functions = [f for f in reply_functions if inspect.iscoroutinefunction(f)]
+        if async_reply_functions:
+            msg = (
+                "Async reply functions can only be used with ConversableAgent.a_initiate_chat(). The following async reply functions are found: "
+                + ", ".join([f.__name__ for f in async_reply_functions])
+            )
+
+            raise RuntimeError(msg)

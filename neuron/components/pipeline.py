@@ -4,8 +4,8 @@ from ..neurons import BaseNeuron, Neuron, RouterNeuron
 from ..neurons.helpers import get_next_component
 from .base_component import BaseComponent
 
-
 class Pipeline(Neuron):
+
     def __init__(self, **kwargs):
         """
         Initialize the Pipeline as a graph of components.
@@ -80,7 +80,6 @@ class Pipeline(Neuron):
         """
         if self._entry_point is None:
             raise RuntimeError("Entry point not set for the pipeline.")
-
         current_component = self._entry_point
         message = messages[-1]
         user = sender
@@ -115,8 +114,9 @@ class Pipeline(Neuron):
                 else:
                     raise ValueError("Invalid component type in the pipeline.")
 
-            # Send the message to the user at the end of the pipeline
+        # Send the message to the user at the end of the pipeline
         if reply_to_user:
-            neuron.send(message, user, request_reply=False, silent=False)
-
-        return True, None
+            print("acabou o pipeline")
+            output = neuron.send(message, user, request_reply=True, silent=False)
+        print("Pipeline output: ", output)
+        return True, output
