@@ -1,23 +1,13 @@
-import asyncio
-import datetime
 import logging
-import warnings
-from collections import defaultdict
 from dataclasses import dataclass
-from functools import partial
-from typing import Any, Dict, List, Set, Tuple
-
-from ..formatting_utils import colored
-from ..io.base import IOStream
-from .utils import consolidate_chat_info
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 Prerequisite = Tuple[int, int]
 
-
 @dataclass
 class ChatResult:
-    """(Experimental) The result of a chat. Almost certain to be changed."""
+    """The result of a chat."""
 
     chat_id: int = None
     """chat id"""

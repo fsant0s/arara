@@ -2,7 +2,7 @@ from typing import Callable, List, Optional, Union
 
 from neuron.neurons.base_neuron import BaseNeuron
 
-from ...exception_utils import SenderRequired
+from .exception_utils import SenderRequired
 
 
 def match_trigger(

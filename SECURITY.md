@@ -58,10 +58,10 @@ if not validate_file_path(user_provided_path, allowed_extensions=['.txt', '.csv'
 
 ## Exception Handling
 
-Use the security-specific exceptions provided in `neuron.exception_utils`:
+Use the security-specific exceptions provided in `neuron.neurons.helpers.exception_utils`:
 
 ```python
-from neuron.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
+from neuron.neurons.helpers.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
 
 try:
     # Your code here

@@ -17,6 +17,7 @@ from neuron.clients.cloud_based_client import CloudBasedClient
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost
 GROQ_PRICING_1K = {
+    "qwen-2.5-32b": (0.00059, 0.00079),
     "llama-3.3-70b-versatile": (0.00059, 0.00079),
     "llama3-70b-8192": (0.00059, 0.00079),
     "mixtral-8x7b-32768": (0.00024, 0.00024),
@@ -24,7 +25,6 @@ GROQ_PRICING_1K = {
     "gemma-7b-it": (0.00007, 0.00007),
     "llama3-groq-70b-8192-tool-use-preview": (0.00089, 0.00089),
 }
-
 
 class GroqClient(CloudBasedClient):
     """Client for Groq's API."""

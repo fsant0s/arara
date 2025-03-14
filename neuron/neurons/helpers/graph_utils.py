@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 
-from neuron.neurons import Neuron
+from neuron.neurons import BaseNeuron
 
 
 def has_self_loops(allowed_speaker_transitions: Dict) -> bool:
@@ -13,17 +13,17 @@ def has_self_loops(allowed_speaker_transitions: Dict) -> bool:
 
 def check_graph_validity(
     allowed_speaker_transitions_dict: Dict,
-    agents: List[Neuron],
+    agents: List[BaseNeuron],
 ):
     """
     allowed_speaker_transitions_dict: A dictionary of keys and list as values. The keys are the names of the agents, and the values are the names of the agents that the key agent can transition to.
-    agents: A list of Neurons
+    agents: A list of BaseNeurons
 
     Checks for the following:
         Errors
         1. The dictionary must have a structure of keys and list as values
         2. Every key exists in agents.
-        3. Every value is a list of Neurons (not string).
+        3. Every value is a list of BaseNeurons (not string).
 
         Warnings
         1. Warning if there are isolated agent nodes
@@ -37,7 +37,7 @@ def check_graph_validity(
     if not isinstance(allowed_speaker_transitions_dict, dict):
         raise ValueError("allowed_speaker_transitions_dict must be a dictionary.")
 
-    # All values must be lists of Neuron or empty
+    # All values must be lists of BaseNeuron or empty
     if not all([isinstance(value, list) for value in allowed_speaker_transitions_dict.values()]):
         raise ValueError("allowed_speaker_transitions_dict must be a dictionary with lists as values.")
 
@@ -45,11 +45,11 @@ def check_graph_validity(
     if not all([key in agents for key in allowed_speaker_transitions_dict.keys()]):
         raise ValueError("allowed_speaker_transitions_dict has keys not in agents.")
 
-    # Check 3. Every value is a list of Neurons or empty list (not string).
+    # Check 3. Every value is a list of BaseNeurons or empty list (not string).
     if not all(
-        [all([isinstance(agent, Neuron) for agent in value]) for value in allowed_speaker_transitions_dict.values()]
+        [all([isinstance(agent, BaseNeuron) for agent in value]) for value in allowed_speaker_transitions_dict.values()]
     ):
-        raise ValueError("allowed_speaker_transitions_dict has values that are not lists of Neurons.")
+        raise ValueError("allowed_speaker_transitions_dict has values that are not lists of BaseNeurons.")
 
     # Warnings
     # Warning 1. Warning if there are isolated agent nodes, there are not incoming nor outgoing edges
@@ -60,7 +60,7 @@ def check_graph_validity(
             has_outgoing_edge.append(key)
     no_outgoing_edges = [agent for agent in agents if agent not in has_outgoing_edge]
 
-    # allowed_speaker_transitions_dict.values() is a list of list of Neurons
+    # allowed_speaker_transitions_dict.values() is a list of list of BaseNeurons
     # values_all_agents is a list of all agents in allowed_speaker_transitions_dict.values()
     has_incoming_edge = []
     for agent_list in allowed_speaker_transitions_dict.values():
@@ -90,11 +90,11 @@ def check_graph_validity(
         unique_duplicates = list(set(duplicates))
         if unique_duplicates:
             logging.warning(
-                f"Neuron '{key.name}' has duplicate elements: {[agent.name for agent in unique_duplicates]}. Please remove duplicates manually."
+                f"BaseNeuron '{key.name}' has duplicate elements: {[agent.name for agent in unique_duplicates]}. Please remove duplicates manually."
             )
 
 
-def invert_disallowed_to_allowed(disallowed_speaker_transitions_dict: dict, agents: List[Neuron]) -> dict:
+def invert_disallowed_to_allowed(disallowed_speaker_transitions_dict: dict, agents: List[BaseNeuron]) -> dict:
     """
     Start with a fully connected allowed_speaker_transitions_dict of all agents. Remove edges from the fully connected allowed_speaker_transitions_dict according to the disallowed_speaker_transitions_dict to form the allowed_speaker_transitions_dict.
     """
@@ -111,7 +111,7 @@ def invert_disallowed_to_allowed(disallowed_speaker_transitions_dict: dict, agen
 
 
 def visualize_speaker_transitions_dict(
-    speaker_transitions_dict: dict, agents: List[Neuron], export_path: Optional[str] = None
+    speaker_transitions_dict: dict, agents: List[BaseNeuron], export_path: Optional[str] = None
 ):
     """
     Visualize the speaker_transitions_dict using networkx.

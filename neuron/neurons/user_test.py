@@ -1,21 +1,21 @@
 from typing import Optional, Literal
 
 from ..runtime_logging import log_new_neuron, logging_enabled
-from . import Neuron
+from . import User
 
-class User(Neuron):
+class UserTest(User):
     """
     Represents a user interacting with the system, providing detailed descriptions
     of items of interest, including brand, category, price, and specific preferences.
     """
 
     DEFAULT_USER_DESCRIPTIONS = """
-    A user who provides detailed descriptions of the items they like, including features such as brand, category, price, intended use, and other specific preferences.
+    A user test who provides detailed descriptions of the items they like, including features such as brand, category, price, intended use, and other specific preferences.
     """
 
     def __init__(
         self,
-        name: str = "user",
+        name: str = "user_test",
         description: Optional[str] = None,
         human_input_mode: Literal["ALWAYS", "NEVER"] = "ALWAYS",
         **kwargs,
@@ -39,3 +39,24 @@ class User(Neuron):
         if logging_enabled():
             log_new_neuron(self, locals())
 
+        self._counter = 0
+        self._dialog = [
+            "Gostaria de saber mais sobre os produtos disponiveis.",
+            "Gostaria de comprar um sapato.",
+            "Desculpa, gostaria de comprar uma camisa.",
+            "exit"
+        ]
+
+    def get_human_input(self, prompt):
+        """Custmized function to get human input.
+
+        Args:
+            prompt (str): prompt for the human input.
+
+        Returns:
+            str: human input.
+        """
+        reply = self._dialog[self._counter]
+        self._counter += 1
+        self._human_input.append(reply)
+        return reply

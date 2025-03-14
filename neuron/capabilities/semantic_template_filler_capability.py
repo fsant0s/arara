@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 
 from neuron.clients import ClientWrapper
-from neuron.code_utils import content_str
+from neuron.neurons.helpers import content_str
 
 from ..neurons.base_neuron import BaseNeuron
 from .neuron_capability import NeuronCapability

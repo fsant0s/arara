@@ -1,7 +1,6 @@
 import copy
 import logging
 import warnings
-import inspect
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
@@ -19,13 +18,17 @@ from .helpers import (
     validate_llm_config,
     content_str,
     prepare_chat,
+    reflection_with_llm,
+    gather_usage_summary,
+    consolidate_chat_info,
 )
 
-from .chat import ChatResult
-from .utils import gather_usage_summary, consolidate_chat_info
-from ..cache.cache import AbstractCache
-
 from openai import BadRequestError
+
+from .chat import ChatResult
+from ..cache.cache import AbstractCache
+from ..io import IOStream
+from termcolor import colored
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +48,7 @@ class Neuron(BaseNeuron):
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
     DEFAULT_SUMMARY_METHOD = "last_msg"
-    DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation. Do not add any introductory phrases."
+    DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
 
     @property
     def name(self) -> str:
@@ -131,6 +134,10 @@ class Neuron(BaseNeuron):
         else:
             self._max_consecutive_auto_reply_dict[sender] = value
 
+    def chat_messages_for_summary(self, agent: "Neuron") -> List[Dict]:
+        """A list of messages as a conversation to summarize."""
+        return self._oai_messages[agent]
+
     def __init__(
         self,
         name: str,
@@ -145,7 +152,7 @@ class Neuron(BaseNeuron):
         enable_reflection: bool = False,
         system_message: str = "",
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
-        human_input_mode: Literal["ALWAYS", "NEVER"] = "ALWAYS",
+        human_input_mode: Literal["ALWAYS", "NEVER"] = "NEVER",
         max_consecutive_auto_reply: int = 0,
     ):
         """
@@ -177,7 +184,7 @@ class Neuron(BaseNeuron):
                 NEVER: Human intervention is never requested.
                 ALWAYS: Human input is always requested. The human can skip to an automatic response, provide feedback, or end the conversation. max_consecutive_auto_reply is ignored in this mode.
             max_consecutive_auto_reply (int):
-                the maximum number of consecutive auto replies.
+                The maximum number of consecutive auto replies.
             is_termination_msg (function): a function that takes a message in the form of a dictionary
                 and returns a boolean value indicating if this received message is a termination message.
                 The dict can contain the following keys: "content", "role", "name", "function_call".
@@ -207,6 +214,7 @@ class Neuron(BaseNeuron):
         self._max_consecutive_auto_reply_dict = defaultdict(self.max_consecutive_auto_reply)
         self.human_input_mode = human_input_mode
         self._human_input = []
+
         self._is_termination_msg = (
             is_termination_msg
             if is_termination_msg is not None
@@ -231,6 +239,7 @@ class Neuron(BaseNeuron):
         }
         self.client = validate_llm_config(self.llm_config, llm_config, self.DEFAULT_CONFIG)
         self.register_reply([BaseNeuron, None], Neuron._generate_oai_reply)
+        self.register_reply([BaseNeuron, None], Neuron.check_termination_and_human_reply)
 
         # Register capabilities
         if enable_reflection:
@@ -274,7 +283,6 @@ class Neuron(BaseNeuron):
         _chat_info["sender"] = self
         consolidate_chat_info(_chat_info, uniform_sender=self)
         for agent in [self, recipient]:
-            agent._raise_exception_on_async_reply_functions()
             agent.previous_cache = agent.client_cache
             agent.client_cache = cache
 
@@ -289,6 +297,7 @@ class Neuron(BaseNeuron):
             recipient,
             cache=cache,
         )
+
         for agent in [self, recipient]:
             agent.client_cache = agent.previous_cache
             agent.previous_cache = None
@@ -299,8 +308,6 @@ class Neuron(BaseNeuron):
             human_input=self._human_input,
         )
         return chat_result
-
-
 
     def send(
         self,
@@ -360,7 +367,6 @@ class Neuron(BaseNeuron):
             and self.reply_at_receive[sender] is False
         ):
             return
-
         reply = self.generate_reply(messages=chat_messages(self, sender), sender=sender)
         if reply is not None:
             self.send(reply, sender, silent=silent)
@@ -613,8 +619,8 @@ class Neuron(BaseNeuron):
         if role and not isinstance(role, str):
             raise ValueError("The summary_role in summary_arg must be a string.")
         try:
-            summary = sender._reflection_with_llm(
-                prompt, msg_list, llm_agent=agent, cache=summary_args.get("cache"), role=role
+            summary = reflection_with_llm(
+                sender, prompt, msg_list, llm_agent=agent, cache=summary_args.get("cache"), role=role
             )
         except BadRequestError as e:
             warnings.warn(
@@ -623,59 +629,88 @@ class Neuron(BaseNeuron):
             summary = ""
         return summary
 
-
-    def _reflection_with_llm(
+    def check_termination_and_human_reply(
         self,
-        prompt,
-        messages,
-        llm_agent: Optional["Neuron"] = None,
-        cache: Optional[AbstractCache] = None,
-        role: Union[str, None] = None,
-    ) -> str:
-        """Get a chat summary using reflection with an llm client based on the conversation history.
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[BaseNeuron] = None,
+        config: Optional[Any] = None,
+    ) -> Tuple[bool, Union[str, None]]:
+        """Check if the conversation should be terminated, and if human reply is provided.
+
+        This method checks for conditions that require the conversation to be terminated, such as reaching a maximum number of consecutive auto-replies or encountering a termination message. Additionally, it prompts for and processes human input based on the configured human input mode, which can be 'ALWAYS' or 'NEVER'. The method also manages the consecutive auto-reply counter for the conversation and prints relevant messages based on the human input received.
 
         Args:
-            prompt (str): The prompt (in this method it is used as system prompt) used to get the summary.
-            messages (list): The messages generated as part of a chat conversation.
-            llm_agent: the agent with an llm client.
-            cache (AbstractCache or None): the cache client to be used for this conversation.
-            role (str): the role of the message, usually "system" or "user". Default is "system".
+            - messages (Optional[List[Dict]]): A list of message dictionaries, representing the conversation history.
+            - sender (Optional[BaseNeuron]): The agent object representing the sender of the message.
+            - config (Optional[Any]): Configuration object, defaults to the current instance if not provided.
+
+        Returns:
+            - Tuple[bool, Union[str, Dict, None]]: A tuple containing a boolean indicating if the conversation should be terminated, and a human reply which can be a string, a dictionary, or None.
         """
-        if not role:
-            role = "system"
 
-        system_msg = [
-            {
-                "role": role,
-                "content": prompt,
-            }
-        ]
+        iostream = IOStream.get_default()
+        if config is None:
+            config = self
+        if messages is None:
+            messages = self._oai_messages[sender] if sender else []
+        message = messages[-1]
+        reply = ""
+        no_human_input_msg = ""
+        sender_name = "the sender" if sender is None else sender.name
 
-        messages = messages + system_msg
-        if llm_agent and llm_agent.client is not None:
-            llm_client = llm_agent.client
-        elif self.client is not None:
-            llm_client = self.client
-        else:
-            raise ValueError("No OpenAIWrapper client is found.")
-        response = self._generate_oai_reply_from_client(llm_client=llm_client, messages=messages, cache=cache)
-        return response
-
-    def _raise_exception_on_async_reply_functions(self) -> None:
-        """Raise an exception if any async reply functions are registered.
-
-        Raises:
-            RuntimeError: if any async reply functions are registered.
-        """
-        reply_functions = {
-            f["reply_func"] for f in self._reply_func_list if not f.get("ignore_async_in_sync_chat", False)
-        }
-
-        async_reply_functions = [f for f in reply_functions if inspect.iscoroutinefunction(f)]
-        if async_reply_functions:
-            msg = (
-                "Async reply functions can only be used with ConversableAgent.a_initiate_chat(). The following async reply functions are found: "
-                + ", ".join([f.__name__ for f in async_reply_functions])
+        if self.human_input_mode == "ALWAYS":
+            reply = self.get_human_input(
+                f"Replying as {self.name}. Provide feedback to {sender_name}. Press enter to skip and use auto-reply, or type 'exit' to end the conversation: "
             )
+            no_human_input_msg = "NO HUMAN INPUT RECEIVED." if not reply else ""
+            # if the human input is empty, and the message is a termination message, then we will terminate the conversation
+            reply = reply if reply or not self._is_termination_msg(message) else "exit"
+        else:
+            # self._max_consecutive_auto_reply sets the maximum allowed consecutive interactions between any two agents.
+            # A value of 0 means no limit.
+            if self._max_consecutive_auto_reply == 0 and self.human_input_mode == "NEVER":
+                return False, None
+            elif self._consecutive_auto_reply_counter[sender] >= self._max_consecutive_auto_reply_dict[sender] or self._is_termination_msg(message):
+                reply = "exit"
 
-            raise RuntimeError(msg)
+        # print the no_human_input_msg
+        if no_human_input_msg:
+            iostream.print(colored(f"\n>>>>>>>> {no_human_input_msg}", "red"), flush=True)
+
+        # stop the conversation
+        if reply == "exit":
+            # reset the consecutive_auto_reply_counter
+            self._consecutive_auto_reply_counter[sender] = 0
+            return True, None
+
+        # send the human reply
+        if reply or self._max_consecutive_auto_reply_dict[sender] == 0:
+            # reset the consecutive_auto_reply_counter
+            self._consecutive_auto_reply_counter[sender] = 0
+            response = {"role": "user", "content": reply}
+            return True, response
+
+        self._consecutive_auto_reply_counter[sender] += 1
+        # increment the consecutive_auto_reply_counter
+        if self.human_input_mode != "NEVER":
+            iostream.print(colored("\n>>>>>>>> USING AUTO REPLY...", "red"), flush=True)
+
+        return False, None
+
+
+    def get_human_input(self, prompt: str) -> str:
+        """Get human input.
+
+        Override this method to customize the way to get human input.
+
+        Args:
+            prompt (str): prompt for the human input.
+
+        Returns:
+            str: human input.
+        """
+        iostream = IOStream.get_default()
+
+        reply = iostream.input(prompt)
+        self._human_input.append(reply)
+        return reply

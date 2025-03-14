@@ -4,3 +4,4 @@ from .router_neuron import RouterNeuron
 from .user import User
 from .chitchat import ChitChat
 from .chitchat import ChitChatManager
+from .user_test import UserTest

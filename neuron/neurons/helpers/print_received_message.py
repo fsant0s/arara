@@ -3,7 +3,7 @@ from typing import Dict, Literal, Union
 from neuron.clients import ClientWrapper
 from neuron.neurons.base_neuron import BaseNeuron
 
-from ...code_utils import content_str
+from .content_str import content_str
 from ...formatting_utils import colored
 from ...io import IOStream
 from .message_to_dict import message_to_dict

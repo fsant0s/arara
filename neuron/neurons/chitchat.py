@@ -1,20 +1,22 @@
-import copy
-import json
 import logging
 import random
 import re
-import sys
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
-from ..code_utils import content_str
-from ..exception_utils import NeuronNameConflict, NoEligibleSpeaker, UndefinedNextNeuron
+from .helpers import (
+    content_str,
+    NeuronNameConflict,
+    NoEligibleSpeaker,
+    UndefinedNextNeuron,
+    check_graph_validity,
+    invert_disallowed_to_allowed
+)
+
 from ..formatting_utils import colored
-from ..graph_utils import check_graph_validity, invert_disallowed_to_allowed
+
 from ..io.base import IOStream
 from ..runtime_logging import log_new_neuron, logging_enabled
-from .neuron import Neuron
-from .chat import ChatResult
 from .neuron import Neuron
 
 logger = logging.getLogger(__name__)
