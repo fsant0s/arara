@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from .message_to_dict import message_to_dict
 

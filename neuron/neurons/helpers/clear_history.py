@@ -1,6 +1,6 @@
 from typing import Optional
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from ...formatting_utils import colored
 from ...io.base import IOStream

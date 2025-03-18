@@ -3,7 +3,7 @@ from typing import Any, List
 from ..formatting_utils import colored
 from ..io.base import IOStream
 from ..neurons import Neuron
-from .base_component import BaseComponent
+from .base import BaseComponent
 
 
 class SequentialComponent(BaseComponent):

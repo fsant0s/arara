@@ -10,7 +10,7 @@ from unittest import mock
 
 from neuron.capabilities import EpisodicMemoryCapability
 from neuron.cognitions import EpisodicMemory
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 from neuron.neurons.neuron import Neuron
 from tests.unit.mock_neuron import MockNeuron
 

@@ -1,5 +1,5 @@
 from ..capabilities.neuron_capability import NeuronCapability
-from ..neurons.base_neuron import BaseNeuron
+from ..neurons.base import BaseNeuron
 
 
 class ReflectionCapability(NeuronCapability):

@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Un
 
 from ..capabilities import EpisodicMemoryCapability, ReflectionCapability, SharedMemoryIOCapability
 from ..runtime_logging import log_event, logging_enabled
-from .base_neuron import BaseNeuron
+from .base import BaseNeuron
 from .helpers import (
     append_oai_message,
     chat_messages,

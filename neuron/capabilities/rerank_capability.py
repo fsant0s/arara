@@ -4,7 +4,7 @@ import cohere
 
 from ..capabilities.neuron_capability import NeuronCapability
 from ..cognitions import SharedMemory
-from ..neurons.base_neuron import BaseNeuron
+from ..neurons.base import BaseNeuron
 
 
 class RerankCapability(NeuronCapability):

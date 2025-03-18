@@ -1,4 +1,4 @@
-from .base_client import BaseClient
+from .base import BaseClient
 
 
 class CustomClient(BaseClient):

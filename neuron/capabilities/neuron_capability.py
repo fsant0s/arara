@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..neurons.base_neuron import BaseNeuron
+from ..neurons.base import BaseNeuron
 
 
 class NeuronCapability(ABC):

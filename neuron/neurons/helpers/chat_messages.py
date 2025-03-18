@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 
 def chat_messages(recipent, sender) -> Dict[BaseNeuron, List[Dict]]:

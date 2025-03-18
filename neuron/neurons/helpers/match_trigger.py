@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional, Union
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from .exception_utils import SenderRequired
 

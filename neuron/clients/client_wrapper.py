@@ -15,7 +15,7 @@ from neuron.runtime_logging import (
     logging_enabled,
 )
 
-from .base_client import BaseClient
+from .base import BaseClient
 from .helpers import PlaceHolderClient, get_client_by_type_name
 
 logger = logging.getLogger(__name__)

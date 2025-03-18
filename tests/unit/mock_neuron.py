@@ -4,7 +4,7 @@ Mock implementation of a neuron for testing purposes.
 
 from typing import Any, Callable, Dict, List, Optional
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 
 class MockNeuron(BaseNeuron):

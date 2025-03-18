@@ -1,4 +1,4 @@
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from ..cognitions import EpisodicMemory
 from .neuron_capability import NeuronCapability

@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..neurons import BaseNeuron, Neuron, RouterNeuron
 from ..neurons.helpers import get_next_component
-from .base_component import BaseComponent
+from .base import BaseComponent
 
 class Pipeline(Neuron):
 

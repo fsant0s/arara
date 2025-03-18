@@ -1,7 +1,7 @@
 from typing import Dict, Literal, Union
 
 from neuron.clients import ClientWrapper
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from .content_str import content_str
 from ...formatting_utils import colored

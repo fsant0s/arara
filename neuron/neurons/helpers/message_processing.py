@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from neuron.neurons.base_neuron import BaseNeuron
+from neuron.neurons.base import BaseNeuron
 
 from ...runtime_logging import log_event, logging_enabled
 from .append_oai_message import append_oai_message
