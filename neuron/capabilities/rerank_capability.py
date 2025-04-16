@@ -2,12 +2,11 @@ from typing import List
 
 import cohere
 
-from ..capabilities.neuron_capability import NeuronCapability
-from ..cognitions import SharedMemory
+from .capability import Capability
 from ..neurons.base import BaseNeuron
 
 
-class RerankCapability(NeuronCapability):
+class RerankCapability(Capability):
 
     def __init__(
         self,

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from ..neurons.base import BaseNeuron
 
 
-class NeuronCapability(ABC):
+class Capability(ABC):
     """Base class for composable capabilities that can be added to a neuron."""
 
     def __init__(self) -> None:

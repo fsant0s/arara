@@ -1,7 +1,7 @@
 from ...clients import ClientWrapper
+from typing import Union
 
-
-def validate_llm_config(self_llm_config, llm_config, default_config):
+def validate_llm_config(self_llm_config, llm_config, default_config) -> Union[None, ClientWrapper]:
 
     assert llm_config in (None, False) or isinstance(
         llm_config, dict

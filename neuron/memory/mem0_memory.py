@@ -1,7 +1,7 @@
 import os
 from typing import Any, List, Optional, Dict
 from mem0 import MemoryClient
-from memory_protocol import MemoryProtocol  # Assuming MemoryProtocol is defined elsewhere
+from .memory_protocol import MemoryProtocol  # Assuming MemoryProtocol is defined elsewhere
 
 # Ensure MEM0 API Key is set
 os.environ["MEM0_API_KEY"] = os.getenv("MEM0_API_KEY")

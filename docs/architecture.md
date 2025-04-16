@@ -81,9 +81,7 @@ Each capability follows a consistent interface, making it easy to extend the fra
 
 Clients provide the interface to LLM providers:
 
-- **BaseClient**: Abstract base class for all clients
 - **ClientWrapper**: Main interface for interacting with LLMs
-- **CloudBasedClient**: Base class for cloud API-based LLMs
   - **GroqClient**: Integration with Groq's API
 
 The client system is designed to be extensible, allowing easy integration of new LLM providers.

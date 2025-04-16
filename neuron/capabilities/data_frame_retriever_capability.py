@@ -9,10 +9,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from neuron.neurons.base import BaseNeuron
 
-from .neuron_capability import NeuronCapability
+from .capability import Capability
 
 
-class DataFrameRetrieverCapability(NeuronCapability):
+class DataFrameRetrieverCapability(Capability):
 
     DEFAULT_DESCRIPTION_PROMPT = (
         "A capability that retrieves and filters data from a pandas DataFrame."

@@ -55,7 +55,6 @@ def validate_parameter(
 
     param_value = params.get(param_name, default_value)
     warning = ""
-
     if param_value is None and allow_None:
         pass
     elif param_value is None:

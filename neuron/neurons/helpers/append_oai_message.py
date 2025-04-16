@@ -12,13 +12,11 @@ def append_oai_message(
     conversation_id: BaseNeuron,
     is_sending: bool,
 ) -> bool:
-
     message = message_to_dict(message)
-
     # create oai message to be appended to the oai conversation that can be passed to oai directly.
     oai_message = {
         k: message[k]
-        for k in ("content", "name", "context")
+        for k in ("content", "function_call", "tool_calls", "tool_responses", "tool_call_id", "name", "context")
         if k in message and message[k] is not None
     }
 

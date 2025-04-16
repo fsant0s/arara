@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Protocol, Union
-
+from typing import Any, Dict, List, Optional, Protocol, Union, Sequence
+from ..tools import Tool, ToolSchema
 
 class BaseClient(Protocol):
     """
-    A client (custom and cloud-based) class must implement the following methods:
+    A client class must implement the following methods:
     - create must return a response object that implements the BaseClientResponseProtocol
     - cost must return the cost of the response
     - get_usage must return a dict with the following keys:
@@ -49,7 +49,7 @@ class BaseClient(Protocol):
         NOTE: if a list of Choice.Message is returned, it currently needs to contain the fields of OpenAI's ChatCompletion Message object,
         since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom neuron is being used.
         """
-        return [choice.message for choice in response.choices]
+        return response.content
 
     def cost(self, response: BaseClientResponseProtocol) -> float:
         return response.cost
@@ -62,5 +62,7 @@ class BaseClient(Protocol):
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens,
             "cost": response.cost,
-            "model": response.model,
+            "model": response.model_name,
         }
+
+    def convert_tools(tools: Sequence[Tool | ToolSchema],) -> List[Dict[str, Union[str, Dict]]]: ...

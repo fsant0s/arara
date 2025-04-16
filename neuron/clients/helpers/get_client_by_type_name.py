@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 # Importações específicas em vez de importação em massa
 # para evitar o ciclo de importação
-from neuron.clients.cloud_based.groq import GroqClient
+from neuron.clients.models.groq import GroqClient
 
 # Importação condicional dos clientes personalizados
 try:

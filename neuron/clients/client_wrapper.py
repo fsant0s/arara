@@ -247,7 +247,6 @@ class ClientWrapper:
         Besides the kwargs allowed in openai's [or other] client, we allow the following additional kwargs.
         The config in each client will be overridden by the config.
         """
-
         invocation_id = str(uuid.uuid4())
         last = len(self._clients) - 1
         # Check if all configs in config list are activated
@@ -273,6 +272,7 @@ class ClientWrapper:
             context = extra_kwargs.get("context")
             neuron = extra_kwargs.get("neuron")
             price = extra_kwargs.get("price", None)
+
             if isinstance(price, list):
                 price = tuple(price)
             elif isinstance(price, float) or isinstance(price, int):
@@ -333,12 +333,12 @@ class ClientWrapper:
                         wrapper_id=id(self),
                         neuron=neuron,
                         request=params,
-                        response=response,
+                        responsef=response,
                         is_cached=0,
                         cost=response.cost,
                         start_time=request_ts,
                     )
-                response.message_retrieval_function = client.message_retrieval
+                response.message_retrieval_function = client.message_retrieval #TODO: check if this is necessary
                 # check the filter
                 pass_filter = filter_func is None or filter_func(context=context, response=response)
                 if pass_filter or i == last:
@@ -346,6 +346,7 @@ class ClientWrapper:
                     response.config_id = i
                     response.pass_filter = pass_filter
                     return response
+
                 continue  # filter is not passed; try the next config
         raise RuntimeError("Should not reach here.")
 

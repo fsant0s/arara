@@ -1,10 +1,8 @@
 from neuron.neurons.base import BaseNeuron
+from .capability import Capability
+from ..memory import MemoryProtocol, Mem0Memory
 
-from ..cognitions import EpisodicMemory
-from .neuron_capability import NeuronCapability
-
-
-class EpisodicMemoryCapability(NeuronCapability):
+class MemoryCapability(Capability):
     """
     Provides a neuron with the ability to store and retrieve episodic memories.
     Episodic memory allows the neuron to maintain context based on past interactions.
@@ -15,6 +13,7 @@ class EpisodicMemoryCapability(NeuronCapability):
     def __init__(
         self,
         neuron: BaseNeuron,
+        memory: MemoryProtocol = Mem0Memory,
         memory_intro: str = DEFAULT_MEMORY_INTRO,
     ) -> None:
         """
@@ -26,7 +25,7 @@ class EpisodicMemoryCapability(NeuronCapability):
             memory_intro (str): The introduction to display when retrieving memories.
         """
         super().__init__()
-        self._episodic_memory = EpisodicMemory()  # Initializes a new episodic memory instance.
+        self._memory = memory
         self._memory_intro = memory_intro  # Sets the introduction for retrieved memories.
         self.add_to_neuron(neuron)  # Attaches this capability to the specified neuron.
 
@@ -41,9 +40,6 @@ class EpisodicMemoryCapability(NeuronCapability):
         neuron.register_hook(
             hookable_method="process_message_before_send", hook=self._store
         )  # Hook to store messages.
-        neuron.register_hook(
-            hookable_method="process_last_received_message", hook=self._retrieve_all
-        )  # Hook to retrieve memory.
 
     def _store(self, sender: BaseNeuron, message: str, recipient: BaseNeuron, silent: bool):
         """
@@ -58,27 +54,5 @@ class EpisodicMemoryCapability(NeuronCapability):
         Returns:
             str: The original message, passed through unchanged.
         """
-        self._episodic_memory._store(message)  # Adds the message to episodic memory.
-        return message
-
-    def _retrieve_all(self, message: str):
-        """
-        Retrieves the most recent memory from episodic memory.
-
-        Args:
-            message (str): The current message context to process.
-
-        Returns:
-            str: The original message, allowing the neuron to act with additional context if needed.
-        """
-        retrieved_episodes = (
-            self._episodic_memory._retrieve_all()
-        )  # Retrieves all memories from episodic memory.
-        if not len(retrieved_episodes):
-            return message
-
-        retrieved_episodes = "\n".join(
-            f"{i + 1}. {item['content']}" for i, item in enumerate(retrieved_episodes)
-        )
-        message += "\n\n" + self._memory_intro + "\n\n" + retrieved_episodes
+        self._memory.add(message, user_id = sender.name)
         return message

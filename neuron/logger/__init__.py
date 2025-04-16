@@ -6,7 +6,7 @@ including file-based logging, database logging, and enhanced contextual logging.
 """
 
 from .base_logger import BaseLogger
-from .enhanced_logger import ContextualLogger, configure_all_loggers, get_logger, log_operation
+from .enhanced_logger import ContextualLogger, configure_all_loggers, get_logger, log_operation, ToolCallEvent
 from .file_logger import FileLogger
 from .logger_factory import LoggerFactory
 

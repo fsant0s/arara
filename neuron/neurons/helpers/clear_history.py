@@ -18,10 +18,8 @@ def clear_history(
         nr_messages_to_preserve: the number of newest messages to preserve in the chat history.
     """
     # TODO: Implement this logic.
-    from ...cognitions import SharedMemory
     from ...components import BaseComponent, CycleComponent, Pipeline
 
-    SharedMemory.get_instance().clear_memory()
     if isinstance(self, Pipeline):
         for component in self._nodes:
             if isinstance(component, BaseComponent):

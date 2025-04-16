@@ -1,8 +1,8 @@
-from ..capabilities.neuron_capability import NeuronCapability
+from .capability import Capability
 from ..neurons.base import BaseNeuron
 
 
-class ReflectionCapability(NeuronCapability):
+class ReflectionCapability(Capability):
 
     DEFAULT_SYSTEM_MESSAGE = "Reflect on the initial response, identify improvements for accuracy, clarity, and completeness, and refine it accordingly."
 

@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Generator
 
 from neuron.neurons.base import BaseNeuron
 
@@ -7,10 +7,19 @@ from .append_oai_message import append_oai_message
 from .print_received_message import print_received_message
 
 
+from ...messages import (
+    TextMessage,
+    ToolCallRequestEvent
+)
+
+from ...base import Response
+
 def process_message_before_send(
-    self: BaseNeuron, message: Union[Dict, str], recipient: BaseNeuron, silent: bool
+    self: BaseNeuron, message: Response | TextMessage, recipient: BaseNeuron, silent: bool
 ) -> Union[Dict, str]:
     """Process the message before sending it to the recipient."""
+    #print("message", message)
+    message = message.to_text() if message is not None and isinstance(message, TextMessage) or isinstance(message, ToolCallRequestEvent) else message.chat_message.content
     hook_list = self.hook_lists["process_message_before_send"]
     for hook in hook_list:
         message = hook(sender=self, message=message, recipient=recipient, silent=silent)

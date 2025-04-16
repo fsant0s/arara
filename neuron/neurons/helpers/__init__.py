@@ -34,3 +34,4 @@ from .graph_utils import (
     invert_disallowed_to_allowed,
     visualize_speaker_transitions_dict
 )
+from .normalize_name import normalize_name
