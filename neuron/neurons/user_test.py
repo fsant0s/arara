@@ -41,10 +41,11 @@ class UserTest(User):
 
         self._counter = 0
         self._dialog = [
-            "Gostaria de saber mais sobre os produtos disponiveis.",
-            "Gostaria de comprar um sapato.",
-            "Desculpa, gostaria de comprar uma camisa.",
-            "exit"
+            "Como vc ta?",
+            "Que legal, obrigado por perguntar!",
+            "Gostaria de saber quanto é 100 euros em usd",
+            "How much is 123.45 USD in EUR??",
+            "exit",
         ]
 
     def get_human_input(self, prompt):

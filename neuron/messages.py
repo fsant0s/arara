@@ -106,8 +106,6 @@ class ChatMessage(BaseMessage, ABC):
         """Convert the message content to a :class:`~autogen_core.models.UserMessage`
         for use with model client, e.g., :class:`~autogen_core.models.ChatCompletionClient`."""
         ...
-
-
 class TextChatMessage(ChatMessage, ABC):
     """Base class for all text-only :class:`ChatMessage` types.
     It has implementations for :meth:`to_text`, :meth:`to_model_text`,
@@ -211,7 +209,6 @@ class StructuredMessage(ChatMessage, Generic[StructuredContentType]):
             content=self.content.model_dump_json(),
             source=self.source,
         )
-
 
 class TextMessage(TextChatMessage):
     """A text message with string-only content."""
@@ -368,6 +365,7 @@ class MessageFactory:
         self._message_types[UserInputRequestedEvent.__name__] = UserInputRequestedEvent
         self._message_types[ModelClientStreamingChunkEvent.__name__] = ModelClientStreamingChunkEvent
         self._message_types[ThoughtEvent.__name__] = ThoughtEvent
+        self._message_types
 
     def is_registered(self, message_type: type[AgentEvent | ChatMessage]) -> bool:
         """Check if a message type is registered with the factory."""

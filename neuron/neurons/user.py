@@ -39,3 +39,4 @@ class User(Neuron):
         if logging_enabled():
             log_new_neuron(self, locals())
 
+

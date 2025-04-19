@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 import inspect
 from typing import Any, Dict, List, Tuple, Union
 
@@ -6,7 +6,7 @@ __all__ = ("get_current_ts", "to_dict")
 
 
 def get_current_ts() -> str:
-    return datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
 
 
 def to_dict(

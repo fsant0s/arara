@@ -12,7 +12,7 @@ from .task import TaskRunner
 
 @dataclass(kw_only=True)
 class Response:
-    """A response from calling :meth:`ChatAgent.on_messages`."""
+    """A response from calling .create()"""
 
     chat_message: ChatMessage
     """A chat message produced by the agent as the response."""

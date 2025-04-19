@@ -1,4 +1,4 @@
-from .data_frame_retriever_capability import DataFrameRetrieverCapability
+from .capability import Capability
 from .memory_capability import MemoryCapability
 from .reflection_capability import ReflectionCapability
-from .rerank_capability import RerankCapability
+from .text_extraction_capability import TextExtractionCapability

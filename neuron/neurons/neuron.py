@@ -4,9 +4,18 @@ import warnings
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator
 from openai import BadRequestError
+from itertools import chain
 
-from ..capabilities import MemoryCapability, ReflectionCapability
-from ..runtime_logging import log_event, logging_enabled
+from ..ui import Console
+
+
+
+from ..capabilities import (
+    Capability,
+    MemoryCapability,
+    ReflectionCapability,
+    TextExtractionCapability
+)
 from .base import BaseNeuron
 from .helpers import (
     append_oai_message,
@@ -24,6 +33,7 @@ from .helpers import (
     consolidate_chat_info
 )
 
+
 from ..clients import ClientWrapper
 
 from ..models import CreateResult
@@ -35,26 +45,20 @@ from ..model_context.chat_completion_context import ChatCompletionContext
 from ..messages import (
     AgentEvent,
     ChatMessage,
-    HandoffMessage,
-    MemoryQueryEvent,
     ModelClientStreamingChunkEvent,
     TextMessage,
     ThoughtEvent,
     ToolCallExecutionEvent,
     ToolCallRequestEvent,
-    ToolCallSummaryMessage,
+    ToolCallSummaryMessage
 )
 
 from ..base import Response
 
 from ..models import (
     AssistantMessage,
-    ChatCompletionClient,
     CreateResult,
     FunctionExecutionResult,
-    FunctionExecutionResultMessage,
-    LLMMessage,
-    ModelFamily,
     SystemMessage,
 )
 
@@ -83,7 +87,7 @@ class Neuron(BaseNeuron):
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
-    DEFAULT_SUMMARY_METHOD = "last_msg"
+    DEFAULT_SUMMARY_METHOD = "reflection_with_llm"
     DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
 
     @property
@@ -181,8 +185,7 @@ class Neuron(BaseNeuron):
         description: Optional[str] = None,
         chat_messages: Optional[Dict[BaseNeuron, List[Dict]]] = None,
         default_auto_reply: Union[str, Dict] = "",
-        memory: Optional[MemoryCapability] = None,
-        enable_reflection: bool = False,
+        reflection_on_: bool = False,
         system_message: str = "",
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         human_input_mode: Literal["ALWAYS", "NEVER"] = "NEVER",
@@ -190,6 +193,7 @@ class Neuron(BaseNeuron):
         tools: List[FunctionTool | Callable[..., Any] | Callable[..., Awaitable[Any]]] | None = None,
         tool_call_summary_format: str = "{result}",
         reflect_on_tool_use: bool = False,
+        capabilities: Optional[List[Capability]] = [],
     ):
         """
         Initialize a Neuron.
@@ -204,8 +208,6 @@ class Neuron(BaseNeuron):
                 Chat messages for the neuron. Defaults to None.
             default_auto_reply (Union[str, Dict], optional):
                 Default auto-reply message. Defaults to "".
-            memory_capability (Optional[MemoryCapability], optional):
-                Memory capability for neurons. Defaults to None.
             enable_reflection (bool, optional):
                 Whether to enable reflection capability. Defaults to False.
             system_message (str, optional):
@@ -224,6 +226,8 @@ class Neuron(BaseNeuron):
                 For example, `"{tool_name}: {result}"` will create a summary like `"tool_name: result"`
             reflect_on_tool_use (bool, optional):
                 If `True`, the agent will make another model inference using the tool call and result to generate a response. If `False`, the tool call result will be returned as the response. Defaults to `False`.
+            capabilities (Optional[List[Capability]], optional):
+                A list of capabilities to be added to the neuron. Defaults to None.
         """
         # a dictionary of conversations, default value is list
         if chat_messages is None:
@@ -241,6 +245,8 @@ class Neuron(BaseNeuron):
         self._oai_system_message = None
         self._tool_call_summary_format = tool_call_summary_format
         self._reflect_on_tool_use = reflect_on_tool_use
+        self._capabilities = capabilities
+        self._conversation_terminated = defaultdict(bool)
 
         if system_message:
             self._oai_system_message = [{"content": system_message, "role": "system"}]
@@ -274,17 +280,10 @@ class Neuron(BaseNeuron):
             "process_message_before_send": [],
             "process_all_messages_before_reply": [],
         }
+
         self.client = validate_llm_config(self.llm_config, llm_config, self.DEFAULT_CONFIG)
         self.register_reply([BaseNeuron, None], Neuron._generate_oai_reply)
         self.register_reply([BaseNeuron, None], Neuron.check_termination_and_human_reply)
-
-        # TODO: Reflection cabapability
-        if enable_reflection:
-            self._reflection_capability = ReflectionCapability(self)
-
-        if memory is not None:
-            self._memory = memory
-            MemoryCapability(memory)
 
         # Tools initialization
         self._tools: List[FunctionTool] = []
@@ -301,6 +300,19 @@ class Neuron(BaseNeuron):
         tool_names = [tool.name for tool in self._tools]
         if len(tool_names) != len(set(tool_names)):
             raise ValueError(f"Tool names must be unique: {tool_names}")
+
+        self._add_capabilities()
+
+    def _add_capabilities(self):
+        # Improve this implementation in a future version
+        TextExtractionCapability(self)
+
+        for capability in self._capabilities:
+            if isinstance(capability, Capability):
+                capability.add_to_neuron(self)
+            else:
+                raise TypeError(f"Unsupported capability type: {type(capability)}")
+        pass
 
     def initiate_chat(
         self,
@@ -333,17 +345,17 @@ class Neuron(BaseNeuron):
             agent.previous_cache = agent.client_cache
             agent.client_cache = cache
 
-
         prepare_chat(self, recipient, should_clear_history)
+
         msg2send = TextMessage(content=message, chat_messages=message, source="user")
 
-        for result in self.send(msg2send, recipient, silent=silent):
-            print("Chegou no final", result)
+        stream = chain([msg2send], self.send(msg2send, recipient, silent=silent))
+        Console(stream)
 
         summary = self._summarize_chat(
             summary_method,
             summary_args,
-            recipient,
+               recipient,
             cache=cache,
         )
 
@@ -356,6 +368,7 @@ class Neuron(BaseNeuron):
             cost=gather_usage_summary([self, recipient]),
             human_input=self._human_input,
         )
+
         return chat_result
 
     def send(
@@ -382,9 +395,8 @@ class Neuron(BaseNeuron):
         message = process_message_before_send(self, message, recipient, silent)
         valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
         if valid:
-            for i in recipient.receive(message, self, request_reply, silent):
-                print("valid", i)
-                yield i
+            # Propagate all replies from recipient.receive() directly
+            yield from recipient.receive(message, self, request_reply, silent)
         else:
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
@@ -416,10 +428,17 @@ class Neuron(BaseNeuron):
             request_reply is False
             or request_reply is None
             and self.reply_at_receive[sender] is False
+            or self._conversation_terminated[sender] # User typed "exit"
         ):
             return
-        for response in self.generate_reply(messages=chat_messages(self, sender), sender=sender):
-            yield self.send(response, sender, silent=silent)
+
+        replies = list(self.generate_reply(messages=chat_messages(self, sender), sender=sender))
+        for reply in replies:
+            if reply:
+                yield reply
+
+        for reply in replies:
+            yield from self.send(reply, sender, silent=silent)
 
     def generate_reply(
         self,
@@ -455,21 +474,30 @@ class Neuron(BaseNeuron):
         # Message modifications do not affect the incoming messages or self._oai_messages.
         messages = process_all_messages_before_reply(self, messages)
 
+        # Iterate over registered reply functions and trigger the ones that match the sender
         for entry in self._reply_func_list:
-            if match_trigger(self, entry["trigger"], sender):
-                for responses in entry["reply_func"](self, messages=messages, sender=sender, config=entry["config"]):
-                    for final, reply in responses:
-                        if reply is None:
-                            continue
-                        if final:
-                            yield reply
-        yield self._default_auto_reply
+            if not match_trigger(self, entry["trigger"], sender):
+                continue
+
+            reply_func = entry["reply_func"]
+            config = entry["config"]
+
+            all_batches = list(reply_func(self, messages=messages, sender=sender, config=config))
+
+            for response_batch in all_batches:
+                for is_final, reply in response_batch:
+                    if not is_final:
+                        continue
+                    if reply is None:
+                        return  # Interrompe tudo
+                    yield reply
+        #yield self._default_auto_reply ??? Fica ou vai?
 
     def _generate_oai_reply(
         self,
         messages: Optional[List[Dict]] = None,
         sender: Optional[BaseNeuron] = None,
-        config: Optional[None] = None,  # APIProtocol
+        config: Optional[None] = None,
     ) -> Generator[Tuple[bool, Union[ToolCallRequestEvent, Response, None]], None, None]:
         """Generate a reply using neuron.clients."""
         client = self.client if config is None else config
@@ -480,10 +508,10 @@ class Neuron(BaseNeuron):
             messages = self._oai_messages[sender]
 
         for extracted_response in self._generate_oai_reply_from_client(client, messages, self.client_cache):
-            if extracted_response is None:
-                yield [(False, None)]
-            else:
+            if extracted_response is not None:
                 yield [(True, extracted_response)]
+            else:
+                yield [(False, None)]
 
     def _generate_oai_reply_from_client(
         self, llm_client, messages, cache
@@ -737,6 +765,7 @@ class Neuron(BaseNeuron):
             if self._max_consecutive_auto_reply == 0 and self.human_input_mode == "NEVER":
                 yield [(False, None)]
                 return
+
             elif self._consecutive_auto_reply_counter[sender] >= self._max_consecutive_auto_reply_dict[sender] or self._is_termination_msg(message):
                 reply = "exit"
 
@@ -748,9 +777,9 @@ class Neuron(BaseNeuron):
         if reply == "exit":
             # reset the consecutive_auto_reply_counter
             self._consecutive_auto_reply_counter[sender] = 0
+            self._conversation_terminated[sender] = True
             yield [(True, None)]
             return
-
         # send the human reply
         if reply or self._max_consecutive_auto_reply_dict[sender] == 0:
             # reset the consecutive_auto_reply_counter
@@ -761,7 +790,6 @@ class Neuron(BaseNeuron):
             )
             yield [(True, response)]
             return
-
         self._consecutive_auto_reply_counter[sender] += 1
         # increment the consecutive_auto_reply_counter
         if self.human_input_mode != "NEVER":
@@ -787,7 +815,7 @@ class Neuron(BaseNeuron):
         self._human_input.append(reply)
         return reply
 
-
+    @classmethod
     def _process_model_result(
         cls,
         model_result: CreateResult,
@@ -878,7 +906,6 @@ class Neuron(BaseNeuron):
         #    yield handoff_output
         #    return
         # STEP 4D: Reflect or summarize tool results
-
         if reflect_on_tool_use:
             #MLEHORAR ISSO AQUI NAO FUNCIONA EU ACHO PQ È UM FOR< NAO FAZ SENTIDO.
             for reflection_response in cls._reflect_on_tool_use_flow(

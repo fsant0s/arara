@@ -4,10 +4,9 @@ import copy
 import os
 import time
 import warnings
-from typing import Any, Dict, List, Sequence, cast
+from typing import Any, Dict, List, Sequence
 
 from groq import Groq, Stream
-from openai.types.chat.chat_completion import ChatCompletionMessage, Choice
 
 from ...models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily
 from ...models import CreateResult, RequestUsage, FinishReasons
@@ -30,6 +29,7 @@ from neuron.neurons.helpers.normalize_name import normalize_name
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost
 GROQ_PRICING_1K = {
+    "gemma2-9b-it": (0.0002, 0.0002),
     "qwen-2.5-32b": (0.00059, 0.00079),
     "llama-3.3-70b-versatile": (0.00059, 0.00079),
     "llama3-70b-8192": (0.00059, 0.00079),
