@@ -9,7 +9,7 @@ from typing_extensions import Any, AsyncGenerator, Required, TypedDict, Union, d
 
 from ..cancellation_token import CancellationToken
 from ..component_config import ComponentBase
-from ..tools import Tool, ToolSchema
+from ..capabilities.tools import Tool, ToolSchema
 from .types import CreateResult, LLMMessage, RequestUsage
 
 

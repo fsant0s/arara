@@ -148,3 +148,12 @@ class CreateResult(BaseModel):
     pass_filter: Optional[bool] = None
     """Indicates whether the result passed a certain filter. Can be None and reassigned."""
 
+    class Config:
+            protected_namespaces = ()
+
+class FunctionExecutionResultMessage(BaseModel):
+    """Function execution result message contains the output of multiple function calls."""
+
+    content: List[FunctionExecutionResult]
+
+    type: Literal["FunctionExecutionResultMessage"] = "FunctionExecutionResultMessage"

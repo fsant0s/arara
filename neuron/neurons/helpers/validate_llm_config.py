@@ -1,4 +1,4 @@
-from ...clients import ClientWrapper
+from ...capabilities.clients import ClientWrapper
 from typing import Union
 
 def validate_llm_config(self_llm_config, llm_config, default_config) -> Union[None, ClientWrapper]:

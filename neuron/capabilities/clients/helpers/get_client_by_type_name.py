@@ -2,11 +2,11 @@ from typing import Any, Dict
 
 # Importações específicas em vez de importação em massa
 # para evitar o ciclo de importação
-from neuron.clients.models.groq import GroqClient
+from neuron.capabilities.clients.models.groq import GroqClient
 
 # Importação condicional dos clientes personalizados
 try:
-    from neuron.clients.custom import BeGreatClient, LLMEmbedding
+    from neuron.capabilities.clients.custom import BeGreatClient, LLMEmbedding
 except ImportError:
     # Valores vazios para caso os módulos não estejam disponíveis
     BeGreatClient = None

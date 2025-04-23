@@ -4,7 +4,6 @@ import time
 import uuid
 from typing import Dict
 
-import numpy as np
 import pandas as pd
 import torch
 from openai.types.chat import ChatCompletion

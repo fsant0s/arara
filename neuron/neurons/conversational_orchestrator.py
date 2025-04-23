@@ -2,7 +2,7 @@ import logging
 import random
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union, Generator
 
 from .helpers import (
     content_str,
@@ -14,15 +14,18 @@ from .helpers import (
 )
 
 from ..formatting_utils import colored
+from ..runtime_logging import log_new_neuron, logging_enabled
 
 from ..io.base import IOStream
-from ..runtime_logging import log_new_neuron, logging_enabled
 from .neuron import Neuron
+
+from ..base import Response
+from ..messages import TextMessage
 
 logger = logging.getLogger(__name__)
 
 @dataclass
-class ChitChat:
+class ConversationalOrchestrator:
     """(In preview) A group chat class that contains the following data fields:
     - agents: a list of participating agents.
     - messages: a list of messages in the group chat.
@@ -69,7 +72,7 @@ class ChitChat:
                 3. None, which would terminate the conversation gracefully.
             ```python
             def custom_speaker_selection_func(
-                last_speaker: Neuron, chitchat: ChitChat
+                last_speaker: Neuron, chitchat: ConversationalOrchestrator
             ) -> Union[Neuron, str, None]:
             ```
     - max_retries_for_selecting_speaker: the maximum number of times the speaker selection requery process will run.
@@ -96,7 +99,7 @@ class ChitChat:
         Must be supplied if `allowed_or_disallowed_speaker_transitions` is not None.
     - enable_clear_history: enable possibility to clear history of messages for agents manually by providing
         "clear history" phrase in user prompt. This is experimental feature.
-        See description of ChitChatManager.clear_agents_history function for more info.
+        See description of ConversationalOrchestratorManager.clear_agents_history function for more info.
     - send_introductions: send a round of introductions at the start of the group chat, so agents know who they can speak to (default: False)
     - role_for_select_speaker_messages: sets the role name for speaker selection when in 'auto' mode, typically 'user' or 'system'. (default: 'system')
     """
@@ -150,7 +153,7 @@ class ChitChat:
         # Post init steers clears of the automatically generated __init__ method from dataclass
 
         if self.allow_repeat_speaker is not None and not isinstance(self.allow_repeat_speaker, (bool, list)):
-            raise ValueError("ChitChat allow_repeat_speaker should be a bool or a list of Neurons.")
+            raise ValueError("ConversationalOrchestrator allow_repeat_speaker should be a bool or a list of Neurons.")
 
         # Here, we create allowed_speaker_transitions_dict from the supplied allowed_or_disallowed_speaker_transitions and speaker_transitions_type, and lastly checks for validity.
 
@@ -160,7 +163,7 @@ class ChitChat:
 
         if self.speaker_transitions_type not in self._VALID_SPEAKER_TRANSITIONS_TYPE:
             raise ValueError(
-                f"ChitChat speaker_transitions_type is set to '{self.speaker_transitions_type}'. "
+                f"ConversationalOrchestrator speaker_transitions_type is set to '{self.speaker_transitions_type}'. "
                 f"It should be one of {self._VALID_SPEAKER_TRANSITIONS_TYPE} (case insensitive). "
             )
 
@@ -181,7 +184,7 @@ class ChitChat:
         # Discussed in https://github.com/microsoft/autogen/pull/857#discussion_r1451259524
         if self.allowed_or_disallowed_speaker_transitions is not None and self.speaker_transitions_type is None:
             raise ValueError(
-                "ChitChat allowed_or_disallowed_speaker_transitions is not None, but speaker_transitions_type is None. "
+                "ConversationalOrchestrator allowed_or_disallowed_speaker_transitions is not None, but speaker_transitions_type is None. "
                 "Please set speaker_transitions_type to either 'allowed' or 'disallowed'."
             )
 
@@ -291,7 +294,7 @@ class ChitChat:
         """Returns all agents in the group chat manager."""
         agents = self.agents.copy()
         for agent in agents:
-            if isinstance(agent, ChitChatManager):
+            if isinstance(agent, ConversationalOrchestratorManager):
                 # Recursive call for nested teams
                 agents.extend(agent.chitchat.nested_agents())
         return agents
@@ -425,7 +428,7 @@ class ChitChat:
 
         if speaker_selection_method.lower() not in self._VALID_SPEAKER_SELECTION_METHODS:
             raise ValueError(
-                f"ChitChat speaker_selection_method is set to '{speaker_selection_method}'. "
+                f"ConversationalOrchestrator speaker_selection_method is set to '{speaker_selection_method}'. "
                 f"It should be one of {self._VALID_SPEAKER_SELECTION_METHODS} (case insensitive). "
             )
 
@@ -438,15 +441,15 @@ class ChitChat:
 
         agents = self.agents
         n_agents = len(agents)
-        # Warn if ChitChat is underpopulated
+        # Warn if ConversationalOrchestrator is underpopulated
         if n_agents < 2:
             raise ValueError(
-                f"ChitChat is underpopulated with {n_agents} agents. "
-                "Please add more agents to the ChitChat or use direct communication instead."
+                f"ConversationalOrchestrator is underpopulated with {n_agents} agents. "
+                "Please add more agents to the ConversationalOrchestrator or use direct communication instead."
             )
         elif n_agents == 2 and speaker_selection_method.lower() != "round_robin" and allow_repeat_speaker:
             logger.warning(
-                f"ChitChat is underpopulated with {n_agents} agents. "
+                f"ConversationalOrchestrator is underpopulated with {n_agents} agents. "
                 "Consider setting speaker_selection_method to 'round_robin' or allow_repeat_speaker to False, "
                 "or use direct communication, unless repeated speaker is desired."
             )
@@ -549,7 +552,7 @@ class ChitChat:
             name = next(iter(mentions))
         else:
             logger.warning(
-                f"ChitChat select_speaker failed to resolve the next speaker's name. This is because the speaker selection OAI call returned:\n{name}"
+                f"ConversationalOrchestrator select_speaker failed to resolve the next speaker's name. This is because the speaker selection OAI call returned:\n{name}"
             )
 
         # Return the result
@@ -596,7 +599,7 @@ class ChitChat:
         attempt = 0
 
         # Registered reply function for checking_agent, checks the result of the response for agent names
-        def validate_speaker_name(recipient, messages, sender, config) -> Tuple[bool, Union[str, Dict, None]]:
+        def validate_speaker_name(recipient, messages, sender, config) -> List[Tuple[bool, Union[Response, None]]]:
             # The number of retries left, starting at max_retries_for_selecting_speaker
             nonlocal attempts_left
             nonlocal attempt
@@ -617,7 +620,6 @@ class ChitChat:
             reply_func=validate_speaker_name,  # Validate each response
             remove_other_reply_funcs=True,
         )
-
         # NOTE: Do we have a speaker prompt (select_speaker_prompt_template is not None)? If we don't, we need to feed in the last message to start the nested chat
 
         # Neuron for selecting a single agent name from the response
@@ -640,12 +642,11 @@ class ChitChat:
             }
         else:
             start_message = messages[-1]
-
         # Run the speaker selection chat
         result = checking_agent.initiate_chat(
             speaker_selection_agent,
             cache=None,  # don't use caching for the speaker selection chat
-            message=start_message,
+            message=start_message['content'],
             max_turns=2
             * max(1, max_attempts),  # Limiting the chat to the number of attempts, including the initial one
             clear_history=False,
@@ -656,11 +657,11 @@ class ChitChat:
 
     def _validate_speaker_name(
         self, recipient, messages, sender, config, attempts_left, attempt, agents
-    ) -> Tuple[bool, Union[str, Dict, None]]:
+    ) -> List[Tuple[bool, Union[Response, None]]]:
         """Validates the speaker response for each round in the internal 2-agent
         chat within the  auto select speaker method.
 
-        Used by auto_select_speaker and a_auto_select_speaker.
+        Used by auto_select_speaker.
         """
 
         # Output the query and requery results
@@ -703,11 +704,16 @@ class ChitChat:
             if attempts_left:
                 # Message to return to the chat for the next attempt
                 agentlist = f"{[agent.name for agent in agents]}"
-
-                return True, {
-                    "content": self.select_speaker_auto_multiple_template.format(agentlist=agentlist),
-                    "override_role": self.role_for_select_speaker_messages,
-                }
+                return [[(True,
+                    Response(
+                        chat_message=TextMessage(
+                            content=self.select_speaker_auto_multiple_template.format(agentlist=agentlist),
+                            sorce=sender.name,
+                            target=recipient.name,
+                        )
+                    )
+                    #"override_role": self.role_for_select_speaker_messages,
+                )]]
             else:
                 # Final failure, no attempts left
                 messages.append(
@@ -732,11 +738,16 @@ class ChitChat:
             if attempts_left:
                 # Message to return to the chat for the next attempt
                 agentlist = f"{[agent.name for agent in agents]}"
-
-                return True, {
-                    "content": self.select_speaker_auto_none_template.format(agentlist=agentlist),
-                    "override_role": self.role_for_select_speaker_messages,
-                }
+                return [[(True,
+                        Response(
+                            chat_message=TextMessage(
+                                content= self.select_speaker_auto_none_template.format(agentlist=agentlist),
+                                source=sender.name,
+                                target=recipient.name,
+                                #"override_role": self.role_for_select_speaker_messages,
+                            )
+                        )
+                )]]
             else:
                 # Final failure, no attempts left
                 messages.append(
@@ -746,13 +757,13 @@ class ChitChat:
                     }
                 )
 
-        return True, None
+        return [[(True, None)]]
 
     def _process_speaker_selection_result(self, result, last_speaker: Neuron, agents: Optional[List[Neuron]]):
         """Checks the result of the auto_select_speaker function, returning the
         agent to speak.
 
-        Used by auto_select_speaker and a_auto_select_speaker."""
+        Used by auto_select_speaker."""
         if len(result.chat_history) > 0:
             # Use the final message, which will have the selected agent or reason for failure
             final_message = result.chat_history[-1]["content"]
@@ -777,7 +788,7 @@ class ChitChat:
         for agent in agents:
             if agent.description.strip() == "":
                 logger.warning(
-                    f"The agent '{agent.name}' has an empty description, and may not work well with ChitChat."
+                    f"The agent '{agent.name}' has an empty description, and may not work well with ConversationalOrchestrator."
                 )
             roles.append(f"{agent.name}: {agent.description}".strip())
         return "\n".join(roles)
@@ -823,13 +834,13 @@ class ChitChat:
         return mentions
 
 
-class ChitChatManager(Neuron):
+class ConversationalOrchestratorManager(Neuron):
     """(In preview) A chat manager agent that can manage a group chat of multiple agents."""
 
     def __init__(
         self,
-        chitchat: ChitChat,
-        name: Optional[str] = "chat_manager",
+        chitchat: ConversationalOrchestrator,
+        name: Optional[str] = "conversational_orchestrator",
         # unlimited consecutive auto reply by default
         system_message: Optional[Union[str, List]] = "Chitchat manager.",
         silent: bool = False,
@@ -841,7 +852,7 @@ class ChitChatManager(Neuron):
             and (kwargs["llm_config"].get("functions") or kwargs["llm_config"].get("tools"))
         ):
             raise ValueError(
-                "ChitChatManager is not allowed to make function/tool calls. Please remove the 'functions' or 'tools' config in 'llm_config' you passed in."
+                "ConversationalOrchestratorManager is not allowed to make function/tool calls. Please remove the 'functions' or 'tools' config in 'llm_config' you passed in."
             )
 
         super().__init__(
@@ -855,10 +866,10 @@ class ChitChatManager(Neuron):
         self._chitchat = chitchat
         self._silent = silent
 
-        self.register_reply(Neuron, ChitChatManager.run_chat, config=chitchat, reset_config=ChitChat.reset)
+        self.register_reply(Neuron, ConversationalOrchestratorManager.run_chat, config=chitchat, reset_config=ConversationalOrchestrator.reset)
 
     @property
-    def chitchat(self) -> ChitChat:
+    def chitchat(self) -> ConversationalOrchestrator:
         """Returns the group chat managed by the group chat manager."""
         return self._chitchat
 
@@ -888,12 +899,13 @@ class ChitChatManager(Neuron):
         self,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Neuron] = None,
-        config: Optional[ChitChat] = None,
-    ) -> Tuple[bool, Optional[str]]:
+        config: Optional[ConversationalOrchestrator] = None,
+    ) -> Generator[Tuple[bool, Optional[str]], None, None]:
         """Run a group chat."""
         if messages is None:
             messages = self._oai_messages[sender]
         message = messages[-1]
+
         speaker = sender
         chitchat = config
         send_introductions = getattr(chitchat, "send_introductions", False)
@@ -903,10 +915,9 @@ class ChitChatManager(Neuron):
             # Broadcast the intro
             intro = chitchat.introductions_msg()
             for agent in chitchat.agents:
-                self.send(intro, agent, request_reply=False, silent=True)
+                yield from self.send(intro, agent, request_reply=False, silent=True)
             # NOTE: We do not also append to chitchat.messages,
             # since chitchat handles its own introductions
-
         if self.client_cache is not None:
             for a in chitchat.agents:
                 a.previous_cache = a.client_cache
@@ -916,55 +927,64 @@ class ChitChatManager(Neuron):
             # broadcast the message to all agents except the speaker
             for agent in chitchat.agents:
                 if agent != speaker:
-                    self.send(message, agent, request_reply=False, silent=True)
+                    yield from self.send(message, agent, request_reply=False, silent=True)
+        #     if self._is_termination_msg(message) or i == chitchat.max_round - 1:
+        #         # The conversation is over or it's the last round
+        #         break
+        #     try:
+        #         # select the next speaker
+        #         speaker = chitchat.select_speaker(speaker, self)
+        #         if not silent:
+        #             iostream = IOStream.get_default()
+        #             iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
+        #         # let the speaker speak
+        #         replies = list(speaker.generate_reply(sender=self))
+        #         for reply in replies:
+        #             print("reply", reply)
+        #             if reply:
+        #                 yield reply
+        #     except KeyboardInterrupt:
+        #         # let the admin agent speak if interrupted
+        #         if chitchat.admin_name in chitchat.agent_names:
+        #             # admin agent is one of the participants
+        #             speaker = chitchat.agent_by_name(chitchat.admin_name)
+        #             replies = list(speaker.generate_reply(sender=self))
+        #             for reply in replies:
+        #                 if reply:
+        #                     yield reply
+        #         else:
+        #             # admin agent is not found in the participants
+        #             raise
+        #     except NoEligibleSpeaker:
+        #         # No eligible speaker, terminate the conversation
+        #         break
 
-            if self._is_termination_msg(message) or i == chitchat.max_round - 1:
-                # The conversation is over or it's the last round
-                break
-            try:
-                # select the next speaker
-                speaker = chitchat.select_speaker(speaker, self)
-                if not silent:
-                    iostream = IOStream.get_default()
-                    iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
-                # let the speaker speak
-                reply = speaker.generate_reply(sender=self)
-            except KeyboardInterrupt:
-                # let the admin agent speak if interrupted
-                if chitchat.admin_name in chitchat.agent_names:
-                    # admin agent is one of the participants
-                    speaker = chitchat.agent_by_name(chitchat.admin_name)
-                    reply = speaker.generate_reply(sender=self)
-                else:
-                    # admin agent is not found in the participants
-                    raise
-            except NoEligibleSpeaker:
-                # No eligible speaker, terminate the conversation
-                break
+        #     if reply is None:
+        #         # no reply is generated, exit the chat
+        #         break
 
-            if reply is None:
-                # no reply is generated, exit the chat
-                break
+        #     # check for "clear history" phrase in reply and activate clear history function if found
+        #     if (
+        #         chitchat.enable_clear_history
+        #         and isinstance(reply, dict)
+        #         and reply["content"]
+        #         and "CLEAR HISTORY" in reply["content"].upper()
+        #     ):
+        #         reply["content"] = self.clear_agents_history(reply, chitchat)
 
-            # check for "clear history" phrase in reply and activate clear history function if found
-            if (
-                chitchat.enable_clear_history
-                and isinstance(reply, dict)
-                and reply["content"]
-                and "CLEAR HISTORY" in reply["content"].upper()
-            ):
-                reply["content"] = self.clear_agents_history(reply, chitchat)
+        #     # The speaker sends the message without requesting a reply
+        #     for reply in replies:
+        #         yield from speaker.send(reply, self, request_reply=False, silent=silent)
 
-            # The speaker sends the message without requesting a reply
-            speaker.send(reply, self, request_reply=False, silent=silent)
-            message = self.last_message(speaker)
+        #     message = self.last_message(speaker)
+
         if self.client_cache is not None:
             for a in chitchat.agents:
                 a.client_cache = a.previous_cache
                 a.previous_cache = None
-        return True, None
+        return [[(True, None)]]
 
-    def clear_agents_history(self, reply: dict, chitchat: ChitChat) -> str:
+    def clear_agents_history(self, reply: dict, chitchat: ConversationalOrchestrator) -> str:
         """Clears history of messages for all agents or selected one. Can preserve selected number of last messages.
         That function is called when user manually provide "clear history" phrase in his reply.
         When "clear history" is provided, the history of messages for all agents is cleared.
@@ -977,7 +997,7 @@ class ChitChatManager(Neuron):
 
         Args:
             reply (dict): reply message dict to analyze.
-            chitchat (ChitChat): ChitChat object.
+            chitchat (ConversationalOrchestrator): ConversationalOrchestrator object.
         """
         iostream = IOStream.get_default()
 

@@ -16,16 +16,9 @@ from neuron.messages import (
 
 from termcolor import colored
 
-def format_sender(name: str) -> str:
-    color_map = {
-        "user": "cyan",
-        "math": "green",
-        "assistant": "yellow",
-        "system": "magenta",
-    }
-    color = color_map.get(name.lower(), "white")
-    return colored(f"⟶ {name.capitalize()}:", color, attrs=["bold"])
-
+def format_sender(source: str, target: Optional[str] = None) -> str:
+    direction = f"[{source} ⟶ {target}]" if target else f"[{source}]"
+    return colored(f"{direction}:", "cyan", attrs=["bold"])
 
 def _is_running_in_iterm() -> bool:
     return os.getenv("TERM_PROGRAM") == "iTerm.app"
@@ -55,7 +48,6 @@ def Console(
 
     last_processed: Optional[T] = None
     streaming_chunks: List[str] = []
-
     for message in stream:
         if message is None: continue
         if isinstance(message, Response):
@@ -68,7 +60,7 @@ def Console(
                 final_content = message.chat_message.to_text()
 
             # Print formatted sender and message
-            aprint(format_sender(message.chat_message.source), flush=True)
+            aprint(format_sender(message.chat_message.source, message.chat_message.target), flush=True)
             aprint(final_content, flush=True)
 
             # Print usage if needed
@@ -100,7 +92,7 @@ def Console(
             message = cast(BaseAgentEvent | BaseChatMessage, message)
 
             if not streaming_chunks:
-                aprint(format_sender(message.source), flush=True)
+                aprint(format_sender(message.source, message.target), flush=True)
 
             if isinstance(message, ModelClientStreamingChunkEvent):
                 aprint(message.to_text(), end="")

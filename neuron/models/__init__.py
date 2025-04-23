@@ -17,6 +17,7 @@ from .types import (
     SystemMessage,
     TopLogprob,
     UserMessage,
+    FunctionExecutionResultMessage
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "ModelFamily",
     "ModelInfo",
     "validate_model_info",
+    "FunctionExecutionResultMessage",
 ]

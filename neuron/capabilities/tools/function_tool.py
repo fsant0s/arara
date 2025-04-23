@@ -7,9 +7,9 @@ from typing import Any, Callable, Sequence
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ..cancellation_token import CancellationToken
-from ..component_config import Component
-from ..function_utils import (
+from ...cancellation_token import CancellationToken
+from ...component_config import Component
+from ...function_utils import (
     args_base_model_from_signature,
     get_typed_signature,
 )

@@ -1,19 +1,17 @@
-from .capability import Capability
-from ..neurons.base import BaseNeuron
-from ..messages import (
+from .ability import Ability
+from ...neurons.base import BaseNeuron
+from ...messages import (
     TextMessage,
     ToolCallRequestEvent,
     ToolCallExecutionEvent,
 )
-
-from ..base import Response
-
+from ...base import Response
 from typing import Union
 
 
-class TextExtractionCapability(Capability):
+class TextExtractionAbility(Ability):
     """
-    A capability that enables a neuron to normalize various message types into plain text content.
+    An ability that enables a neuron to normalize various message types into plain text content.
 
     This is useful for preparing messages for processing, display, or logging by extracting their semantic content,
     regardless of the original message format (TextMessage, ToolCall, or Response).
@@ -21,10 +19,10 @@ class TextExtractionCapability(Capability):
 
     def __init__(self, neuron: BaseNeuron) -> None:
         """
-        Initialize the capability and bind it to a neuron.
+        Initialize the ability and bind it to a neuron.
 
         Args:
-            neuron (BaseNeuron): The neuron to which this capability is attached.
+            neuron (BaseNeuron): The neuron to which this ability is attached.
         """
         super().__init__()
         self._neuron = neuron
@@ -32,18 +30,22 @@ class TextExtractionCapability(Capability):
 
     def on_add_to_neuron(self, neuron: BaseNeuron):
         """
-        Register this capability as a utility hook if desired. Not strictly required here,
-        as this capability can also be called directly.
+        Register this ability as a utility hook.
         """
         neuron.register_hook(hookable_method="process_message_before_send", hook=self._extract_text)
 
-    def _extract_text(self, sender: BaseNeuron, message: Union[str, TextMessage, ToolCallRequestEvent, ToolCallExecutionEvent, Response, None], recipient: BaseNeuron, silent: bool) -> str:
+    def _extract_text(
+        self,
+        sender: BaseNeuron,
+        message: Union[str, TextMessage, ToolCallRequestEvent, ToolCallExecutionEvent, Response, None],
+        recipient: BaseNeuron,
+        silent: bool
+    ) -> str:
         """
         Normalize a message object into plain string content.
 
         Args:
-            message (Union[str, TextMessage, ToolCallRequestEvent, ToolCallExecutionEvent, Response, None]):
-                The message to process.
+            message: The message to process.
 
         Returns:
             str: The extracted text content.
@@ -53,6 +55,9 @@ class TextExtractionCapability(Capability):
         """
         if message is None:
             return ""
+
+        if isinstance(message, dict):
+            return message['content']
 
         if isinstance(message, str):
             return message

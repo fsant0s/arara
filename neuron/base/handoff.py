@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict
 
-from ..tools import BaseTool, FunctionTool
+from ..capabilities.tools import BaseTool, FunctionTool
 from pydantic import BaseModel, Field, model_validator
 
 event_logger = logging.getLogger(__name__)

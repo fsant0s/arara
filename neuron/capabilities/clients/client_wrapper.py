@@ -408,7 +408,7 @@ class ClientWrapper:
                     flush=True,
                 )
                 return
-
+            yield ("Usage summary")
             iostream.print(f"Usage summary {word_from_type} cached usage: ", flush=True)
             iostream.print(f"Total cost: {round(usage_summary['total_cost'], 5)}", flush=True)
             for model, counts in usage_summary.items():

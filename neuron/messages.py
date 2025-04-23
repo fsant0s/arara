@@ -9,7 +9,7 @@ from typing import Any, Dict, Generic, List, Literal, Mapping, TypeVar
 
 from .types import FunctionCall
 from .image import Image
-from .memory import MemoryContent
+from .capabilities.memory import MemoryContent
 from .models import FunctionExecutionResult, LLMMessage, RequestUsage, UserMessage
 from pydantic import BaseModel, ConfigDict, computed_field
 from typing_extensions import Self
@@ -68,6 +68,9 @@ class ChatMessage(BaseMessage, ABC):
 
     source: str
     """The name of the agent that sent this message."""
+
+    target: str | None = None
+    """The name of the agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
     """The model client usage incurred when producing this message."""
@@ -145,6 +148,9 @@ class AgentEvent(BaseMessage, ABC):
 
     source: str
     """The name of the agent that sent this message."""
+
+    target: str | None = None
+    """The name of the agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
     """The model client usage incurred when producing this message."""

@@ -32,7 +32,7 @@ class ChatCompletionContext(ABC, ComponentBase[BaseModel]):
             class ReasoningModelContext(UnboundedChatCompletionContext):
                 \"\"\"A model context for reasoning models.\"\"\"
 
-                async def get_messages(self) -> List[LLMMessage]:
+                def get_messages(self) -> List[LLMMessage]:
                     messages = await super().get_messages()
                     # Filter out thought field from AssistantMessage.
                     messages_out: List[LLMMessage] = []
@@ -49,21 +49,21 @@ class ChatCompletionContext(ABC, ComponentBase[BaseModel]):
     def __init__(self, initial_messages: List[LLMMessage] | None = None) -> None:
         self._messages: List[LLMMessage] = initial_messages or []
 
-    async def add_message(self, message: LLMMessage) -> None:
+    def add_message(self, message: LLMMessage) -> None:
         """Add a message to the context."""
         self._messages.append(message)
 
     @abstractmethod
-    async def get_messages(self) -> List[LLMMessage]: ...
+    def get_messages(self) -> List[LLMMessage]: ...
 
-    async def clear(self) -> None:
+    def clear(self) -> None:
         """Clear the context."""
         self._messages = []
 
-    async def save_state(self) -> Mapping[str, Any]:
+    def save_state(self) -> Mapping[str, Any]:
         return ChatCompletionContextState(messages=self._messages).model_dump()
 
-    async def load_state(self, state: Mapping[str, Any]) -> None:
+    def load_state(self, state: Mapping[str, Any]) -> None:
         self._messages = ChatCompletionContextState.model_validate(state).messages
 
 

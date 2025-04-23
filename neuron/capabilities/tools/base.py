@@ -9,10 +9,10 @@ from opentelemetry.trace import get_tracer
 from pydantic import BaseModel
 from typing_extensions import NotRequired
 
-from ..cancellation_token import CancellationToken
-from ..component_config import ComponentBase
-from ..function_utils import normalize_annotated_type
-from ..logger import ToolCallEvent
+from ...cancellation_token import CancellationToken
+from ...component_config import ComponentBase
+from ...function_utils import normalize_annotated_type
+from ...logger import ToolCallEvent
 
 T = TypeVar("T", bound=BaseModel, contravariant=True)
 

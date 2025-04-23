@@ -55,7 +55,6 @@ Neurons are the fundamental agents in the framework:
 
 - **BaseNeuron**: The abstract base class for all neurons
 - **Neuron**: Standard implementation with customizable capabilities
-- **RouterNeuron**: Specialized neuron that routes requests to other neurons
 - **User**: Represents user interaction in the system
 
 Neurons handle:

@@ -8,14 +8,14 @@ from typing import Any, Dict, List, Sequence
 
 from groq import Groq, Stream
 
-from ...models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily
-from ...models import CreateResult, RequestUsage, FinishReasons
-from ...normalize_stop_reason import normalize_stop_reason
-from ...parse_r1_content import parse_r1_content
+from ....models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily
+from ....models import CreateResult, RequestUsage, FinishReasons
+from ....normalize_stop_reason import normalize_stop_reason
+from ....parse_r1_content import parse_r1_content
 
 
-from neuron.clients.helpers.validate_parameter import validate_parameter
-from neuron.clients.base import BaseClient
+from neuron.capabilities.clients.helpers.validate_parameter import validate_parameter
+from neuron.capabilities.clients.base import BaseClient
 
 from ...tools import Tool, ToolSchema
 from typing import Dict, List, Union
@@ -23,7 +23,7 @@ from typing import Dict, List, Union
 from ..helpers.assert_valid_name import assert_valid_name
 from ..helpers.should_hide_tools import should_hide_tools
 
-from ...types import FunctionCall
+from ....types import FunctionCall
 from neuron.neurons.helpers.normalize_name import normalize_name
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
