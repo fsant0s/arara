@@ -14,10 +14,12 @@ from neuron.messages import (
     MultiModalMessage
 )
 
+from ..neurons.helpers.message_processing import process_received_message
+
 from termcolor import colored
 
-def format_sender(source: str, target: Optional[str] = None) -> str:
-    direction = f"[{source} ⟶ {target}]" if target else f"[{source}]"
+def format_sender(source_name: str, target_name: Optional[str] = None) -> str:
+    direction = f"[{source_name} ⟶ {target_name}]" if target_name else f"[{source_name}]"
     return colored(f"{direction}:", "cyan", attrs=["bold"])
 
 def _is_running_in_iterm() -> bool:
@@ -26,6 +28,8 @@ def _is_running_in_iterm() -> bool:
 
 def _is_output_a_tty() -> bool:
     return sys.stdout.isatty()
+
+
 
 SyncInputFunc = Callable[[str], str]
 AsyncInputFunc = Callable[[str, Optional[CancellationToken]], Awaitable[str]]
@@ -42,14 +46,15 @@ def Console(
     no_inline_images: bool = False,
     output_stats: bool = False,
 ) -> T:
+
     render_image_iterm = _is_running_in_iterm() and _is_output_a_tty() and not no_inline_images
     start_time = time.time()
     total_usage = RequestUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
-
     last_processed: Optional[T] = None
     streaming_chunks: List[str] = []
     for message in stream:
         if message is None: continue
+
         if isinstance(message, Response):
             duration = time.time() - start_time
 
@@ -60,7 +65,9 @@ def Console(
                 final_content = message.chat_message.to_text()
 
             # Print formatted sender and message
-            aprint(format_sender(message.chat_message.source, message.chat_message.target), flush=True)
+            source = message.chat_message.source
+            target = message.chat_message.target
+            aprint(format_sender(source.name, target.name), flush=True)
             aprint(final_content, flush=True)
 
             # Print usage if needed
@@ -90,9 +97,10 @@ def Console(
 
         else:
             message = cast(BaseAgentEvent | BaseChatMessage, message)
-
+            source = message.source
+            target = message.target
             if not streaming_chunks:
-                aprint(format_sender(message.source, message.target), flush=True)
+                aprint(format_sender(source.name, target.name), flush=True)
 
             if isinstance(message, ModelClientStreamingChunkEvent):
                 aprint(message.to_text(), end="")

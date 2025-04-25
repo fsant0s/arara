@@ -18,7 +18,7 @@ class UnboundedChatCompletionContext(ChatCompletionContext, Component[UnboundedC
     component_config_schema = UnboundedChatCompletionContextConfig
     component_provider_override = "autogen_core.model_context.UnboundedChatCompletionContext"
 
-    async def get_messages(self) -> List[LLMMessage]:
+    def get_messages(self) -> List[LLMMessage]:
         """Get at most `buffer_size` recent messages."""
         return self._messages
 

@@ -37,5 +37,5 @@ def reflection_with_llm(
         else:
             raise ValueError("No OpenAIWrapper client is found.")
 
-        response = list(sender._generate_oai_reply_from_client(llm_client=llm_client, messages=messages, cache=cache))
+        response = list(sender._generate_oai_reply_from_client(llm_client=llm_client, messages=messages, cache=cache, sender=sender))
         return response

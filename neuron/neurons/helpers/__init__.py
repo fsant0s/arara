@@ -33,3 +33,5 @@ from .graph_utils import (
     visualize_speaker_transitions_dict
 )
 from .normalize_name import normalize_name
+
+from .remove_images import remove_images

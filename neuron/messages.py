@@ -13,7 +13,7 @@ from .capabilities.memory import MemoryContent
 from .models import FunctionExecutionResult, LLMMessage, RequestUsage, UserMessage
 from pydantic import BaseModel, ConfigDict, computed_field
 from typing_extensions import Self
-
+from .neurons import BaseNeuron
 
 class BaseMessage(BaseModel, ABC):
     """Base class for all message types in AgentChat. This is an abstract class
@@ -66,11 +66,11 @@ class ChatMessage(BaseMessage, ABC):
     message using models and return a response as another :class:`ChatMessage`.
     """
 
-    source: str
-    """The name of the agent that sent this message."""
+    source: BaseNeuron
+    """The agent that sent this message."""
 
-    target: str | None = None
-    """The name of the agent that this message is intended for."""
+    target: BaseNeuron
+    """The agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
     """The model client usage incurred when producing this message."""
@@ -146,11 +146,11 @@ class AgentEvent(BaseMessage, ABC):
     a custom rendering of the content.
     """
 
-    source: str
-    """The name of the agent that sent this message."""
+    source: BaseNeuron
+    """The agent that sent this message."""
 
-    target: str | None = None
-    """The name of the agent that this message is intended for."""
+    target: BaseNeuron
+    """The agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
     """The model client usage incurred when producing this message."""

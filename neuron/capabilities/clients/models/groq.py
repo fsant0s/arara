@@ -218,33 +218,6 @@ class GroqClient(BaseClient):
         else:
             raise RuntimeError("Failed to get response from Groq after retrying 5 times.")
 
-       # convert output
-        # message = ChatCompletionMessage(
-        #     role="assistant",
-        #     content=response_content,
-        #     function_call=None,
-        #     tool_calls=tool_calls,
-        # )
-
-        # choices = [Choice(finish_reason=groq_finish, index=0, message=message)]
-
-        # response_oai = ChatCompletion(
-        #     id=response_id,
-        #     model=groq_params["model"],
-        #     created=int(time.time()),
-        #     object="chat.completion",
-        #     choices=choices,
-        #     usage=CompletionUsage( #ja foi
-        #         prompt_tokens=prompt_tokens,
-        #         completion_tokens=completion_tokens,
-        #         total_tokens=total_tokens,
-        #     ),
-        #     cost=calculate_groq_cost(prompt_tokens, completion_tokens, groq_params["model"]),
-        # )
-
-
-        ###
-
         logprobs = None
         if response.choices[0].logprobs and response.choices[0].logprobs.content:
             logprobs = [
@@ -268,7 +241,6 @@ class GroqClient(BaseClient):
             completion_tokens=completion_tokens,
             total_tokens=total_tokens
         )
-
         response = CreateResult(
             response_id=response_id,
             model=groq_params["model"],

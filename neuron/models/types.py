@@ -128,8 +128,6 @@ class CreateResult(BaseModel):
     """The reasoning text for the completion, if available.
     Used for models that provide intermediate reasoning steps or textual explanations."""
 
-    #Fsantos:
-
     response_id: str
     """Unique identifier of the request made to generate the completion."""
 
@@ -157,3 +155,7 @@ class FunctionExecutionResultMessage(BaseModel):
     content: List[FunctionExecutionResult]
 
     type: Literal["FunctionExecutionResultMessage"] = "FunctionExecutionResultMessage"
+
+LLMMessage = Annotated[
+    Union[SystemMessage, UserMessage, AssistantMessage, FunctionExecutionResultMessage], Field(discriminator="type")
+]
