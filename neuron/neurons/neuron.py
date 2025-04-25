@@ -419,7 +419,6 @@ class Neuron(BaseNeuron):
         valid = True
         if should_append_message:
             valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
-
         if not valid:
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
@@ -467,10 +466,8 @@ class Neuron(BaseNeuron):
         for reply in self.generate_reply(messages=chat_messages(self, sender), sender=sender):
             if reply:
                 replies.append(reply)
+                yield reply
                 yield from self.send(reply, sender, silent=silent, request_reply=False)
-
-        for reply in replies:
-            yield reply
 
         for reply in replies:
             yield from self.send(reply, sender, silent=silent, should_append_message=False)
