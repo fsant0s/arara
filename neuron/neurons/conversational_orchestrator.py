@@ -650,7 +650,7 @@ class ConversationalOrchestrator:
             max_turns=2
             * max(1, max_attempts),  # Limiting the chat to the number of attempts, including the initial one
             clear_history=False,
-            silent=not self.select_speaker_auto_verbose,  # Base silence on the verbose attribute
+            silent=True,  # Base silence on the verbose attribute
         )
 
         return self._process_speaker_selection_result(result, last_speaker, agents)

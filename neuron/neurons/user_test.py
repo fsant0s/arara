@@ -41,10 +41,12 @@ class UserTest(User):
 
         self._counter = 0
         self._dialog = [
-            "Como vc ta?",
-            "Que legal, obrigado por perguntar!",
+            #"Como vc ta?",
+            #"Que legal, obrigado por perguntar!",
             "Gostaria de saber quanto é 100 euros em usd",
+            "Quantas árovres existem no planeta terra?",
             "How much is 123.45 USD in EUR??",
+            "Muito obrigado pelas informações!",
             "exit",
         ]
 

@@ -2,11 +2,9 @@ import copy
 import logging
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator, Sequence
-from openai import BadRequestError
-from itertools import chain
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator
 
-from ..ui import Console
+from openai import BadRequestError
 
 from ..capabilities.abilities import (
     Ability,
@@ -27,9 +25,7 @@ from .helpers import (
     reflection_with_llm,
     gather_usage_summary,
     consolidate_chat_info,
-    remove_images
 )
-
 
 from ..capabilities.clients import ClientWrapper
 
@@ -365,8 +361,7 @@ class Neuron(BaseNeuron):
             target=recipient,
             )
 
-        stream = chain([msg2send], self.send(msg2send, recipient, silent=silent))
-        Console(stream)
+        self.send(msg2send, recipient, silent=silent)
 
         summary = self._summarize_chat(
              summary_method,
@@ -392,8 +387,7 @@ class Neuron(BaseNeuron):
         message: Union[Dict, str],
         recipient: BaseNeuron,
         request_reply: Optional[bool] = None,
-        silent: Optional[bool] = False,
-        should_append_message: Optional[bool] = True,
+        silent: Optional[bool] = False
     ):
         """
         Send a message to another neuron.
@@ -410,26 +404,12 @@ class Neuron(BaseNeuron):
             Union[str, Dict, None]: The reply from the recipient if requested.
         """
         message = process_message_before_send(self, message, recipient, silent)
-
-        # Prevents duplicate entries in `_oai_messages`.
-        # Only the first `send()` inside `receive()` should call `append_oai_message`
-        # so that replies are saved for immediate access (e.g., for reflection or summaries).
-        # The second `send()` is for response propagation and must not store again.
-        # Future fix: unify message storing and sending to avoid this workaround.
-        valid = True
-        if should_append_message:
-            valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
+        valid = append_oai_message(self, message, "assistant", recipient, is_sending=True)
         if not valid:
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
             )
-
-        # # Propagate all replies from recipient.receive() directly
-        # # yield from recipient.receive(message, self, request_reply, silent)
-        for reply in recipient.receive(message, self, request_reply, silent):
-            if reply:
-                yield reply
-
+        recipient.receive(message, self, request_reply, silent)
 
     def receive(
         self,
@@ -459,19 +439,15 @@ class Neuron(BaseNeuron):
             and self.reply_at_receive[sender] is False)
             or self._conversation_terminated[sender] # User typed "exit"
         ):
-            yield None
             return
 
-        replies = []
-        for reply in self.generate_reply(messages=chat_messages(self, sender), sender=sender):
-            if reply:
-                replies.append(reply)
-                yield reply
-                yield from self.send(reply, sender, silent=silent, request_reply=False)
 
-        for reply in replies:
-            yield from self.send(reply, sender, silent=silent, should_append_message=False)
-
+        for reply in self.generate_reply(sender=sender):
+            # It is the final yield. If the type is Response, it marks the generator's last yield.
+            request_reply = False
+            if isinstance(reply, Response) or isinstance(reply, TextMessage):
+                request_reply = True
+            self.send(reply, sender, silent=silent, request_reply=request_reply)
 
     def generate_reply(
         self,
@@ -514,7 +490,6 @@ class Neuron(BaseNeuron):
 
             reply_func = entry["reply_func"]
             config = entry["config"]
-
             for response_batch in reply_func(self, messages=messages, sender=sender, config=config):
                 for is_final, reply in response_batch:
                     if not is_final:
@@ -926,7 +901,6 @@ class Neuron(BaseNeuron):
             )
             for call in model_result.content
         ]
-
         exec_results = [result for _, result in executed_calls_and_results]
 
         # Yield ToolCallExecutionEvent
@@ -939,7 +913,6 @@ class Neuron(BaseNeuron):
         model_context.add_message(FunctionExecutionResultMessage(content=exec_results))
         inner_messages.append(tool_call_result_msg)
         yield tool_call_result_msg
-
 
         # STEP 4: Reflect or summarize tool results
         if reflect_on_tool_use:
@@ -1035,7 +1008,7 @@ class Neuron(BaseNeuron):
                 )
             )
         tool_call_summary = "\n".join(tool_call_summaries)
-        return Response(
+        yield Response(
             chat_message=ToolCallSummaryMessage(
                 content=tool_call_summary,
                 source=source,
@@ -1043,6 +1016,7 @@ class Neuron(BaseNeuron):
             ),
             inner_messages=inner_messages,
         )
+        return
 
     @staticmethod
     def _perform_self_reflection(

@@ -32,5 +32,4 @@ def append_oai_message(
 
     oai_message["role"] = role
     self._oai_messages[conversation_id].append(oai_message)
-
     return True

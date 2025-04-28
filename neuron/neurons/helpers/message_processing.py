@@ -7,9 +7,9 @@ from .append_oai_message import append_oai_message
 
 from ...messages import (
     TextMessage,
-    ToolCallRequestEvent,
-    ToolCallExecutionEvent
 )
+
+from .print_received_message import print_received_message
 
 from ...base import Response
 
@@ -35,6 +35,9 @@ def process_received_message(
         raise ValueError(
             "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
         )
+
+    if not silent:
+        print_received_message(message, sender, self.name, self.llm_config)
 
 def process_last_received_message(self: BaseNeuron, messages: List[Dict]) -> List[Dict]:
     """
