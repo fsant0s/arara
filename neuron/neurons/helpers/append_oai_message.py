@@ -21,15 +21,30 @@ def append_oai_message(
     }
 
     if "content" not in oai_message:
-        return False
+        if "function_call" in oai_message or "tool_calls" in oai_message:
+            oai_message["content"] = None  # if only function_call is provided, content will be set to None.
+        else:
+            return False
 
-    if "name" not in oai_message:
+    if message.get("role") in ["function", "tool"]:
+        oai_message["role"] = message.get("role")
+    elif "override_role" in message:
+        # If we have a direction to override the role then set the
+        # role accordingly. Used to customise the role for the
+        # select speaker prompt.
+        oai_message["role"] = message.get("override_role")
+    else:
+        oai_message["role"] = role
+
+    if oai_message.get("function_call", False) or oai_message.get("tool_calls", False):
+        oai_message["role"] = "assistant"  # only messages with role 'assistant' can have a function call.
+    elif "name" not in oai_message:
         # If we don't have a name field, append it
         if is_sending:
             oai_message["name"] = self.name
         else:
             oai_message["name"] = conversation_id.name
 
-    oai_message["role"] = role
     self._oai_messages[conversation_id].append(oai_message)
+
     return True

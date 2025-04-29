@@ -57,7 +57,7 @@ class TextExtractionAbility(Ability):
             return ""
 
         if isinstance(message, dict):
-            return message['content']
+            return message
 
         if isinstance(message, str):
             return message

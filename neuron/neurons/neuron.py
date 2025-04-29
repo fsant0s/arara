@@ -84,7 +84,7 @@ class Neuron(BaseNeuron):
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
-    DEFAULT_SUMMARY_METHOD = "reflection_with_llm"
+    DEFAULT_SUMMARY_METHOD = "last_msg"
     DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
 
     @property
@@ -354,14 +354,7 @@ class Neuron(BaseNeuron):
             agent.client_cache = cache
 
         prepare_chat(self, recipient, should_clear_history)
-        msg2send = TextMessage(
-            content=message,
-            chat_messages=message,
-            source=self,
-            target=recipient,
-            )
-
-        self.send(msg2send, recipient, silent=silent)
+        self.send(message, recipient, silent=silent, request_reply=True)
 
         summary = self._summarize_chat(
              summary_method,
@@ -538,7 +531,6 @@ class Neuron(BaseNeuron):
         cancellation_token = None
         self_reflection = self._self_reflection
 
-        # unroll tool_responses
         if self._oai_system_message is not None:
             messages = self._oai_system_message + messages
 

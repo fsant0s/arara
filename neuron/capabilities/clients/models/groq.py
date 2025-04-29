@@ -137,6 +137,7 @@ class GroqClient(BaseClient):
         finish_reason = None
         thought: str | None = None
         try:
+            print("groq_params", groq_params)
             response = client.chat.completions.create(**groq_params)
         except Exception as e:
             raise RuntimeError(f"Groq exception occurred: {e}")
