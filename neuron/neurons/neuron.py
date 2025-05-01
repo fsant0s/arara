@@ -13,7 +13,6 @@ from ..capabilities.abilities import (
 from .base import BaseNeuron
 from .helpers import (
     append_oai_message,
-    chat_messages,
     match_trigger,
     process_all_messages_before_reply,
     process_last_received_message,
@@ -27,17 +26,9 @@ from .helpers import (
     consolidate_chat_info,
 )
 
-from ..capabilities.clients import ClientWrapper
-
-from ..types import FunctionCall
-from ..base.handoff import Handoff as HandoffBase
+from .types import FunctionCall, Response, ChatResult
 from ..capabilities.tools.execute_tool_call import execute_tool_call
-from ..cancellation_token import CancellationToken
-from ..model_context.chat_completion_context import ChatCompletionContext
-from ..model_context.unbounded_chat_completion_context import UnboundedChatCompletionContext
 from ..messages import (
-    AgentEvent,
-    ChatMessage,
     ModelClientStreamingChunkEvent,
     TextMessage,
     ThoughtEvent,
@@ -46,21 +37,14 @@ from ..messages import (
     ToolCallSummaryMessage
 )
 
-from ..base import Response
-
 from ..models import (
     AssistantMessage,
     CreateResult,
     FunctionExecutionResult,
-    SystemMessage,
-    FunctionExecutionResultMessage,
-    CreateResult,
-    ChatCompletionClient,
-    LLMMessage
+    CreateResult
 )
 
-from ..capabilities.tools import BaseTool, FunctionTool
-from .chat import ChatResult
+from ..capabilities.tools import FunctionTool
 from ..cache.cache import AbstractCache
 from ..io import IOStream
 
@@ -76,10 +60,6 @@ class Neuron(BaseNeuron):
 
     Neurons are the core components of the NEURON framework. They can be equipped with
     various capabilities, communicate with each other, and interact with LLM providers.
-
-    Attributes:
-        llm_config: Configuration for LLM inference.
-        DEFAULT_CONFIG: Default configuration for LLM inference.
     """
 
     llm_config: Union[Dict, Literal[False]]
@@ -182,7 +162,6 @@ class Neuron(BaseNeuron):
         description: Optional[str] = None,
         chat_messages: Optional[Dict[BaseNeuron, List[Dict]]] = None,
         default_auto_reply: Union[str, Dict] = "",
-        reflection_on_: bool = False,
         system_message: str = "",
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         human_input_mode: Literal["ALWAYS", "NEVER"] = "NEVER",
@@ -191,45 +170,56 @@ class Neuron(BaseNeuron):
         tool_call_summary_format: str = "{result}",
         reflect_on_tool_use: bool = False,
         abilities: Optional[List[Ability]] = [],
-        model_context: ChatCompletionContext | None = None,
         self_reflection: bool = False,
     ):
         """
         Initialize a Neuron.
 
         Args:
-            name (str): The name of the neuron.
+            name (str): Unique identifier for the neuron.
+
             llm_config (Optional[Union[Dict, Literal[False]]], optional):
-                Configuration for LLM inference. Defaults to None.
+                Configuration for large language model inference. Set to False to disable LLM use.
+
             description (Optional[str], optional):
-                A description of the neuron. Defaults to None.
+                Textual description of the neuron's purpose or behavior.
+
             chat_messages (Optional[Dict[BaseNeuron, List[Dict]]], optional):
-                Chat messages for the neuron. Defaults to None.
+                Dictionary storing chat history between this neuron and others.
+
             default_auto_reply (Union[str, Dict], optional):
-                Default auto-reply message. Defaults to "".
-            enable_reflection (bool, optional):
-                Whether to enable reflection capability. Defaults to False.
+                Default message used when no specific reply is generated.
+
             system_message (str, optional):
-                System message for the neuron. Defaults to "".
-            human_input_mode (str, optional):
-                NEVER: Human intervention is never requested.
-                ALWAYS: Human input is always requested. The human can skip to an automatic response, provide feedback, or end the conversation. max_consecutive_auto_reply is ignored in this mode.
-            max_consecutive_auto_reply (int):
-                The maximum number of consecutive auto replies.
-            is_termination_msg (function): a function that takes a message in the form of a dictionary
-                and returns a boolean value indicating if this received message is a termination message.
-                The dict can contain the following keys: "content", "role", "name", "function_call".
-            tool_call_summary_format: (str, optional):
-                The format string used to create a tool call summary for     every tool call result. Defaults to "{result}".When `reflect_on_tool_use` is `False`, a concatenation of all the tool call summaries, separated by a new line character ('\\n') will be returned as the response.
-                Available variables: `{tool_name}`, `{arguments}`, `{result}`.
-                For example, `"{tool_name}: {result}"` will create a summary like `"tool_name: result"`
+                Message prepended to the conversation to guide LLM behavior.
+
+            is_termination_msg (Optional[Callable[[Dict], bool]], optional):
+                Function that returns True if a given message indicates conversation termination.
+                The input is a dictionary with keys like "content", "role", "name", or "function_call".
+
+            human_input_mode (Literal["ALWAYS", "NEVER"], optional):
+                Defines whether human input is required at every turn ("ALWAYS") or never ("NEVER").
+
+            max_consecutive_auto_reply (int, optional):
+                Maximum number of automatic replies before requiring human input (ignored if human_input_mode="ALWAYS").
+
+            tools (Optional[List[FunctionTool | Callable[..., Any] | Callable[..., Awaitable[Any]]]], optional):
+                A list of external tools or functions the neuron can call.
+
+            tool_call_summary_format (str, optional):
+                Format string used to summarize tool call results. Variables: `{tool_name}`, `{arguments}`, `{result}`.
+
             reflect_on_tool_use (bool, optional):
-                If `True`, the agent will make another model inference using the tool call and result to generate a response. If `False`, the tool call result will be returned as the response. Defaults to `False`.
+                If True, performs an additional inference using the tool result to refine the response.
+
             abilities (Optional[List[Ability]], optional):
-                A list of abilities to be added to the neuron. Defaults to None.
-            model_context (ChatCompletionContext, optional):
-                The model context for the neuron. Defaults to None.
+                List of specific capabilities or skills assigned to the neuron.
+
+            self_reflection (bool, optional):
+                Enables internal reflection mechanisms, allowing the neuron to review its own outputs.
         """
+
+
         # a dictionary of conversations, default value is list
         if chat_messages is None:
             self._oai_messages = defaultdict(list)
@@ -246,12 +236,18 @@ class Neuron(BaseNeuron):
         self._oai_system_message = None
         self._tool_call_summary_format = tool_call_summary_format
         self._reflect_on_tool_use = reflect_on_tool_use
-        self._abilities = abilities
         self._conversation_terminated = defaultdict(bool)
         self._self_reflection = self_reflection
 
         if system_message:
             self._oai_system_message = [{"content": system_message, "role": "system"}]
+
+        #
+        # Avoid mutable default argument
+        self._abilities = abilities if abilities is not None else []
+
+        # Add default abilities (they are always included)
+        self._abilities.append(TextExtractionAbility())
 
         # HUMAN IN THE LOOP
         self._max_consecutive_auto_reply = max_consecutive_auto_reply
@@ -303,24 +299,17 @@ class Neuron(BaseNeuron):
         if len(tool_names) != len(set(tool_names)):
             raise ValueError(f"Tool names must be unique: {tool_names}")
 
-        if model_context is not None:
-            self._model_context = model_context
-        else:
-            self._model_context = UnboundedChatCompletionContext()
-
-
         self._add_abilities()
 
     def _add_abilities(self):
-        # Improve this implementation in a future version
-        TextExtractionAbility(self)
-
-        for capability in self._abilities:
-            if isinstance(capability, Ability):
-                capability.add_to_neuron(self)
+        """
+        Attach all abilities declared in the neuron, including self abilities.
+        """
+        for ability in self._abilities:
+            if isinstance(ability, Ability):
+                ability.add_to_neuron(self)
             else:
-                raise TypeError(f"Unsupported capability type: {type(capability)}")
-        pass
+                raise TypeError(f"Unsupported ability type: {type(ability)}")
 
     def initiate_chat(
         self,
@@ -366,6 +355,7 @@ class Neuron(BaseNeuron):
         for agent in [self, recipient]:
             agent.client_cache = agent.previous_cache
             agent.previous_cache = None
+
         chat_result = ChatResult(
             chat_history=self.chat_messages[recipient],
             summary=summary,
@@ -515,21 +505,6 @@ class Neuron(BaseNeuron):
         self, llm_client, messages, cache, sender=None
     ) -> Generator[Response | ToolCallRequestEvent, None, None]:
         # Gather all relevant state here
-        source = self
-        target = sender
-        model_context = self._model_context
-        #memory = self._memory
-        system_messages = self._oai_system_message
-        tools = self._tools
-        handoff_tools = []
-        #handoffs = self._handoffs
-        model_client = self.client
-        model_client_stream = False
-        reflect_on_tool_use = self._reflect_on_tool_use
-        tool_call_summary_format = self._tool_call_summary_format
-        inner_messages = []
-        cancellation_token = None
-        self_reflection = self._self_reflection
 
         if self._oai_system_message is not None:
             messages = self._oai_system_message + messages
@@ -548,20 +523,7 @@ class Neuron(BaseNeuron):
 
         for output_event in self._process_model_result(
             model_result=response,
-            inner_messages=inner_messages,
-            cancellation_token=cancellation_token,
-            source=source,
-            target=target,
-            system_messages=system_messages,
-            model_context=model_context,
-            tools=tools,
-            handoff_tools=handoff_tools,
-            #handoffs=handoffs,
-            model_client=model_client,
-            model_client_stream=model_client_stream,
-            reflect_on_tool_use=reflect_on_tool_use,
-            tool_call_summary_format=tool_call_summary_format,
-            self_reflection=self_reflection,
+            sender=sender,
         ):
             yield output_event
 
@@ -686,8 +648,7 @@ class Neuron(BaseNeuron):
             )
         return summary
 
-    @staticmethod
-    def _last_msg_as_summary(sender, recipient, summary_args) -> str:
+    def _last_msg_as_summary(self, sender, recipient, summary_args) -> str:
         """Get a chat summary from the last message of the recipient."""
         summary = ""
         try:
@@ -703,8 +664,7 @@ class Neuron(BaseNeuron):
             warnings.warn(f"Cannot extract summary using last_msg: {e}. Using an empty str as summary.", UserWarning)
         return summary
 
-    @staticmethod
-    def _reflection_with_llm_as_summary(sender, recipient, summary_args):
+    def _reflection_with_llm_as_summary(self, sender, recipient, summary_args):
         prompt = summary_args.get("summary_prompt")
         prompt = Neuron.DEFAULT_SUMMARY_PROMPT if prompt is None else prompt
         if not isinstance(prompt, str):
@@ -787,8 +747,8 @@ class Neuron(BaseNeuron):
             self._consecutive_auto_reply_counter[sender] = 0
             response = TextMessage(
                 content=reply,
-                source=self,
-                target=sender,
+                sender=sender,
+                receiver=self,
             )
             yield [(True, response)]
             return
@@ -817,29 +777,14 @@ class Neuron(BaseNeuron):
         self._human_input.append(reply)
         return reply
 
-    @classmethod
     def _process_model_result(
-        cls,
+        self,
         model_result: CreateResult,
-        inner_messages: List[AgentEvent | ChatMessage],
-        cancellation_token: CancellationToken,
-        source: BaseNeuron,
-        target: BaseNeuron,
-        system_messages: str, #List[SystemMessage],
-        model_context: ChatCompletionContext,
-        tools: List[BaseTool[Any, Any]],
-        handoff_tools: List[BaseTool[Any, Any]],
-        #handoffs: Dict[str, HandoffBase],
-        model_client: ClientWrapper,
-        model_client_stream: bool,
-        reflect_on_tool_use: bool,
-        tool_call_summary_format: str,
-        self_reflection: bool,
+        sender: BaseNeuron,
     ) -> Generator[Response | ToolCallRequestEvent, None, None]:
 
         """
-        Handle final or partial responses from model_result, including tool calls,
-        and reflection if needed.
+        Handle final responses from model_result, including tool calls, and reflection if needed.
         """
         if model_result is None:
             warnings.warn(f"Extracted_response from {model_result} is None.", UserWarning)
@@ -848,22 +793,21 @@ class Neuron(BaseNeuron):
 
         # If direct text response (string)
         if isinstance(model_result.content, str):
-            if self_reflection:
-                # self._perform_self_reflection(
+            if self._self_reflection:
                 pass
+                # yield self._perform_self_reflection(
                 # )
 
             else:
                 yield Response(
                     chat_message=TextMessage(
                         content=model_result.content,
-                        source=source,
-                        target=target,
+                        sender=sender,
+                        receiver=self,
                         models_usage=model_result.usage,
-                    ),
-                    inner_messages=inner_messages,
+                    )
                 )
-                return
+            return
 
 
         # Otherwise, we have function calls
@@ -871,25 +815,22 @@ class Neuron(BaseNeuron):
             isinstance(item, FunctionCall) for item in model_result.content
         )
 
-        # STEP 4A: Yield ToolCallRequestEvent
+        # STEP 1: Yield ToolCallRequestEvent
         tool_call_msg = ToolCallRequestEvent(
             content=model_result.content,
-            source=source,
-            target=target,
+            sender=sender,
+            receiver=self,
             models_usage=model_result.usage,
         )
-        #event_logger.debug(tool_call_msg)
-        inner_messages.append(tool_call_msg)
+
         yield tool_call_msg
 
-        # STEP 4B: Execute tool calls (synchronous version)
+        # STEP 2: Execute tool calls (synchronous version)
         executed_calls_and_results = [
             execute_tool_call(
                 tool_call=call,
-                tools=tools,
-                handoff_tools=handoff_tools,
-                agent_name=source.name,
-                cancellation_token=cancellation_token,
+                tools=self._tools,
+                cancellation_token=None,
             )
             for call in model_result.content
         ]
@@ -898,102 +839,73 @@ class Neuron(BaseNeuron):
         # Yield ToolCallExecutionEvent
         tool_call_result_msg = ToolCallExecutionEvent(
             content=exec_results,
-            source=source,
-            target=target
+            sender=sender,
+            receiver=self,
         )
-        #event_logger.debug(tool_call_result_msg)
-        model_context.add_message(FunctionExecutionResultMessage(content=exec_results))
-        inner_messages.append(tool_call_result_msg)
         yield tool_call_result_msg
 
-        # STEP 4: Reflect or summarize tool results
-        if reflect_on_tool_use:
-            for reflection_response in cls._reflect_on_tool_use_flow(
-                system_messages=system_messages,
-                model_client=model_client,
-                model_client_stream=model_client_stream,
-                model_context=model_context,
-                source=source,
-                target=target,
-                inner_messages=inner_messages,
+        # STEP 3: Reflect or summarize tool results
+        if self._reflect_on_tool_use:
+            for reflection_response in self._reflect_on_tool_use_flow(
+                sender=sender,
             ):
                 yield reflection_response
         else:
-            yield cls._summarize_tool_use(
-            executed_calls_and_results=executed_calls_and_results,
-                inner_messages=inner_messages,
-                handoffs=[],
-                tool_call_summary_format=tool_call_summary_format,
-                source=source,
-                target=target
-            )
+            for sumarize_response in self._summarize_tool_use(
+                executed_calls_and_results=executed_calls_and_results,
+                sender=sender,
+            ):
+                yield sumarize_response
 
-    @classmethod
     def _reflect_on_tool_use_flow(
-        cls,
-        system_messages: List[SystemMessage],
-        model_client: ClientWrapper,
-        model_client_stream: bool,
-        model_context: ChatCompletionContext,
-        source: BaseNeuron,
-        target: BaseNeuron,
-        inner_messages: List[AgentEvent | ChatMessage],
+        self,
+        sender: BaseNeuron,
     ) -> Generator[Response | ModelClientStreamingChunkEvent | ThoughtEvent, None, None]:
         """
         If reflect_on_tool_use=True, we do another inference based on tool results
         and yield the final text response (or streaming chunks).
         """
+        messages = sender._oai_messages[self]
+        messages = self._oai_system_message + messages
 
-        messages = target._oai_messages[source]
-        messages = system_messages + messages
-
-        reflection_result = model_client.create(
+        reflection_result = self.client.create(
             context=messages[-1].pop("context", None),
             messages=messages,
             tools=[],
             cache=None,
-            neuron=source,
+            neuron=self,
         )
 
         if not reflection_result or not isinstance(reflection_result.content, str):
             raise RuntimeError("Reflect on tool use produced no valid text response.")
 
-        # --- NEW: If the reflection produced a thought, yield it ---
         if reflection_result.thought:
-            thought_event = ThoughtEvent(content=reflection_result.thought, source=source)
+            thought_event = ThoughtEvent(content=reflection_result.thought, sender=self)
             yield thought_event
-            inner_messages.append(thought_event)
 
         yield Response(
             chat_message=TextMessage(
                 content=reflection_result.content,
-                source=source,
-                target=target,
+                sender=sender,
+                receiver=self,
                 models_usage=reflection_result.usage,
-            ),
-            inner_messages=inner_messages,
+            )
         )
         return
 
-    @staticmethod
     def _summarize_tool_use(
+        self,
         executed_calls_and_results: List[Tuple[FunctionCall, FunctionExecutionResult]],
-        inner_messages: List[AgentEvent | ChatMessage],
-        handoffs: Dict[str, HandoffBase],
-        tool_call_summary_format: str,
-        source: BaseNeuron,
-        target: BaseNeuron,
-
+        sender: BaseNeuron,
     ) -> Generator[Response, None, None]:
         """
         If reflect_on_tool_use=False, create a summary message of all tool calls.
         """
-        # Filter out calls which were actually handoffs
-        normal_tool_calls = [(call, result) for call, result in executed_calls_and_results if call.name not in handoffs]
+        normal_tool_calls = [(call, result) for call, result in executed_calls_and_results]
         tool_call_summaries: List[str] = []
         for tool_call, tool_call_result in normal_tool_calls:
             tool_call_summaries.append(
-                tool_call_summary_format.format(
+                self._tool_call_summary_format.format(
                     tool_name=tool_call.name,
                     arguments=tool_call.arguments,
                     result=tool_call_result.content,
@@ -1003,22 +915,16 @@ class Neuron(BaseNeuron):
         yield Response(
             chat_message=ToolCallSummaryMessage(
                 content=tool_call_summary,
-                source=source,
-                target=target
-            ),
-            inner_messages=inner_messages,
+                sender=sender,
+                receiver=self,
+            )
         )
         return
 
-    @staticmethod
     def _perform_self_reflection(
         self,
-        agent_name: str,
-        target_name: str,
+        sender: BaseNeuron,
         model_result: CreateResult,
-        inner_messages: List[AgentEvent | ChatMessage],
-        model_context: ChatCompletionContext,
-        model_client: ClientWrapper,
     ) -> Response:
         """
         Performs self-reflection using the output of a model result and returns a Response.
@@ -1027,8 +933,6 @@ class Neuron(BaseNeuron):
             agent_name (str): The name of the neuron agent.
             target_name (str): The name of the recipient neuron.
             model_result (CreateResult): The result from the model before reflection.
-            inner_messages (List[AgentEvent | ChatMessage]): Messages leading up to the reflection.
-            model_context (ChatCompletionContext): The current model context.
             model_client (ClientWrapper): The model client to use for generating the reflection.
 
         Returns:
@@ -1042,20 +946,20 @@ class Neuron(BaseNeuron):
         prompt = f"Reflect on the reasoning behind this response: \n\n{content_to_reflect}\n\nWhat led you to this response? Provide insights or doubts if any."
 
         # Compose full message history for reflection
-        reflection_messages = inner_messages + [
+        reflection_messages = "target" + [
             AssistantMessage(
                 content=content_to_reflect,
-                source_name=agent_name,
-                target_name=target_name,
+                sender=sender,
+                receiver=self,
             ),
             TextMessage(
                 content=prompt,
-                source_name=agent_name,
-                target_name=agent_name,
+                sender=sender,
+                receiver=self,
             )
         ]
 
-        reflection_result = model_client.create(
+        reflection_result = self.client.create(
             context=None,
             messages=reflection_messages,
             tools=None,
@@ -1066,25 +970,13 @@ class Neuron(BaseNeuron):
         reflection_text = reflection_result.content if isinstance(reflection_result.content, str) else str(reflection_result.content)
 
         # Add reflection as thought
-        thought_event = ThoughtEvent(content=reflection_text, source_name=agent_name)
-        inner_messages.append(thought_event)
-
-        # Update model context with reflected thought
-        model_context.add_message(
-            AssistantMessage(
-                content=content_to_reflect,
-                source_name=agent_name,
-                target_name=target_name,
-                thought=reflection_text,
-            )
-        )
+        #thought_event = ThoughtEvent(content=reflection_text, source_name=agent_name)
 
         return Response(
             chat_message=TextMessage(
                 content=content_to_reflect,
-                source_name=agent_name,
-                target_name=target_name,
+                sender=sender,
+                receiver=self,
                 models_usage=model_result.usage,
             ),
-            inner_messages=inner_messages,
         )

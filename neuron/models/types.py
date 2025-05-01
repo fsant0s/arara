@@ -4,7 +4,7 @@ from typing import List, Literal, Optional, Union, Callable
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from ..types import FunctionCall
+from ..neurons.types import FunctionCall
 from ..image import Image
 
 
@@ -70,16 +70,8 @@ class FunctionExecutionResult(BaseModel):
     """Whether the function call resulted in an error."""
 
 
-class FunctionExecutionResultMessage(BaseModel):
-    """Function execution result message contains the output of multiple function calls."""
-
-    content: List[FunctionExecutionResult]
-
-    type: Literal["FunctionExecutionResultMessage"] = "FunctionExecutionResultMessage"
-
-
 LLMMessage = Annotated[
-    Union[SystemMessage, UserMessage, AssistantMessage, FunctionExecutionResultMessage], Field(discriminator="type")
+    Union[SystemMessage, UserMessage, AssistantMessage], Field(discriminator="type")
 ]
 
 
@@ -156,6 +148,3 @@ class FunctionExecutionResultMessage(BaseModel):
 
     type: Literal["FunctionExecutionResultMessage"] = "FunctionExecutionResultMessage"
 
-LLMMessage = Annotated[
-    Union[SystemMessage, UserMessage, AssistantMessage, FunctionExecutionResultMessage], Field(discriminator="type")
-]

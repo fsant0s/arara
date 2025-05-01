@@ -7,7 +7,6 @@ from pydantic import BaseModel, ConfigDict, field_serializer
 from ...cancellation_token import CancellationToken
 from ...component_config import ComponentBase
 from ...image import Image
-from ...model_context.chat_completion_context import ChatCompletionContext
 
 
 class MemoryMimeType(Enum):
@@ -75,9 +74,9 @@ class Memory(ABC, ComponentBase[BaseModel]):
     component_type = "memory"
 
     @abstractmethod
-    async def update_context(
+    def update_context(
         self,
-        model_context: ChatCompletionContext,
+        model_context,
     ) -> UpdateContextResult:
         """
         Update the provided model context using relevant memory content.
@@ -91,7 +90,7 @@ class Memory(ABC, ComponentBase[BaseModel]):
         ...
 
     @abstractmethod
-    async def query(
+    def query(
         self,
         query: str | MemoryContent,
         cancellation_token: CancellationToken | None = None,
@@ -111,7 +110,7 @@ class Memory(ABC, ComponentBase[BaseModel]):
         ...
 
     @abstractmethod
-    async def add(self, content: MemoryContent, cancellation_token: CancellationToken | None = None) -> None:
+    def add(self, content: MemoryContent, cancellation_token: CancellationToken | None = None) -> None:
         """
         Add a new content to memory.
 
@@ -122,11 +121,11 @@ class Memory(ABC, ComponentBase[BaseModel]):
         ...
 
     @abstractmethod
-    async def clear(self) -> None:
+    def clear(self) -> None:
         """Clear all entries from memory."""
         ...
 
     @abstractmethod
-    async def close(self) -> None:
+    def close(self) -> None:
         """Clean up any resources used by the memory implementation."""
         ...

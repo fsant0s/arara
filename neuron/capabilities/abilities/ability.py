@@ -6,7 +6,7 @@ class Ability(ABC):
     """Base class for modular abilities that can be added to a neuron."""
 
     def __init__(self) -> None:
-        pass
+        self._neuron = None
 
     def add_to_neuron(self, neuron: BaseNeuron):
         """
@@ -17,7 +17,7 @@ class Ability(ABC):
             raise TypeError(
                 f"Expected parameter 'neuron' to be of type 'BaseNeuron', but got {type(neuron).__name__}."
             )
-
+        self._neuron = neuron
         # Delegate specific behavior to the subclass
         self.on_add_to_neuron(neuron)
 

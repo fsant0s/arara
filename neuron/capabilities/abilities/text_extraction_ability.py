@@ -5,9 +5,8 @@ from ...messages import (
     ToolCallRequestEvent,
     ToolCallExecutionEvent,
 )
-from ...base import Response
+from ...neurons.types import Response
 from typing import Union
-
 
 class TextExtractionAbility(Ability):
     """
@@ -17,7 +16,7 @@ class TextExtractionAbility(Ability):
     regardless of the original message format (TextMessage, ToolCall, or Response).
     """
 
-    def __init__(self, neuron: BaseNeuron) -> None:
+    def __init__(self) -> None:
         """
         Initialize the ability and bind it to a neuron.
 
@@ -25,14 +24,16 @@ class TextExtractionAbility(Ability):
             neuron (BaseNeuron): The neuron to which this ability is attached.
         """
         super().__init__()
-        self._neuron = neuron
-        self.add_to_neuron(neuron)
 
     def on_add_to_neuron(self, neuron: BaseNeuron):
         """
         Register this ability as a utility hook.
         """
-        neuron.register_hook(hookable_method="process_message_before_send", hook=self._extract_text)
+        if not isinstance(neuron, BaseNeuron):
+            raise TypeError(
+                f"Expected parameter 'neuron' to be of type 'BaseNeuron', but got {type(neuron).__name__}."
+            )
+        self._neuron.register_hook(hookable_method="process_message_before_send", hook=self._extract_text)
 
     def _extract_text(
         self,
@@ -70,5 +71,5 @@ class TextExtractionAbility(Ability):
 
         if isinstance(message, Response):
             return message.chat_message.content
-
+        print("message", message)
         raise TypeError(f"Unsupported message type: {type(message)}")

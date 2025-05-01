@@ -5,12 +5,17 @@ from . import Neuron
 
 class User(Neuron):
     """
-    Represents a user interacting with the system, providing detailed descriptions
-    of items of interest, including brand, category, price, and specific preferences.
+    Represents a user-type neuron responsible for initiating and maintaining interactions
+    with other neurons in the system.
+
+    This agent simulates or represents human input in a conversation, providing questions,
+    responses, or general free-form communication. It is ideal for testing or modeling
+    human behavior in conversational environments.
     """
 
     DEFAULT_USER_DESCRIPTIONS = """
-    A user who provides detailed descriptions of the items they like, including features such as brand, category, price, intended use, and other specific preferences.
+    An agent that represents a human user interacting with the system. Its communication is free-form
+    and may involve questions, comments, or spontaneously expressed preferences.
     """
 
     def __init__(
@@ -21,22 +26,24 @@ class User(Neuron):
         **kwargs,
     ):
         """
-        Initializes an instance of the User class, a type of Neuron.
+        Initializes a user-type agent.
 
         Args:
-            **kwargs: Additional arguments for configuring the Neuron.
+            name (str): Agent name, used for identification in conversations.
+            description (Optional[str]): Optional textual description of the agent's role or behavior.
+            human_input_mode (Literal): Defines whether the agent should wait for human input ("ALWAYS")
+                                        or operate automatically ("NEVER").
+            **kwargs: Additional parameters passed to the base Neuron class.
         """
 
+        # Initialize the base Neuron class with the appropriate parameters
         super().__init__(
             name=name,
-            description=(
-                description if description is not None else self.DEFAULT_USER_DESCRIPTIONS
-            ),
+            description=(description if description is not None else self.DEFAULT_USER_DESCRIPTIONS),
             human_input_mode=human_input_mode,
             **kwargs,
         )
 
+        # Log this agent if logging is enabled
         if logging_enabled():
             log_new_neuron(self, locals())
-
-

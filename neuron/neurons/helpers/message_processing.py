@@ -11,7 +11,7 @@ from ...messages import (
 
 from .print_received_message import print_received_message
 
-from ...base import Response
+from ...neurons.types import Response
 
 def process_message_before_send(
     self: BaseNeuron, message: Response | TextMessage, recipient: BaseNeuron, silent: bool

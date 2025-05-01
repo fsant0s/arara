@@ -4,7 +4,6 @@ from neuron.neurons.base import BaseNeuron
 
 from .message_to_dict import message_to_dict
 
-
 def append_oai_message(
     self: BaseNeuron,
     message: Union[Dict, str],

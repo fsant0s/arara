@@ -7,10 +7,10 @@ class and includes specific fields relevant to the type of message being sent.
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, Literal, Mapping, TypeVar
 
-from .types import FunctionCall
+from .neurons.types import FunctionCall
 from .image import Image
 from .capabilities.memory import MemoryContent
-from .models import FunctionExecutionResult, LLMMessage, RequestUsage, UserMessage
+from .models import FunctionExecutionResult, RequestUsage, UserMessage
 from pydantic import BaseModel, ConfigDict, computed_field
 from typing_extensions import Self
 from .neurons import BaseNeuron
@@ -66,10 +66,10 @@ class ChatMessage(BaseMessage, ABC):
     message using models and return a response as another :class:`ChatMessage`.
     """
 
-    source: BaseNeuron
+    sender: BaseNeuron
     """The agent that sent this message."""
 
-    target: BaseNeuron
+    receiver: BaseNeuron
     """The agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
@@ -127,7 +127,7 @@ class TextChatMessage(ChatMessage, ABC):
         return self.content
 
     def to_model_message(self) -> UserMessage:
-        return UserMessage(content=self.content, source=self.source)
+        return UserMessage(content=self.content, source=self.sender)
 
 
 class AgentEvent(BaseMessage, ABC):
@@ -146,10 +146,10 @@ class AgentEvent(BaseMessage, ABC):
     a custom rendering of the content.
     """
 
-    source: BaseNeuron
+    sender: BaseNeuron
     """The agent that sent this message."""
 
-    target: BaseNeuron
+    receiver: BaseNeuron
     """The agent that this message is intended for."""
 
     models_usage: RequestUsage | None = None
@@ -213,7 +213,7 @@ class StructuredMessage(ChatMessage, Generic[StructuredContentType]):
     def to_model_message(self) -> UserMessage:
         return UserMessage(
             content=self.content.model_dump_json(),
-            source=self.source,
+            source=self.sender,
         )
 
 class TextMessage(TextChatMessage):
@@ -259,23 +259,13 @@ class MultiModalMessage(ChatMessage):
         return "\n".join(result)
 
     def to_model_message(self) -> UserMessage:
-        return UserMessage(content=self.content, source=self.source)
+        return UserMessage(content=self.content, source=self.sender)
 
 
 class StopMessage(TextChatMessage):
     """A message requesting stop of a conversation."""
 
     ...
-
-
-class HandoffMessage(TextChatMessage):
-    """A message requesting handoff of a conversation to another agent."""
-
-    target: str
-    """The name of the target agent to handoff to."""
-
-    context: List[LLMMessage] = []
-    """The model context to be passed to the target agent."""
 
 
 class ToolCallSummaryMessage(TextChatMessage):
@@ -364,7 +354,6 @@ class MessageFactory:
         self._message_types[MultiModalMessage.__name__] = MultiModalMessage
         self._message_types[StopMessage.__name__] = StopMessage
         self._message_types[ToolCallSummaryMessage.__name__] = ToolCallSummaryMessage
-        self._message_types[HandoffMessage.__name__] = HandoffMessage
         self._message_types[ToolCallRequestEvent.__name__] = ToolCallRequestEvent
         self._message_types[ToolCallExecutionEvent.__name__] = ToolCallExecutionEvent
         self._message_types[MemoryQueryEvent.__name__] = MemoryQueryEvent
@@ -425,7 +414,6 @@ __all__ = [
     "ChatMessage",
     "StructuredContentType",
     "StructuredMessage",
-    "HandoffMessage",
     "MultiModalMessage",
     "StopMessage",
     "TextMessage",

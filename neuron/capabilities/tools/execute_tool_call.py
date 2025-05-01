@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Tuple, Generator
 import json
-from ...types import FunctionCall
+from ...neurons.types import FunctionCall
 from ..tools.base import BaseTool
 from ...cancellation_token import CancellationToken
 from ...models import FunctionExecutionResult
@@ -8,13 +8,11 @@ from ...models import FunctionExecutionResult
 def execute_tool_call(
     tool_call: FunctionCall,
     tools: List[BaseTool[Any, Any]],
-    handoff_tools: List[BaseTool[Any, Any]],
-    agent_name: str,
     cancellation_token: CancellationToken,
 ) -> Generator[tuple[FunctionCall, FunctionExecutionResult], None, None]:
     """Execute a single tool call and return the result."""
     try:
-        all_tools = tools + handoff_tools
+        all_tools = tools
         if not all_tools:
             raise ValueError("No tools are available.")
         tool = next((t for t in all_tools if t.name == tool_call.name), None)

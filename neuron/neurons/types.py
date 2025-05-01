@@ -1,9 +1,27 @@
-import logging
-from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
 
-logger = logging.getLogger(__name__)
-Prerequisite = Tuple[int, int]
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+@dataclass
+class FunctionCall:
+    """A function call issued by the agent during a chat."""
+
+    id: str
+    """Unique identifier for the function call."""
+
+    arguments: str
+    """The JSON-formatted string containing the arguments to be passed to the function."""
+
+    name: str
+    """The name of the function to be invoked."""
+
+@dataclass(kw_only=True)
+class Response:
+    """A response from calling .create()"""
+
+    chat_message: "ChatMessage"  # type hint as string to avoid direct evaluation
+    """A chat message produced by the agent as the response."""
 
 @dataclass
 class ChatResult:

@@ -19,16 +19,16 @@ from ..runtime_logging import log_new_neuron, logging_enabled
 from ..io.base import IOStream
 from .neuron import Neuron
 
-from ..base import Response
+from ..neurons.types import Response
 from ..messages import TextMessage
 
 logger = logging.getLogger(__name__)
 
 @dataclass
 class ConversationalOrchestrator:
-    """(In preview) A group chat class that contains the following data fields:
+    """(In preview) A conversation orchestrator class that contains the following data fields:
     - agents: a list of participating agents.
-    - messages: a list of messages in the group chat.
+    - messages: a list of messages in the conversation orchestrator.
     - max_round: the maximum number of rounds.
     - admin_name: the name of the admin agent if there is one. Default is "Admin".
         KeyBoardInterrupt will make the admin agent take over.
@@ -66,8 +66,8 @@ class ConversationalOrchestrator:
         - "random": the next speaker is selected randomly.
         - "round_robin": the next speaker is selected in a round robin fashion, i.e., iterating in the same order as provided in `agents`.
         - a customized speaker selection function (Callable): the function will be called to select the next speaker.
-            The function should take the last speaker and the group chat as input and return one of the following:
-                1. an `Neuron` class, it must be one of the agents in the group chat.
+            The function should take the last speaker and the conversation orchestrator as input and return one of the following:
+                1. an `Neuron` class, it must be one of the agents in the conversation orchestrator.
                 2. a string from ['auto', 'manual', 'random', 'round_robin'] to select a default method to use.
                 3. None, which would terminate the conversation gracefully.
             ```python
@@ -100,7 +100,7 @@ class ConversationalOrchestrator:
     - enable_clear_history: enable possibility to clear history of messages for agents manually by providing
         "clear history" phrase in user prompt. This is experimental feature.
         See description of ConversationalOrchestratorManager.clear_agents_history function for more info.
-    - send_introductions: send a round of introductions at the start of the group chat, so agents know who they can speak to (default: False)
+    - send_introductions: send a round of introductions at the start of the conversation orchestrator, so agents know who they can speak to (default: False)
     - role_for_select_speaker_messages: sets the role name for speaker selection when in 'auto' mode, typically 'user' or 'system'. (default: 'system')
     """
 
@@ -176,7 +176,7 @@ class ConversationalOrchestrator:
         # Discussed in https://github.com/microsoft/autogen/pull/857#discussion_r1451266661
         if self.allowed_or_disallowed_speaker_transitions is not None and self.allow_repeat_speaker is not None:
             raise ValueError(
-                "Don't provide both allowed_or_disallowed_speaker_transitions and allow_repeat_speaker in group chat. "
+                "Don't provide both allowed_or_disallowed_speaker_transitions and allow_repeat_speaker in conversation orchestrator. "
                 "Please set one of them to None."
             )
 
@@ -259,15 +259,15 @@ class ConversationalOrchestrator:
 
     @property
     def agent_names(self) -> List[str]:
-        """Return the names of the agents in the group chat."""
+        """Return the names of the agents in the conversation orchestrator."""
         return [agent.name for agent in self.agents]
 
     def reset(self):
-        """Reset the group chat."""
+        """Reset the conversation orchestrator."""
         self.messages.clear()
 
     def append(self, message: Dict, speaker: Neuron):
-        """Append a message to the group chat.
+        """Append a message to the conversation orchestrator.
         We cast the content to str here so that it can be managed by text-based
         model.
         """
@@ -291,7 +291,7 @@ class ConversationalOrchestrator:
         return filtered_agents[0] if filtered_agents else None
 
     def nested_agents(self) -> List[Neuron]:
-        """Returns all agents in the group chat manager."""
+        """Returns all agents in the conversation orchestrator manager."""
         agents = self.agents.copy()
         for agent in agents:
             if isinstance(agent, ConversationalOrchestratorManager):
@@ -416,7 +416,7 @@ class ConversationalOrchestrator:
                     return selected_agent, self.agents, None
                 else:
                     raise ValueError(
-                        f"Custom speaker selection function returned an agent {selected_agent.name} not in the group chat."
+                        f"Custom speaker selection function returned an agent {selected_agent.name} not in the conversation orchestrator."
                     )
             elif isinstance(selected_agent, str):
                 # If returned a string, assume it is a speaker selection method
@@ -577,7 +577,7 @@ class ConversationalOrchestrator:
         5. If we run out of turns and no single agent can be determined, the next speaker in the list of agents is returned
 
         Args:
-            last_speaker Neuron: The previous speaker in the group chat
+            last_speaker Neuron: The previous speaker in the conversation orchestrator
             selector ConversableNeuron:
             messages Optional[List[Dict]]: Current chat messages
             agents Optional[List[Neuron]]: Valid list of agents for speaker selection
@@ -586,7 +586,7 @@ class ConversationalOrchestrator:
             Dict: a counter for mentioned agents.
         """
 
-        # If no agents are passed in, assign all the group chat's agents
+        # If no agents are passed in, assign all the conversation orchestrator's agents
         if agents is None:
             agents = self.agents
 
@@ -835,13 +835,12 @@ class ConversationalOrchestrator:
 
 
 class ConversationalOrchestratorManager(Neuron):
-    """(In preview) A chat manager agent that can manage a group chat of multiple agents."""
+    """(In preview) A chat manager agent that can manage a conversation orchestrator of multiple agents."""
 
     def __init__(
         self,
         chitchat: ConversationalOrchestrator,
         name: Optional[str] = "conversational_orchestrator",
-        # unlimited consecutive auto reply by default
         system_message: Optional[Union[str, List]] = "Chitchat manager.",
         silent: bool = False,
         **kwargs,
@@ -870,11 +869,11 @@ class ConversationalOrchestratorManager(Neuron):
 
     @property
     def chitchat(self) -> ConversationalOrchestrator:
-        """Returns the group chat managed by the group chat manager."""
+        """Returns the conversation orchestrator managed by the conversation orchestrator manager."""
         return self._chitchat
 
     def chat_messages_for_summary(self, agent: Neuron) -> List[Dict]:
-        """The list of messages in the group chat as a conversation to summarize.
+        """The list of messages in the conversation orchestrator as a conversation to summarize.
         The agent is ignored.
         """
         return self._chitchat.messages
@@ -901,7 +900,7 @@ class ConversationalOrchestratorManager(Neuron):
         sender: Optional[Neuron] = None,
         config: Optional[ConversationalOrchestrator] = None,
     ) -> Generator[Tuple[bool, Optional[str]], None, None]:
-        """Run a group chat."""
+        """Run a conversation orchestrator."""
         if messages is None:
             messages = self._oai_messages[sender]
         message = messages[-1]

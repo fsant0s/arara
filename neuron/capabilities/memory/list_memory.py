@@ -5,7 +5,6 @@ from typing_extensions import Self
 
 from ...cancellation_token import CancellationToken
 from ...component_config import Component
-from ...model_context.chat_completion_context import ChatCompletionContext
 from ...models import SystemMessage
 from .base_memory import Memory, MemoryContent, MemoryQueryResult, UpdateContextResult
 
@@ -103,7 +102,7 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
 
     async def update_context(
         self,
-        model_context: ChatCompletionContext,
+        model_context,
     ) -> UpdateContextResult:
         """Update the model context by appending memory content.
 

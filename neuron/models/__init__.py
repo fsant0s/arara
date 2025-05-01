@@ -11,7 +11,6 @@ from .types import (
     CreateResult,
     FinishReasons,
     FunctionExecutionResult,
-    FunctionExecutionResultMessage,
     LLMMessage,
     RequestUsage,
     SystemMessage,
@@ -34,6 +33,5 @@ __all__ = [
     "ModelFamily",
     "ModelInfo",
     "validate_model_info",
-    "FunctionExecutionResultMessage",
     "LLMMessage",
 ]

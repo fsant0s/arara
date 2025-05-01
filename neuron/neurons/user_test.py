@@ -5,12 +5,16 @@ from . import User
 
 class UserTest(User):
     """
-    Represents a user interacting with the system, providing detailed descriptions
-    of items of interest, including brand, category, price, and specific preferences.
+    Represents a test user agent that simulates human interaction with the system.
+
+    This agent follows a predefined sequence of messages (dialog), mimicking a user
+    interacting naturally with other neurons. It is useful for testing conversations,
+    verifying tool responses, or running automated scenarios.
     """
 
     DEFAULT_USER_DESCRIPTIONS = """
-    A user test who provides detailed descriptions of the items they like, including features such as brand, category, price, intended use, and other specific preferences.
+    A test user agent that interacts with the system using predefined, natural-language
+    messages. Used to simulate typical user behavior during conversations.
     """
 
     def __init__(
@@ -21,17 +25,19 @@ class UserTest(User):
         **kwargs,
     ):
         """
-        Initializes an instance of the User class, a type of Neuron.
+        Initializes a simulated user agent with a predefined dialog.
 
         Args:
-            **kwargs: Additional arguments for configuring the Neuron.
+            name (str): Agent name, used for identification in interactions.
+            description (Optional[str]): Custom description of the agent behavior.
+            human_input_mode (Literal): Determines whether human input is expected
+                                        ("ALWAYS") or bypassed ("NEVER").
+            **kwargs: Additional parameters passed to the base User class.
         """
 
         super().__init__(
             name=name,
-            description=(
-                description if description is not None else self.DEFAULT_USER_DESCRIPTIONS
-            ),
+            description=(description if description is not None else self.DEFAULT_USER_DESCRIPTIONS),
             human_input_mode=human_input_mode,
             **kwargs,
         )
@@ -39,25 +45,27 @@ class UserTest(User):
         if logging_enabled():
             log_new_neuron(self, locals())
 
+        # Internal state to control progression through the predefined dialog
         self._counter = 0
+
+        # Simulated conversation sequence for testing purposes
         self._dialog = [
-            #"Como vc ta?",
-            #"Que legal, obrigado por perguntar!",
             "Gostaria de saber quanto é 100 euros em usd",
-            "Quantas árovres existem no planeta terra?",
+            "Quantas árvores existem no planeta terra?",
             "How much is 123.45 USD in EUR??",
             "Muito obrigado pelas informações!",
             "exit",
         ]
 
     def get_human_input(self, prompt):
-        """Custmized function to get human input.
+        """
+        Returns the next message in the simulated user dialog.
 
         Args:
-            prompt (str): prompt for the human input.
+            prompt (str): Prompt text shown to the user (ignored in this simulation).
 
         Returns:
-            str: human input.
+            str: The next predefined user message.
         """
         reply = self._dialog[self._counter]
         self._counter += 1
