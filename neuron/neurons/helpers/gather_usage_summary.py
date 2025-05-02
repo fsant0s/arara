@@ -1,12 +1,17 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from neuron.neurons import BaseNeuron
 
-def gather_usage_summary(neurons: List[BaseNeuron]) -> Dict[Dict[str, Dict], Dict[str, Dict]]:
+usage_including_cached_inference = {"total_cost": 0}
+usage_excluding_cached_inference = {"total_cost": 0}
+
+
+def gather_usage_summary(sender: BaseNeuron, receiver: BaseNeuron) -> Dict[Dict[str, Dict], Dict[str, Dict]]:
     r"""Gather usage summary from all neurons.
 
     Args:
-        neurons: (list): List of neurons.
+        sender (BaseNeuron): The sender neuron.
+        receiver (BaseNeuron): The receiver neuron.
 
     Returns:
         dictionary: A dictionary containing two keys:
@@ -44,27 +49,40 @@ def gather_usage_summary(neurons: List[BaseNeuron]) -> Dict[Dict[str, Dict], Dic
     If none of the neurons incurred any cost (not having a client), then the usage_including_cached_inference and usage_excluding_cached_inference will be `{'total_cost': 0}`.
     """
 
-    def aggregate_summary(usage_summary: Dict[str, Any], neuron_summary: Dict[str, Any]) -> None:
+    def aggregate_summary(usage_summary: Dict[str, Any], neuron_summary: Dict[str, Any], neuron_name: str) -> None:
+
         if neuron_summary is None:
             return
+
         usage_summary["total_cost"] += neuron_summary.get("total_cost", 0)
+
         for model, data in neuron_summary.items():
             if model != "total_cost":
-                if model not in usage_summary:
-                    usage_summary[model] = data.copy()
+                if neuron_name not in usage_summary:
+                    usage_summary[neuron_name] = neuron_summary
                 else:
-                    usage_summary[model]["cost"] += data.get("cost", 0)
-                    usage_summary[model]["prompt_tokens"] += data.get("prompt_tokens", 0)
-                    usage_summary[model]["completion_tokens"] += data.get("completion_tokens", 0)
-                    usage_summary[model]["total_tokens"] += data.get("total_tokens", 0)
+                    usage_summary[neuron_name]["total_cost"] += neuron_summary.get("total_cost", 0)
+                    usage_summary[neuron_name][model]["cost"] += data.get("cost", 0)
+                    usage_summary[neuron_name][model]["prompt_tokens"] += data.get("prompt_tokens", 0)
+                    usage_summary[neuron_name][model]["completion_tokens"] += data.get("completion_tokens", 0)
+                    usage_summary[neuron_name][model]["total_tokens"] += data.get("total_tokens", 0)
 
-    usage_including_cached_inference = {"total_cost": 0}
-    usage_excluding_cached_inference = {"total_cost": 0}
+    neurons = []
+    if getattr(sender, "client", None):
+        neurons.append(sender)
+    if getattr(receiver, "client", None):
+        neurons.append(receiver)
+
+    from neuron.neurons.conversational_orchestrator import ConversationalOrchestratorManager
+    if isinstance(receiver, ConversationalOrchestratorManager):
+        for neuron in receiver.chitchat.agents:
+            if getattr(neuron, "client", None):
+                neurons.append(neuron)
 
     for neuron in neurons:
         if getattr(neuron, "client", None):
-            aggregate_summary(usage_including_cached_inference, neuron.client.total_usage_summary)
-            aggregate_summary(usage_excluding_cached_inference, neuron.client.actual_usage_summary)
+            aggregate_summary(usage_including_cached_inference, neuron.client.total_usage_summary, neuron._name)
+            aggregate_summary(usage_excluding_cached_inference, neuron.client.actual_usage_summary, neuron._name)
 
     return {
         "usage_including_cached_inference": usage_including_cached_inference,

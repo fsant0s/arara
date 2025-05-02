@@ -359,7 +359,7 @@ class Neuron(BaseNeuron):
         chat_result = ChatResult(
             chat_history=self.chat_messages[recipient],
             summary=summary,
-            cost=gather_usage_summary([self, recipient]),
+            cost=gather_usage_summary(self, recipient),
             human_input=self._human_input,
         )
 
