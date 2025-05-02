@@ -2,13 +2,11 @@ from typing import Any, Dict, List, Tuple, Generator
 import json
 from ...neurons.types import FunctionCall
 from ..tools.base import BaseTool
-from ...cancellation_token import CancellationToken
 from ...models import FunctionExecutionResult
 
 def execute_tool_call(
     tool_call: FunctionCall,
     tools: List[BaseTool[Any, Any]],
-    cancellation_token: CancellationToken,
 ) -> Generator[tuple[FunctionCall, FunctionExecutionResult], None, None]:
     """Execute a single tool call and return the result."""
     try:
@@ -19,7 +17,7 @@ def execute_tool_call(
         if tool is None:
             raise ValueError(f"The tool '{tool_call.name}' is not available.")
         arguments: Dict[str, Any] = json.loads(tool_call.arguments) if tool_call.arguments else {}
-        result = tool.run_json(arguments, cancellation_token)
+        result = tool.run_json(arguments)
         result_as_str = tool.return_value_as_string(result)
         return (
             tool_call,

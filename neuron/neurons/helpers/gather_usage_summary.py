@@ -5,7 +5,6 @@ from neuron.neurons import BaseNeuron
 usage_including_cached_inference = {"total_cost": 0}
 usage_excluding_cached_inference = {"total_cost": 0}
 
-
 def gather_usage_summary(sender: BaseNeuron, receiver: BaseNeuron) -> Dict[Dict[str, Dict], Dict[str, Dict]]:
     r"""Gather usage summary from all neurons.
 
@@ -48,6 +47,7 @@ def gather_usage_summary(sender: BaseNeuron, receiver: BaseNeuron) -> Dict[Dict[
 
     If none of the neurons incurred any cost (not having a client), then the usage_including_cached_inference and usage_excluding_cached_inference will be `{'total_cost': 0}`.
     """
+    from ..conversational_orchestrator import ConversationalOrchestratorManager
 
     def aggregate_summary(usage_summary: Dict[str, Any], neuron_summary: Dict[str, Any], neuron_name: str) -> None:
 
@@ -67,13 +67,7 @@ def gather_usage_summary(sender: BaseNeuron, receiver: BaseNeuron) -> Dict[Dict[
                     usage_summary[neuron_name][model]["completion_tokens"] += data.get("completion_tokens", 0)
                     usage_summary[neuron_name][model]["total_tokens"] += data.get("total_tokens", 0)
 
-    neurons = []
-    if getattr(sender, "client", None):
-        neurons.append(sender)
-    if getattr(receiver, "client", None):
-        neurons.append(receiver)
-
-    from neuron.neurons.conversational_orchestrator import ConversationalOrchestratorManager
+    neurons = [sender, receiver]
     if isinstance(receiver, ConversationalOrchestratorManager):
         for neuron in receiver.chitchat.agents:
             if getattr(neuron, "client", None):

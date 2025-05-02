@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel, ConfigDict, field_serializer
 
-from ...cancellation_token import CancellationToken
 from ...component_config import ComponentBase
 from ...image import Image
 
@@ -28,7 +27,7 @@ class MemoryContent(BaseModel):
     content: ContentType
     """The content of the memory item. It can be a string, bytes, dict, or :class:`~autogen_core.Image`."""
 
-    mime_type: MemoryMimeType | str
+    mime_type: MemoryMimeType | str = MemoryMimeType.TEXT
     """The MIME type of the memory content."""
 
     metadata: Dict[str, Any] | None = None
@@ -93,7 +92,6 @@ class Memory(ABC, ComponentBase[BaseModel]):
     def query(
         self,
         query: str | MemoryContent,
-        cancellation_token: CancellationToken | None = None,
         **kwargs: Any,
     ) -> MemoryQueryResult:
         """
@@ -101,7 +99,6 @@ class Memory(ABC, ComponentBase[BaseModel]):
 
         Args:
             query: Query content item
-            cancellation_token: Optional token to cancel operation
             **kwargs: Additional implementation-specific parameters
 
         Returns:
@@ -110,13 +107,12 @@ class Memory(ABC, ComponentBase[BaseModel]):
         ...
 
     @abstractmethod
-    def add(self, content: MemoryContent, cancellation_token: CancellationToken | None = None) -> None:
+    def add(self, content: MemoryContent) -> None:
         """
         Add a new content to memory.
 
         Args:
             content: The memory content to add
-            cancellation_token: Optional token to cancel operation
         """
         ...
 

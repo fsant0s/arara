@@ -2,13 +2,14 @@ import copy
 import logging
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator, Sequence
 
 from openai import BadRequestError
 
 from ..capabilities.abilities import (
     Ability,
-    TextExtractionAbility
+    TextExtractionAbility,
+    MemoryAbility
 )
 from .base import BaseNeuron
 from .helpers import (
@@ -26,6 +27,7 @@ from .helpers import (
     consolidate_chat_info,
 )
 
+from ..capabilities.memory import Memory
 from .types import FunctionCall, Response, ChatResult
 from ..capabilities.tools.execute_tool_call import execute_tool_call
 from ..messages import (
@@ -171,6 +173,7 @@ class Neuron(BaseNeuron):
         reflect_on_tool_use: bool = False,
         abilities: Optional[List[Ability]] = [],
         self_reflection: bool = False,
+        memory: Sequence[Memory] | None = None,
     ):
         """
         Initialize a Neuron.
@@ -242,12 +245,19 @@ class Neuron(BaseNeuron):
         if system_message:
             self._oai_system_message = [{"content": system_message, "role": "system"}]
 
-        #
+        self._memory = None
+        if memory is not None:
+            if isinstance(memory, list):
+                self._memory = memory
+            else:
+                raise TypeError(f"Expected Memory, List[Memory], or None, got {type(memory)}")
+
         # Avoid mutable default argument
         self._abilities = abilities if abilities is not None else []
 
         # Add default abilities (they are always included)
         self._abilities.append(TextExtractionAbility())
+        self._abilities.append(MemoryAbility())
 
         # HUMAN IN THE LOOP
         self._max_consecutive_auto_reply = max_consecutive_auto_reply
@@ -830,7 +840,6 @@ class Neuron(BaseNeuron):
             execute_tool_call(
                 tool_call=call,
                 tools=self._tools,
-                cancellation_token=None,
             )
             for call in model_result.content
         ]

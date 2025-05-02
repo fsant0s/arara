@@ -9,7 +9,6 @@ from opentelemetry.trace import get_tracer
 from pydantic import BaseModel
 from typing_extensions import NotRequired
 
-from ...cancellation_token import CancellationToken
 from ...component_config import ComponentBase
 from ...function_utils import normalize_annotated_type
 from ...logger import ToolCallEvent
@@ -51,7 +50,7 @@ class Tool(Protocol):
 
     def return_value_as_string(self, value: Any) -> str: ...
 
-    def run_json(self, args: Mapping[str, Any], cancellation_token: CancellationToken) -> Any: ...
+    def run_json(self, args: Mapping[str, Any]) -> Any: ...
 
     def save_state_json(self) -> Mapping[str, Any]: ...
 
@@ -145,9 +144,9 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
         return str(value)
 
     @abstractmethod
-    def run(self, args: ArgsT, cancellation_token: CancellationToken) -> ReturnT: ...
+    def run(self, args: ArgsT) -> ReturnT: ...
 
-    def run_json(self, args: Mapping[str, Any], cancellation_token: CancellationToken) -> Any:
+    def run_json(self, args: Mapping[str, Any]) -> Any:
         with get_tracer("base_tool").start_as_current_span(
             self._name,
             attributes={
@@ -157,7 +156,7 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
             },
         ):
             # Execute the tool's run method
-            return_value = self.run(self._args_type.model_validate(args), cancellation_token)
+            return_value = self.run(self._args_type.model_validate(args))
 
         # Log the tool call event
         #event = ToolCallEvent(

@@ -3,7 +3,6 @@ from typing import Any, List
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...cancellation_token import CancellationToken
 from ...component_config import Component
 from ...models import SystemMessage
 from .base_memory import Memory, MemoryContent, MemoryQueryResult, UpdateContextResult
@@ -22,8 +21,7 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
     """Simple chronological list-based memory implementation.
 
     This memory implementation stores contents in a list and retrieves them in
-    chronological order. It has an `update_context` method that updates model contexts
-    by appending all stored memories.
+    chronological order. It has an `update_context` method that updates model contexts by appending all stored memories.
 
     The memory content can be directly accessed and modified through the content property,
     allowing external applications to manage memory contents directly.
@@ -37,7 +35,7 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
             from autogen_core.model_context import BufferedChatCompletionContext
 
 
-            async def main() -> None:
+            def main() -> None:
                 # Initialize memory
                 memory = ListMemory(name="chat_history")
 
@@ -100,7 +98,7 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
         """
         self._contents = value
 
-    async def update_context(
+    def update_context(
         self,
         model_context,
     ) -> UpdateContextResult:
@@ -123,43 +121,40 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
 
         if memory_strings:
             memory_context = "\nRelevant memory content (in chronological order):\n" + "\n".join(memory_strings) + "\n"
-            await model_context.add_message(SystemMessage(content=memory_context))
+            model_context.add_message(SystemMessage(content=memory_context))
 
         return UpdateContextResult(memories=MemoryQueryResult(results=self._contents))
 
-    async def query(
+    def query(
         self,
         query: str | MemoryContent = "",
-        cancellation_token: CancellationToken | None = None,
         **kwargs: Any,
     ) -> MemoryQueryResult:
         """Return all memories without any filtering.
 
         Args:
             query: Ignored in this implementation
-            cancellation_token: Optional token to cancel operation
             **kwargs: Additional parameters (ignored)
 
         Returns:
             MemoryQueryResult containing all stored memories
         """
-        _ = query, cancellation_token, kwargs
+        _ = query, kwargs
         return MemoryQueryResult(results=self._contents)
 
-    async def add(self, content: MemoryContent, cancellation_token: CancellationToken | None = None) -> None:
+    def add(self, content: MemoryContent) -> None:
         """Add new content to memory.
 
         Args:
             content: Memory content to store
-            cancellation_token: Optional token to cancel operation
         """
         self._contents.append(content)
 
-    async def clear(self) -> None:
+    def clear(self) -> None:
         """Clear all memory content."""
         self._contents = []
 
-    async def close(self) -> None:
+    def close(self) -> None:
         """Cleanup resources if needed."""
         pass
 

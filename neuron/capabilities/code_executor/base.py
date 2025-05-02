@@ -11,7 +11,6 @@ from typing import List, Optional, Type
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...cancellation_token import CancellationToken
 from ...component_config import ComponentBase
 
 
@@ -52,7 +51,7 @@ class CodeExecutor(ABC, ComponentBase[BaseModel]):
 
     @abstractmethod
     async def execute_code_blocks(
-        self, code_blocks: List[CodeBlock], cancellation_token: CancellationToken
+        self, code_blocks: List[CodeBlock]
     ) -> CodeResult:
         """Execute code blocks and return the result.
 
@@ -67,7 +66,6 @@ class CodeExecutor(ABC, ComponentBase[BaseModel]):
         Raises:
             ValueError: Errors in user inputs
             asyncio.TimeoutError: Code execution timeouts
-            asyncio.CancelledError: CancellationToken evoked during execution
         """
         ...
 

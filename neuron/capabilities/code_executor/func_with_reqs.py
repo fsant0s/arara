@@ -176,7 +176,6 @@ def with_requirements(
 
             import tempfile
             import asyncio
-            from autogen_core import CancellationToken
             from autogen_core.code_executor import with_requirements, CodeBlock
             from autogen_ext.code_executors.local import LocalCommandLineCodeExecutor
             import pandas
@@ -207,7 +206,6 @@ def with_requirements(
 
                     result = await executor.execute_code_blocks(
                         code_blocks=[CodeBlock(language="python", code=code)],
-                        cancellation_token=CancellationToken(),
                     )
                     print(result.output)  # Output: John
 

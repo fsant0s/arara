@@ -7,7 +7,6 @@ from typing import Literal, Mapping, Optional, Sequence, TypeAlias
 from pydantic import BaseModel
 from typing_extensions import Any, AsyncGenerator, Required, TypedDict, Union, deprecated
 
-from ..cancellation_token import CancellationToken
 from ..component_config import ComponentBase
 from ..capabilities.tools import Tool, ToolSchema
 from .types import CreateResult, LLMMessage, RequestUsage
@@ -147,7 +146,6 @@ class ChatCompletionClient(ComponentBase[BaseModel], ABC):
         # A value means to override the client default - often specified in the constructor
         json_output: Optional[bool | type[BaseModel]] = None,
         extra_create_args: Mapping[str, Any] = {},
-        cancellation_token: Optional[CancellationToken] = None,
     ) -> CreateResult:
         """Creates a single response from the model.
 
@@ -160,7 +158,6 @@ class ChatCompletionClient(ComponentBase[BaseModel], ABC):
                 If set to a boolean, it will be used to determine whether to use JSON mode or not.
                 If set to `True`, make sure to instruct the model to produce JSON output in the instruction or prompt.
             extra_create_args (Mapping[str, Any], optional): Extra arguments to pass to the underlying client. Defaults to {}.
-            cancellation_token (Optional[CancellationToken], optional): A token for cancellation. Defaults to None.
 
         Returns:
             CreateResult: The result of the model call.
@@ -177,7 +174,6 @@ class ChatCompletionClient(ComponentBase[BaseModel], ABC):
         # A value means to override the client default - often specified in the constructor
         json_output: Optional[bool | type[BaseModel]] = None,
         extra_create_args: Mapping[str, Any] = {},
-        cancellation_token: Optional[CancellationToken] = None,
     ) -> AsyncGenerator[Union[str, CreateResult], None]:
         """Creates a stream of string chunks from the model ending with a CreateResult.
 
@@ -190,7 +186,6 @@ class ChatCompletionClient(ComponentBase[BaseModel], ABC):
                 If set to a boolean, it will be used to determine whether to use JSON mode or not.
                 If set to `True`, make sure to instruct the model to produce JSON output in the instruction or prompt.
             extra_create_args (Mapping[str, Any], optional): Extra arguments to pass to the underlying client. Defaults to {}.
-            cancellation_token (Optional[CancellationToken], optional): A token for cancellation. Defaults to None.
 
         Returns:
             AsyncGenerator[Union[str, CreateResult], None]: A generator that yields string chunks and ends with a :py:class:`CreateResult`.

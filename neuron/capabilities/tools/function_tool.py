@@ -7,7 +7,6 @@ from typing import Any, Callable, Sequence
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...cancellation_token import CancellationToken
 from ...component_config import Component
 from ...function_utils import (
     args_base_model_from_signature,
@@ -56,7 +55,6 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
         .. code-block:: python
 
             import random
-            from autogen_core import CancellationToken
             from autogen_core.tools import FunctionTool
             from typing_extensions import Annotated
             import asyncio
@@ -72,8 +70,7 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
                 stock_price_tool = FunctionTool(get_stock_price, description="Fetch the stock price for a given ticker.")
 
                 # Execute the tool with cancellation support.
-                cancellation_token = CancellationToken()
-                result = await stock_price_tool.run_json({"ticker": "AAPL", "date": "2021/01/01"}, cancellation_token)
+                result = await stock_price_tool.run_json({"ticker": "AAPL", "date": "2021/01/01"})
 
                 # Output the result as a formatted string.
                 print(stock_price_tool.return_value_as_string(result))
@@ -110,7 +107,7 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
 
         super().__init__(args_model, return_type, func_name, description, strict)
 
-    def run(self, args: BaseModel, cancellation_token: CancellationToken) -> Any:
+    def run(self, args: BaseModel) -> Any:
         kwargs = {}
         for name in self._signature.parameters.keys():
             if hasattr(args, name):
@@ -118,7 +115,7 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
 
         # Executa diretamente, com ou sem suporte a cancelamento
         if self._has_cancellation_support:
-            return self._func(**kwargs, cancellation_token=cancellation_token)
+            return self._func(**kwargs)
         else:
             return self._func(**kwargs)
 
