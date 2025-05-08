@@ -31,7 +31,6 @@ from ..capabilities.memory import Memory
 from .types import FunctionCall, Response, ChatResult
 from ..capabilities.tools.execute_tool_call import execute_tool_call
 from ..messages import (
-    ModelClientStreamingChunkEvent,
     TextMessage,
     ThoughtEvent,
     ToolCallExecutionEvent,
@@ -68,6 +67,20 @@ class Neuron(BaseNeuron):
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
     DEFAULT_SUMMARY_METHOD = "last_msg"
     DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
+    LLM_REFLECTION_PROMPT = """
+    You are a thoughtful and introspective assistant capable of self-reflection.
+    Your task is to analyze your previous response and evaluate whether it was accurate, helpful, and aligned with the user's intent.
+
+    Please reflect on the following:
+    1. Was the response factually correct?
+    2. Did it fully address the user's question or request?
+    3. Was the tone appropriate?
+    4. Is there a better way to express or structure the answer?
+    5. If any mistake was made, explain why it happened and how it can be avoided in the future.
+
+    After reflecting, summarize what went well, what could be improved, and provide an improved version of your answer if applicable.
+    """
+
 
     @property
     def name(self) -> str:
@@ -172,8 +185,9 @@ class Neuron(BaseNeuron):
         tool_call_summary_format: str = "{result}",
         reflect_on_tool_use: bool = False,
         abilities: Optional[List[Ability]] = [],
-        self_reflection: bool = False,
+        llm_reflection: bool = False,
         memory: Sequence[Memory] | None = None,
+        llm_reflection_prompt: str = LLM_REFLECTION_PROMPT
     ):
         """
         Initialize a Neuron.
@@ -218,7 +232,7 @@ class Neuron(BaseNeuron):
             abilities (Optional[List[Ability]], optional):
                 List of specific capabilities or skills assigned to the neuron.
 
-            self_reflection (bool, optional):
+            llm_reflection (bool, optional):
                 Enables internal reflection mechanisms, allowing the neuron to review its own outputs.
         """
 
@@ -240,7 +254,8 @@ class Neuron(BaseNeuron):
         self._tool_call_summary_format = tool_call_summary_format
         self._reflect_on_tool_use = reflect_on_tool_use
         self._conversation_terminated = defaultdict(bool)
-        self._self_reflection = self_reflection
+        self._llm_reflection = llm_reflection
+        self._llm_reflection_prompt = llm_reflection_prompt
 
         if system_message:
             self._oai_system_message = [{"content": system_message, "role": "system"}]
@@ -438,7 +453,7 @@ class Neuron(BaseNeuron):
         for reply in self.generate_reply(sender=sender):
             # It is the final yield. If the type is Response, it marks the generator's last yield.
             request_reply = False
-            if isinstance(reply, Response) or isinstance(reply, TextMessage):
+            if isinstance(reply, Response):
                 request_reply = True
             self.send(reply, sender, silent=silent, request_reply=request_reply)
 
@@ -523,7 +538,7 @@ class Neuron(BaseNeuron):
         for message in messages:
             all_messages.append(message)
 
-        response = llm_client.create(
+        model_result = llm_client.create(
             context=messages[-1].pop("context", None),
             messages=all_messages,
             tools=self._tools,
@@ -531,8 +546,17 @@ class Neuron(BaseNeuron):
             neuron=self,
         )
 
+        # TODO: Improve this to be more generic and less hardcoded
+        if self._llm_reflection:
+            model_result = self._perform_llm_reflection(
+                model_result,
+                all_messages,
+                llm_client,
+                cache
+            )
+
         for output_event in self._process_model_result(
-            model_result=response,
+            model_result=model_result,
             sender=sender,
         ):
             yield output_event
@@ -755,10 +779,12 @@ class Neuron(BaseNeuron):
         if reply or self._max_consecutive_auto_reply_dict[sender] == 0:
             # reset the consecutive_auto_reply_counter
             self._consecutive_auto_reply_counter[sender] = 0
-            response = TextMessage(
-                content=reply,
-                sender=sender,
-                receiver=self,
+            response = Response(
+                chat_message=TextMessage(
+                    content=reply,
+                    sender=sender,
+                    receiver=self,
+                )
             )
             yield [(True, response)]
             return
@@ -790,7 +816,7 @@ class Neuron(BaseNeuron):
     def _process_model_result(
         self,
         model_result: CreateResult,
-        sender: BaseNeuron,
+        sender: BaseNeuron  = None,
     ) -> Generator[Response | ToolCallRequestEvent, None, None]:
 
         """
@@ -803,22 +829,15 @@ class Neuron(BaseNeuron):
 
         # If direct text response (string)
         if isinstance(model_result.content, str):
-            if self._self_reflection:
-                pass
-                # yield self._perform_self_reflection(
-                # )
-
-            else:
-                yield Response(
-                    chat_message=TextMessage(
-                        content=model_result.content,
-                        sender=sender,
-                        receiver=self,
-                        models_usage=model_result.usage,
-                    )
+            yield Response(
+                chat_message=TextMessage(
+                    content=model_result.content,
+                    sender=sender,
+                    receiver=self,
+                    models_usage=model_result.usage,
                 )
+            )
             return
-
 
         # Otherwise, we have function calls
         assert isinstance(model_result.content, list) and all(
@@ -869,7 +888,7 @@ class Neuron(BaseNeuron):
     def _reflect_on_tool_use_flow(
         self,
         sender: BaseNeuron,
-    ) -> Generator[Response | ModelClientStreamingChunkEvent | ThoughtEvent, None, None]:
+    ) -> Generator[Response | ThoughtEvent, None, None]:
         """
         If reflect_on_tool_use=True, we do another inference based on tool results
         and yield the final text response (or streaming chunks).
@@ -930,62 +949,19 @@ class Neuron(BaseNeuron):
         )
         return
 
-    def _perform_self_reflection(
+    def _perform_llm_reflection(
         self,
-        sender: BaseNeuron,
-        model_result: CreateResult,
+        response,
+        all_messages: CreateResult,
+        llm_client,
+        cache: Optional[AbstractCache] = None,
     ) -> Response:
-        """
-        Performs self-reflection using the output of a model result and returns a Response.
 
-        Args:
-            agent_name (str): The name of the neuron agent.
-            target_name (str): The name of the recipient neuron.
-            model_result (CreateResult): The result from the model before reflection.
-            model_client (ClientWrapper): The model client to use for generating the reflection.
-
-        Returns:
-            Response: A response object containing the self-reflected message.
-        """
-        # Build reflection prompt
-        content_to_reflect = model_result.content
-        if not isinstance(content_to_reflect, str):
-            raise TypeError("Reflection requires model_result.content to be a string.")
-
-        prompt = f"Reflect on the reasoning behind this response: \n\n{content_to_reflect}\n\nWhat led you to this response? Provide insights or doubts if any."
-
-        # Compose full message history for reflection
-        reflection_messages = "target" + [
-            AssistantMessage(
-                content=content_to_reflect,
-                sender=sender,
-                receiver=self,
-            ),
-            TextMessage(
-                content=prompt,
-                sender=sender,
-                receiver=self,
-            )
-        ]
-
-        reflection_result = self.client.create(
-            context=None,
-            messages=reflection_messages,
-            tools=None,
-            cache=None,
-            neuron=self,
-        )
-
-        reflection_text = reflection_result.content if isinstance(reflection_result.content, str) else str(reflection_result.content)
-
-        # Add reflection as thought
-        #thought_event = ThoughtEvent(content=reflection_text, source_name=agent_name)
-
-        return Response(
-            chat_message=TextMessage(
-                content=content_to_reflect,
-                sender=sender,
-                receiver=self,
-                models_usage=model_result.usage,
-            ),
+        all_messages += [{"content": str(response.content), "role": "user"}] + [{"content": self._llm_reflection_prompt, 'role': 'system'}]
+        return llm_client.create(
+        context=all_messages[-1].pop("context", None),
+        messages=all_messages ,
+        tools=self._tools,
+        cache=cache,
+        neuron=self,
         )

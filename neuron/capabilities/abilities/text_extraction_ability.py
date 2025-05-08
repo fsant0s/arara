@@ -71,5 +71,5 @@ class TextExtractionAbility(Ability):
 
         if isinstance(message, Response):
             return message.chat_message.content
-        print("message", message)
+
         raise TypeError(f"Unsupported message type: {type(message)}")

@@ -20,6 +20,9 @@ class FunctionCall:
 class Response:
     """A response from calling .create()"""
 
+    to_reply : bool = True
+    """Whether the agent should reply."""
+
     chat_message: "ChatMessage"  # type hint as string to avoid direct evaluation
     """A chat message produced by the agent as the response."""
 
