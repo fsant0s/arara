@@ -103,7 +103,6 @@ class ConversationalOrchestrator:
     - send_introductions: send a round of introductions at the start of the conversation orchestrator, so agents know who they can speak to (default: False)
     - role_for_select_speaker_messages: sets the role name for speaker selection when in 'auto' mode, typically 'user' or 'system'. (default: 'system')
     """
-
     agents: List[Neuron]
     messages: List[Dict]
     max_round: int = 10
@@ -188,6 +187,7 @@ class ConversationalOrchestrator:
                 "Please set speaker_transitions_type to either 'allowed' or 'disallowed'."
             )
 
+        self._modules = []
         # Inferring self.allowed_speaker_transitions_dict
         # Create self.allowed_speaker_transitions_dict if allowed_or_disallowed_speaker_transitions is None, using allow_repeat_speaker
         if self.allowed_or_disallowed_speaker_transitions is None:
@@ -195,6 +195,8 @@ class ConversationalOrchestrator:
 
             # Create a fully connected allowed_speaker_transitions_dict not including self loops
             for agent in self.agents:
+                if isinstance(agent, ConversationalOrchestrator):
+                    print(agent.admin_name)
                 self.allowed_speaker_transitions_dict[agent] = [
                     other_agent for other_agent in self.agents if other_agent != agent
                 ]
@@ -219,11 +221,10 @@ class ConversationalOrchestrator:
                 self.allowed_speaker_transitions_dict = invert_disallowed_to_allowed(
                     self.allowed_or_disallowed_speaker_transitions, self.agents
                 )
-
         # Check for validity
         check_graph_validity(
-            allowed_speaker_transitions_dict=self.allowed_speaker_transitions_dict,
-            agents=self.agents,
+           allowed_speaker_transitions_dict=self.allowed_speaker_transitions_dict,
+           agents=self.agents,
         )
 
         # Check select speaker messages, prompts, roles, and retries have values
@@ -921,9 +922,11 @@ class ConversationalOrchestratorManager(Neuron):
                 a.previous_cache = a.client_cache
                 a.client_cache = self.client_cache
         for i in range(chitchat.max_round):
+            print("*chitchat.name", chitchat.admin_name, chitchat.max_round, i)
             chitchat.append(message, speaker)
             # broadcast the message to all agents except the speaker
             for agent in chitchat.agents:
+                print("chitchat.name", chitchat.admin_name, "agent.name", agent.name)
                 if agent != speaker:
                     self.send(message, agent, request_reply=False, silent=True)
 
@@ -934,6 +937,7 @@ class ConversationalOrchestratorManager(Neuron):
             try:
                 # select the next speaker
                 speaker = chitchat.select_speaker(speaker, self)
+                print("spespeaker", speaker.name)
                 if not silent:
                     iostream = IOStream.get_default()
                     iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
@@ -944,6 +948,7 @@ class ConversationalOrchestratorManager(Neuron):
                     reply = reply
                     # The speaker sends the message without requesting a reply
                     #speaker.send(reply, self, request_reply=False, silent=silent)
+                print("reply", reply)
             except KeyboardInterrupt:
                 # let the admin agent speak if interrupted
                 if chitchat.admin_name in chitchat.agent_names:
@@ -956,11 +961,13 @@ class ConversationalOrchestratorManager(Neuron):
                     # admin agent is not found in the participants
                     raise
             except NoEligibleSpeaker:
+                print("No eligible speaker found, terminating the conversation.")
                 # No eligible speaker, terminate the conversation
                 break
 
             if reply is None:
                 # no reply is generated, exit the chat
+                print("No reply generated, exiting the chat.", chitchat.admin_name, chitchat.max_round, i)
                 break
             # check for "clear history" phrase in reply and activate clear history function if found
             if (
@@ -972,15 +979,16 @@ class ConversationalOrchestratorManager(Neuron):
                 reply["content"] = self.clear_agents_history(reply, chitchat)
 
             # The speaker sends the message without requesting a reply
+            print("Enviando ...", speaker.name, self.name)
             speaker.send(reply, self, request_reply=False, silent=silent)
             message = self.last_message(speaker)
-
+            print("vamos para outra rodada", chitchat.admin_name, chitchat.max_round, i)
         if self.client_cache is not None:
             for a in chitchat.agents:
                 a.client_cache = a.previous_cache
                 a.previous_cache = None
-
-        return [[(True, None)]]
+        print("finalzing chat", chitchat.admin_name, chitchat.max_round, i)
+        return [[(True, message)]]
 
     def clear_agents_history(self, reply: dict, chitchat: ConversationalOrchestrator) -> str:
         """Clears history of messages for all agents or selected one. Can preserve selected number of last messages.
