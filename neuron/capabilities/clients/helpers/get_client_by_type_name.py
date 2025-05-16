@@ -2,16 +2,7 @@ from typing import Any, Dict
 
 # Importações específicas em vez de importação em massa
 # para evitar o ciclo de importação
-from neuron.capabilities.clients.models.groq import GroqClient
-
-# Importação condicional dos clientes personalizados
-try:
-    from neuron.capabilities.clients.custom import BeGreatClient, LLMEmbedding
-except ImportError:
-    # Valores vazios para caso os módulos não estejam disponíveis
-    BeGreatClient = None
-    LLMEmbedding = None
-
+from neuron.capabilities.clients.groq import GroqClient
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """
@@ -38,8 +29,6 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
         # Mapping from client keys to their constructor functions
         client_constructors = {
             "groq": GroqClient,
-            "begreat": BeGreatClient,
-            "llmembedding": LLMEmbedding,
         }
 
         # Retrieve the appropriate client class from the mapping

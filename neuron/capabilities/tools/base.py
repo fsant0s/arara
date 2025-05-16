@@ -11,7 +11,6 @@ from typing_extensions import NotRequired
 
 from ...component_config import ComponentBase
 from ...function_utils import normalize_annotated_type
-from ...logger import ToolCallEvent
 
 T = TypeVar("T", bound=BaseModel, contravariant=True)
 
@@ -158,13 +157,6 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
             # Execute the tool's run method
             return_value = self.run(self._args_type.model_validate(args))
 
-        # Log the tool call event
-        #event = ToolCallEvent(
-        #    tool_name=self.name,
-        #    arguments=dict(args),  # Using the raw args passed to run_json
-        #    result=self.return_value_as_string(return_value),
-        #)
-        #logger.info(event)
         return return_value
 
     def save_state_json(self) -> Mapping[str, Any]:

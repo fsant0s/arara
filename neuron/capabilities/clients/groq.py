@@ -1,48 +1,28 @@
-"""Create an OpenAI-compatible client using Groq's API.
-
-Example:
-    llm_config={
-        "config_list": [{
-            "api_type": "groq",
-            "model": "mixtral-8x7b-32768",
-            "api_key": os.environ.get("GROQ_API_KEY")
-            }
-    ]}
-
-    agent = autogen.AssistantAgent("my_agent", llm_config=llm_config)
-
-Install Groq's python library using: pip install --upgrade groq
-
-Resources:
-- https://console.groq.com/docs/quickstart
-"""
-
 from __future__ import annotations
 
 import copy
 import os
 import warnings
-from typing import Any, Dict, List, Sequence
 
 from groq import Groq, Stream
 
-from ....models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily
-from ....models import CreateResult, RequestUsage
-from ....normalize_stop_reason import normalize_stop_reason
-from ....parse_r1_content import parse_r1_content
+from ...models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily, CreateResult, RequestUsage
+from ...normalize_stop_reason import normalize_stop_reason
+from ...parse_r1_content import parse_r1_content
 
 
 from neuron.capabilities.clients.helpers.validate_parameter import validate_parameter
 from neuron.capabilities.clients.base import BaseClient
 
-from ...tools import Tool, ToolSchema
-from typing import Dict, List, Union
+from ..tools import Tool, ToolSchema
+from typing import Dict, List, Union, Any, Sequence
 
-from ..helpers.assert_valid_name import assert_valid_name
-from ..helpers.should_hide_tools import should_hide_tools
+from .helpers.assert_valid_name import assert_valid_name
+from .helpers.should_hide_tools import should_hide_tools
 
-from ....neurons.types import FunctionCall
+from ...neurons.types import FunctionCall
 from neuron.neurons.helpers.normalize_name import normalize_name
+
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost
 GROQ_PRICING_1K = {
@@ -85,9 +65,6 @@ class GroqClient(BaseClient):
         since that is expected for function or tool calling in the rest of the codebase at the moment, unless a custom agent is being used.
         """
         return [choice.message for choice in response.choices]
-
-    def cost(self, response) -> float:
-        return response.cost
 
     def parse_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Loads the parameters for Groq API from the passed in parameters and returns a validated set. Checks types, ranges, and sets defaults"""

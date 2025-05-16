@@ -24,7 +24,6 @@ from uuid import uuid4
 DEFAULT_LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
 DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-
 class ContextualLogger:
     """
     Enhanced logger that adds contextual information to log entries.
@@ -398,44 +397,3 @@ def configure_all_loggers(
     for logger in _loggers.values():
         logger.set_level(level)
 
-
-class ToolCallEvent:
-    def __init__(
-        self,
-        *,
-        tool_name: str,
-        arguments: Dict[str, Any],
-        result: str,
-    ) -> None:
-        """Used by subclasses of :class:`~autogen_core.tools.BaseTool` to log executions of tools.
-
-        Args:
-            tool_name (str): The name of the tool.
-            arguments (Dict[str, Any]): The arguments of the tool. Must be json serializable.
-            result (str): The result of the tool. Must be a string.
-
-        Example:
-
-            .. code-block:: python
-
-                from autogen_core import EVENT_LOGGER_NAME
-                from autogen_core.logging import ToolCallEvent
-
-                logger = logging.getLogger(EVENT_LOGGER_NAME)
-                logger.info(ToolCallEvent(tool_name="Tool1", call_id="123", arguments={"arg1": "value1"}))
-
-        """
-        self.kwargs: Dict[str, Any] = {}
-        self.kwargs["type"] = "ToolCall"
-        self.kwargs["tool_name"] = tool_name
-        self.kwargs["arguments"] = arguments
-        self.kwargs["result"] = result
-        try:
-            agent_id = MessageHandlerContext.agent_id()
-        except RuntimeError:
-            agent_id = None
-        self.kwargs["agent_id"] = None if agent_id is None else str(agent_id)
-
-    # This must output the event in a json serializable format
-    def __str__(self) -> str:
-        return json.dumps(self.kwargs)
