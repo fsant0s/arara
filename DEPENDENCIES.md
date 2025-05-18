@@ -1,6 +1,6 @@
 # Dependencies Documentation
 
-This document provides information about the dependencies used in the NEURON project and explains why each one is necessary.
+This document provides information about the dependencies used in the ARARA project and explains why each one is necessary.
 
 ## Production Dependencies
 

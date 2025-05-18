@@ -1,10 +1,10 @@
 # Installation Guide
 
-This guide will help you set up the NEURON framework in your development environment.
+This guide will help you set up the ARARA framework in your development environment.
 
 ## Prerequisites
 
-Before installing NEURON, ensure you have:
+Before installing ARARA, ensure you have:
 
 - Python 3.12 or higher
 - Git
@@ -14,12 +14,12 @@ Before installing NEURON, ensure you have:
 
 ### Method 1: Automatic Setup (Recommended)
 
-NEURON includes a script to automatically set up your development environment:
+ARARA includes a script to automatically set up your development environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/fsant0s/neuron.git
-cd neuron
+git clone https://github.com/fsant0s/src.git
+cd arara
 
 # Run the setup script
 ./scripts/setup_dev_env.sh
@@ -37,8 +37,8 @@ If you prefer to set up manually:
 
 ```bash
 # Clone the repository
-git clone https://github.com/fsant0s/neuron.git
-cd neuron
+git clone https://github.com/fsant0s/src.git
+cd arara
 
 # Create and activate a virtual environment
 python -m venv .venv
@@ -53,7 +53,7 @@ uv pip install ipykernel pytest pytest-cov black isort flake8 mypy
 
 ## Environment Configuration
 
-NEURON requires API keys for the LLM services you'll be using. Set up your environment variables:
+ARARA requires API keys for the LLM services you'll be using. Set up your environment variables:
 
 1. Copy the example environment file:
    ```bash
@@ -71,7 +71,7 @@ NEURON requires API keys for the LLM services you'll be using. Set up your envir
 
 ## Verify Installation
 
-To verify that NEURON is installed correctly:
+To verify that ARARA is installed correctly:
 
 ```bash
 # Activate your virtual environment if it's not already activated
@@ -85,8 +85,8 @@ If all tests pass, your installation is working correctly.
 
 ## Next Steps
 
-Now that you have NEURON installed, you can:
+Now that you have ARARA installed, you can:
 
 - Continue to [Basic Usage](basic_usage.md) to create your first neural agent
-- Explore the [Architecture](architecture.md) to understand how NEURON works
+- Explore the [Architecture](architecture.md) to understand how ARARA works
 - Check out the examples in the [notebooks](../notebooks/) directory

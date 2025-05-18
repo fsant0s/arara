@@ -96,7 +96,7 @@ run_bandit() {
   fi
 
   # Run bandit with a good set of rules
-  bandit -r neuron/ -c pyproject.toml -ll || return 1
+  bandit -r arara/ -c pyproject.toml -ll || return 1
 
   echo -e "${GREEN}Bandit scan completed successfully.${NC}"
   return 0
@@ -119,7 +119,7 @@ check_dependency_vulnerabilities() {
 }
 
 # Run all checks
-echo -e "${BLUE}Running security checks for NEURON project...${NC}"
+echo -e "${BLUE}Running security checks for ARARA project...${NC}"
 
 # Initialize status
 checks_failed=0

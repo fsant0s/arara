@@ -96,7 +96,7 @@ def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
                 formatted_message = message[match.end() :].strip()
 
             # Adds link to the commit
-            entry = f"{formatted_message} ([{hash_id[:7]}](https://github.com/fsant0s/neuron/commit/{hash_id}))"
+            entry = f"{formatted_message} ([{hash_id[:7]}](https://github.com/fsant0s/arara/commit/{hash_id}))"
 
             if commit_type in categories:
                 categories[commit_type]["items"].append(entry)
@@ -105,7 +105,7 @@ def categorize_commits(commits: List[str]) -> Dict[str, List[str]]:
         else:
             # Commits that don't follow the pattern
             entry = (
-                f"{message} ([{hash_id[:7]}](https://github.com/fsant0s/neuron/commit/{hash_id}))"
+                f"{message} ([{hash_id[:7]}](https://github.com/fsant0s/arara/commit/{hash_id}))"
             )
             categories["other"]["items"].append(entry)
 
@@ -137,7 +137,7 @@ def update_changelog(new_entry: str) -> None:
         with open(changelog_path, "w") as f:
             f.write("# Changelog\n\n")
             f.write(
-                "All notable changes to the NEURON project will be documented in this file.\n\n"
+                "All notable changes to the ARARA project will be documented in this file.\n\n"
             )
             f.write(
                 "The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\n"

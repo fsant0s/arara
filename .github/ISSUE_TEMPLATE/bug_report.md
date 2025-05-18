@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 What actually happened, including error messages and stack traces if applicable.
 
 ## Environment
-- NEURON version:
+- ARARA version:
 - Python version:
 - Operating System:
 - LLM backends used:

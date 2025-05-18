@@ -8,7 +8,7 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Running security checks on the NEURON project...${NC}"
+echo -e "${BLUE}Running security checks on the ARARA project...${NC}"
 
 # Check if we're in a virtual environment, activate if found
 if [ -d ".venv" ]; then
@@ -25,11 +25,11 @@ fi
 
 # Run different security scans
 echo -e "${BLUE}Running bandit for security vulnerabilities...${NC}"
-bandit -r neuron/ -c pyproject.toml
+bandit -r arara/ -c pyproject.toml
 
 # Check for hardcoded credentials
 echo -e "${BLUE}Checking for hardcoded credentials...${NC}"
-grep -r --include="*.py" -E "(pass|password|pwd|secret|token|key).*['\"][a-zA-Z0-9_\.\-\+\/\=]{8,}['\"]" neuron/
+grep -r --include="*.py" -E "(pass|password|pwd|secret|token|key).*['\"][a-zA-Z0-9_\.\-\+\/\=]{8,}['\"]" arara/
 if [ $? -eq 0 ]; then
   echo -e "${RED}WARNING: Potential hardcoded credentials found!${NC}"
   echo -e "${YELLOW}Consider using environment variables or a secure vault for sensitive information.${NC}"
@@ -39,7 +39,7 @@ fi
 
 # Check for insecure imports
 echo -e "${BLUE}Checking for potentially insecure imports...${NC}"
-grep -r --include="*.py" -E "import (pickle|marshal|shelve|subprocess|os.system|eval)" neuron/
+grep -r --include="*.py" -E "import (pickle|marshal|shelve|subprocess|os.system|eval)" arara/
 if [ $? -eq 0 ]; then
   echo -e "${YELLOW}Potentially risky imports found. Review for proper security controls.${NC}"
 else

@@ -1,6 +1,6 @@
 # Security Guidelines
 
-This document provides security guidelines for developers working with the NEURON framework. Following these practices will help maintain the security of applications built with NEURON.
+This document provides security guidelines for developers working with the ARARA framework. Following these practices will help maintain the security of applications built with ARARA.
 
 ## API Keys and Authentication
 
@@ -8,10 +8,10 @@ This document provides security guidelines for developers working with the NEURO
 
 - **Never hardcode API keys** or secrets directly in your code
 - Use environment variables for all API keys, tokens, and credentials
-- Use the provided `CredentialManager` class from `neuron.security_utils` for retrieving API keys:
+- Use the provided `CredentialManager` class from `src.security_utils` for retrieving API keys:
 
 ```python
-from neuron.security_utils import CredentialManager
+from src.security_utils import CredentialManager
 
 # Get an API key (raises error if not found)
 openai_key = CredentialManager.get_api_key("OPENAI")
@@ -38,7 +38,7 @@ if not CredentialManager.validate_api_key(openai_key, "OPENAI"):
 Always validate and sanitize user inputs:
 
 ```python
-from neuron.security_utils import sanitize_input
+from src.security_utils import sanitize_input
 
 # Sanitize user input
 safe_input = sanitize_input(user_input)
@@ -49,7 +49,7 @@ safe_input = sanitize_input(user_input)
 Validate file paths to prevent path traversal attacks:
 
 ```python
-from neuron.security_utils import validate_file_path
+from src.security_utils import validate_file_path
 
 # Check if a file path is safe
 if not validate_file_path(user_provided_path, allowed_extensions=['.txt', '.csv']):
@@ -58,10 +58,10 @@ if not validate_file_path(user_provided_path, allowed_extensions=['.txt', '.csv'
 
 ## Exception Handling
 
-Use the security-specific exceptions provided in `neuron.neurons.helpers.exception_utils`:
+Use the security-specific exceptions provided in `src.agents.helpers.exception_utils`:
 
 ```python
-from neuron.neurons.helpers.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
+from src.agents.helpers.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
 
 try:
     # Your code here
@@ -94,15 +94,15 @@ except InputValidationError as e:
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability in NEURON, please report it by:
+If you discover a security vulnerability in ARARA, please report it by:
 
 1. **Do Not Disclose Publicly**: Avoid creating public GitHub issues for security vulnerabilities
-2. **Contact the Maintainers**: Email [security@neuron.com](mailto:security@neuron.com)
+2. **Contact the Maintainers**: Email [security@src.com](mailto:security@src.com)
 3. **Provide Details**: Include steps to reproduce, impact, and potential mitigations
 
 ## Security Checklist
 
-Use this checklist before deploying applications built with NEURON:
+Use this checklist before deploying applications built with ARARA:
 
 - [ ] All API keys and secrets are stored in environment variables
 - [ ] Input validation is implemented for all user inputs

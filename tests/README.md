@@ -1,6 +1,6 @@
-# NEURON Project Tests
+# ARARA Project Tests
 
-This directory contains tests for the NEURON project, organized into different categories to ensure code quality and reliability.
+This directory contains tests for the ARARA project, organized into different categories to ensure code quality and reliability.
 
 ## Directory Structure
 
@@ -26,10 +26,10 @@ python -m pytest tests/unit -v
 python -m pytest tests/integration -v
 
 # Run a specific test file
-python -m pytest tests/unit/test_neuron.py -v
+python -m pytest tests/unit/test_agent.py -v
 
 # Run with coverage
-python -m pytest tests/unit -v --cov=neuron
+python -m pytest tests/unit -v --cov=arara
 ```
 
 ## Available Fixtures
@@ -37,9 +37,9 @@ python -m pytest tests/unit -v --cov=neuron
 The `conftest.py` file defines several useful fixtures for testing:
 
 - `mock_client`: A mock client for testing without real API calls
-- `basic_neuron`: A basic Neuron instance
-- `memory_neuron`: A Neuron with episodic memory capability
-- `advanced_neuron`: A Neuron with multiple capabilities
+- `basic_agent`: A basic Agent instance
+- `memory_agent`: A Agent with episodic memory capability
+- `advanced_agent`: A Agent with multiple capabilities
 - `user`: A User instance for testing
 - `conversation_history`: A sample conversation history
 - `preset_responses`: Predefined responses for testing

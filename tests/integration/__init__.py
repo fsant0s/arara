@@ -1,3 +1,3 @@
 """
-Integration tests for NEURON framework.
+Integration tests for ARARA framework.
 """

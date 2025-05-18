@@ -881,7 +881,7 @@ wheels = [
 ]
 
 [[package]]
-name = "neuron"
+name = "arara"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

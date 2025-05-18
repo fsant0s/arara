@@ -1,6 +1,6 @@
-# Contributing Guide for the NEURON Project
+# Contributing Guide for the ARARA Project
 
-Thank you for considering contributing to NEURON! This document provides guidelines and instructions for contributing to the project.
+Thank you for considering contributing to ARARA! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ This project and all participants are subject to the [Code of Conduct](CODE_OF_C
 
 ## How to Contribute
 
-Contributions to NEURON can take several forms:
+Contributions to ARARA can take several forms:
 
 1. Reporting bugs and issues
 2. Suggesting new features
@@ -31,7 +31,7 @@ Contributions to NEURON can take several forms:
 For all contributions that involve code, follow the workflow below:
 
 1. Fork the repository
-2. Clone your fork locally: `git clone https://github.com/your-username/neuron.git`
+2. Clone your fork locally: `git clone https://github.com/your-username/arara.git`
 3. Create a branch for your contribution: `git checkout -b feature/your-feature`
 4. Make your changes
 5. Add tests for your changes (when applicable)
@@ -46,8 +46,8 @@ To set up the development environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/fsant0s/neuron.git
-cd neuron
+git clone https://github.com/fsant0s/arara.git
+cd arara
 
 # Set up the development environment automatically
 ./scripts/setup_dev_env.sh
@@ -61,7 +61,7 @@ pip install ipykernel pytest pytest-cov black isort flake8 mypy
 
 ## Coding Standards
 
-The NEURON project follows strict coding standards to maintain code quality and consistency:
+The ARARA project follows strict coding standards to maintain code quality and consistency:
 
 ### Code Formatting
 
@@ -158,17 +158,17 @@ To request new features, use the [feature request issue template](ISSUE_TEMPLATE
 
 ## Project Structure
 
-The NEURON project is organized as follows:
+The ARARA project is organized as follows:
 
 ```
-neuron/
+arara/
 ├── capabilities/   # Capabilities for neural agents
 ├── clients/        # Clients for different LLMs and APIs
 ├── cognitions/     # Cognition modules
 ├── components/     # Reusable base components
 ├── io/             # Input/output and communication
 ├── logger/         # Logging utilities
-├── neurons/        # Neuron implementations
+├── agents/         # Agents implementations
 ├── notebooks/      # Example notebooks
 └── scripts/        # Utility scripts
 ```
@@ -179,4 +179,4 @@ Familiarize yourself with this structure to understand where your contribution f
 
 If you have questions about the contribution process, open an issue with the "question" tag or contact the maintainers.
 
-Thank you for contributing to NEURON!
+Thank you for contributing to ARARA!

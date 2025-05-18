@@ -1,10 +1,10 @@
 # Monitoring and Observability
 
-The NEURON framework includes comprehensive monitoring and observability features to help track performance, diagnose issues, and understand system behavior in production environments.
+The ARARA framework includes comprehensive monitoring and observability features to help track performance, diagnose issues, and understand system behavior in production environments.
 
 ## Logging System
 
-NEURON provides an enhanced logging system that adds contextual information to log entries, making it easier to trace requests and understand system behavior.
+ARARA provides an enhanced logging system that adds contextual information to log entries, making it easier to trace requests and understand system behavior.
 
 ### Enhanced Contextual Logging
 
@@ -16,7 +16,7 @@ The enhanced logger automatically adds useful context to each log entry:
 - Custom context data relevant to the operation
 
 ```python
-from neuron.logger.enhanced_logger import get_logger
+from src.logger.enhanced_logger import get_logger
 
 # Get a logger for a specific component
 logger = get_logger("my_component")
@@ -35,7 +35,7 @@ user_logger.info("Processing user request",
 You can easily instrument functions with comprehensive logging using the `log_operation` decorator:
 
 ```python
-from neuron.logger.enhanced_logger import log_operation, get_logger
+from src.logger.enhanced_logger import log_operation, get_logger
 
 logger = get_logger("my_service")
 
@@ -54,14 +54,14 @@ This decorator automatically:
 
 ## Performance Metrics
 
-NEURON's metrics collector provides tools for measuring and analyzing performance metrics.
+ARARA's metrics collector provides tools for measuring and analyzing performance metrics.
 
 ### Measuring Operation Times
 
 The `measure_time` decorator automatically tracks execution time for operations:
 
 ```python
-from neuron.monitoring.metrics import measure_time
+from src.monitoring.metrics import measure_time
 
 @measure_time("llm_inference")
 def get_llm_response(prompt: str):
@@ -75,7 +75,7 @@ def get_llm_response(prompt: str):
 You can track how many times specific operations are performed:
 
 ```python
-from neuron.monitoring.metrics import count_operation
+from src.monitoring.metrics import count_operation
 
 @count_operation("database_query")
 def fetch_user_data(user_id: str):
@@ -86,10 +86,10 @@ def fetch_user_data(user_id: str):
 
 ### Resource Monitoring
 
-NEURON can monitor system resource usage in real-time:
+ARARA can monitor system resource usage in real-time:
 
 ```python
-from neuron.monitoring.metrics import metrics_collector
+from src.monitoring.metrics import metrics_collector
 
 # Start monitoring resources (CPU, memory) every 10 seconds
 metrics_collector.start_resource_monitoring(interval_seconds=10.0)
@@ -108,8 +108,8 @@ Here's a complete example that combines logging and metrics:
 
 ```python
 import logging
-from neuron.logger.enhanced_logger import get_logger, configure_all_loggers, log_operation
-from neuron.monitoring.metrics import measure_time, count_operation, metrics_collector
+from src.logger.enhanced_logger import get_logger, configure_all_loggers, log_operation
+from src.monitoring.metrics import measure_time, count_operation, metrics_collector
 
 # Configure logging for the application
 configure_all_loggers(

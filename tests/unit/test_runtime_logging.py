@@ -4,7 +4,7 @@ Unit tests for the runtime_logging module.
 This module tests the functionality of the runtime logging system, including:
 - Starting and stopping logging
 - Logging chat completions
-- Logging events and neuron creation
+- Logging events and agent creation
 """
 
 import logging
@@ -13,9 +13,8 @@ import uuid
 from datetime import datetime
 from unittest import mock
 
-import neuron.runtime_logging as runtime_logging
-from neuron.logger.base_logger import BaseLogger, LLMConfig
-
+import src.runtime_logging as runtime_logging
+from src.logger.base_logger import BaseLogger
 
 class MockLogger(BaseLogger):
     """Mock logger for testing."""
@@ -40,9 +39,9 @@ class MockLogger(BaseLogger):
         """Log a chat completion."""
         self.events.append(("chat_completion", args, kwargs))
 
-    def log_new_neuron(self, *args, **kwargs):
-        """Log a new neuron."""
-        self.events.append(("new_neuron", args, kwargs))
+    def log_new_agent(self, *args, **kwargs):
+        """Log a new src."""
+        self.events.append(("new_agent", args, kwargs))
 
     def log_event(self, *args, **kwargs):
         """Log an event."""
@@ -71,7 +70,7 @@ class TestRuntimeLogging(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         # Reset global variables before each test
-        runtime_logging.neuron_logger = None
+        runtime_logging.agent_logger = None
         runtime_logging.is_logging = False
         self.mock_logger = MockLogger()
 
@@ -80,9 +79,9 @@ class TestRuntimeLogging(unittest.TestCase):
         session_id = runtime_logging.start(logger=self.mock_logger)
         self.assertEqual(session_id, self.mock_logger.session_id)
         self.assertTrue(runtime_logging.is_logging)
-        self.assertEqual(runtime_logging.neuron_logger, self.mock_logger)
+        self.assertEqual(runtime_logging.agent_logger, self.mock_logger)
 
-    @mock.patch("neuron.runtime_logging.LoggerFactory.get_logger")
+    @mock.patch("src.runtime_logging.LoggerFactory.get_logger")
     def test_start_with_default_logger(self, mock_get_logger):
         """Test starting logging with the default logger."""
         mock_get_logger.return_value = self.mock_logger
@@ -91,7 +90,7 @@ class TestRuntimeLogging(unittest.TestCase):
         self.assertTrue(runtime_logging.is_logging)
         mock_get_logger.assert_called_once_with(logger_type="file", config=None)
 
-    @mock.patch("neuron.runtime_logging.LoggerFactory.get_logger")
+    @mock.patch("src.runtime_logging.LoggerFactory.get_logger")
     def test_start_with_logger_type_and_config(self, mock_get_logger):
         """Test starting logging with a specific logger type and config."""
         mock_get_logger.return_value = self.mock_logger
@@ -101,7 +100,7 @@ class TestRuntimeLogging(unittest.TestCase):
         self.assertTrue(runtime_logging.is_logging)
         mock_get_logger.assert_called_once_with(logger_type="file", config=config)
 
-    @mock.patch("neuron.runtime_logging.logger.error")
+    @mock.patch("src.runtime_logging.logger.error")
     def test_start_with_exception(self, mock_error):
         """Test handling of exceptions when starting logging."""
         # Configure the mock to raise an exception
@@ -120,7 +119,7 @@ class TestRuntimeLogging(unittest.TestCase):
         """Test stopping logging when it's active."""
         # First, mock that logging is active
         runtime_logging.is_logging = True
-        runtime_logging.neuron_logger = self.mock_logger
+        runtime_logging.agent_logger = self.mock_logger
 
         # Now call stop and check the result
         result = runtime_logging.stop()
@@ -153,7 +152,7 @@ class TestRuntimeLogging(unittest.TestCase):
         invocation_id = uuid.uuid4()
         client_id = 1
         wrapper_id = 2
-        neuron_name = "TestNeuron"
+        agent_name = "TestAgent"
         request = {
             "messages": [{"role": "user", "content": "Hello"}],
             "temperature": 0.7,
@@ -167,7 +166,7 @@ class TestRuntimeLogging(unittest.TestCase):
             invocation_id,
             client_id,
             wrapper_id,
-            neuron_name,
+            agent_name,
             request,
             response,
             is_cached,
@@ -179,11 +178,11 @@ class TestRuntimeLogging(unittest.TestCase):
         log_type, args, kwargs = self.mock_logger.events[0]
         self.assertEqual(log_type, "chat_completion")
 
-    @mock.patch("neuron.runtime_logging.logging_enabled")
+    @mock.patch("src.runtime_logging.logging_enabled")
     def test_log_chat_completion_when_disabled(self, mock_enabled):
         """Test that log_chat_completion does nothing when logging is disabled."""
         mock_enabled.return_value = False
-        runtime_logging.log_chat_completion(uuid.uuid4(), 1, 2, "TestNeuron", {}, "", 0, 0.0, "")
+        runtime_logging.log_chat_completion(uuid.uuid4(), 1, 2, "TestAgent", {}, "", 0, 0.0, "")
         self.assertEqual(len(self.mock_logger.events), 0)
 
     def test_log_event(self):
@@ -196,7 +195,7 @@ class TestRuntimeLogging(unittest.TestCase):
         log_type, args, kwargs = self.mock_logger.events[0]
         self.assertEqual(log_type, "event")
 
-    @mock.patch("neuron.runtime_logging.logging_enabled")
+    @mock.patch("src.runtime_logging.logging_enabled")
     def test_log_event_when_disabled(self, mock_enabled):
         """Test that log_event does nothing when logging is disabled."""
         mock_enabled.return_value = False

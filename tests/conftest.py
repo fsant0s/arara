@@ -8,9 +8,9 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-from neuron.capabilities import EpisodicMemoryCapability, ReflectionCapability
-from neuron.neurons import Neuron
-from neuron.neurons.user import User
+from src.capabilities import EpisodicMemoryCapability, ReflectionCapability
+from src.agents import Agent
+from src.agents.user import User
 from tests.unit.mock_client import MockClient
 
 
@@ -21,34 +21,34 @@ def mock_client():
 
 
 @pytest.fixture
-def basic_neuron(mock_client):
-    """Create a basic Neuron instance for testing."""
-    return Neuron(
-        name="TestNeuron",
+def basic_agent(mock_client):
+    """Create a basic Agent instance for testing."""
+    return Agent(
+        name="TestAgent",
         client=mock_client,
-        description="A test neuron for unit tests",
+        description="A test agent for unit tests",
     )
 
 
 @pytest.fixture
-def memory_neuron(mock_client):
-    """Create a Neuron instance with EpisodicMemoryCapability for testing."""
-    return Neuron(
-        name="MemoryNeuron",
+def memory_agent(mock_client):
+    """Create a Agent instance with EpisodicMemoryCapability for testing."""
+    return Agent(
+        name="MemoryAgent",
         client=mock_client,
         capabilities=[EpisodicMemoryCapability()],
-        description="A test neuron with episodic memory",
+        description="A test agent with episodic memory",
     )
 
 
 @pytest.fixture
-def advanced_neuron(mock_client):
-    """Create a Neuron instance with multiple capabilities for testing."""
-    return Neuron(
-        name="AdvancedNeuron",
+def advanced_agent(mock_client):
+    """Create a Agent instance with multiple capabilities for testing."""
+    return Agent(
+        name="AdvancedAgent",
         client=mock_client,
         capabilities=[EpisodicMemoryCapability(), ReflectionCapability()],
-        description="A test neuron with multiple capabilities",
+        description="A test agent with multiple capabilities",
     )
 
 

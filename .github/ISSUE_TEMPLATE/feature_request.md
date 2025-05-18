@@ -16,7 +16,7 @@ A clear and concise description of what you want to happen.
 A clear and concise description of any alternative solutions or features you've considered.
 
 ## Integration with existing features
-How does this feature integrate with the existing functionality in NEURON?
+How does this feature integrate with the existing functionality in ARARA?
 
 ## Use cases
 Describe specific use cases where this feature would be valuable.

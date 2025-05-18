@@ -7,7 +7,7 @@ BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Checking type annotations in the NEURON project...${NC}"
+echo -e "${BLUE}Checking type annotations in the ARARA project...${NC}"
 
 # Check if we're in a virtual environment, activate if found
 if [ -d ".venv" ]; then
@@ -25,7 +25,7 @@ fi
 # Run mypy
 echo -e "${BLUE}Running mypy...${NC}"
 # Add --strict for more strict checking
-mypy --config-file pyproject.toml neuron/
+mypy --config-file pyproject.toml arara/
 
 # Check exit code
 if [ $? -eq 0 ]; then

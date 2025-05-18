@@ -1,10 +1,10 @@
-# Versioning Policy for NEURON Project
+# Versioning Policy for ARARA Project
 
-This document describes the versioning policy for the NEURON project, following the principles of [Semantic Versioning 2.0.0](https://semver.org/).
+This document describes the versioning policy for the ARARA project, following the principles of [Semantic Versioning 2.0.0](https://semver.org/).
 
 ## Version Format
 
-NEURON versions follow the `MAJOR.MINOR.PATCH` format where:
+ARARA versions follow the `MAJOR.MINOR.PATCH` format where:
 
 1. **MAJOR**: Incremented when making incompatible changes to the public API.
 2. **MINOR**: Incremented when adding functionality in a backward-compatible manner.

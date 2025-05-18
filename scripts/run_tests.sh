@@ -21,7 +21,7 @@ fi
 
 # Run unit tests with coverage
 echo "Running unit tests with coverage..."
-pytest tests/unit -v --cov=neuron --cov-report=html:reports/coverage_html --cov-report=xml:reports/coverage.xml
+pytest tests/unit -v --cov=arara --cov-report=html:reports/coverage_html --cov-report=xml:reports/coverage.xml
 
 # Check if unit tests passed
 if [ $? -ne 0 ]; then
@@ -44,11 +44,11 @@ echo "Coverage report is available at reports/coverage_html/index.html"
 
 # Run linting checks (but don't fail if they fail)
 echo "Running linting checks..."
-flake8 neuron || echo "Linting errors found. You can fix them later."
+flake8 arara || echo "Linting errors found. You can fix them later."
 
 # Run type checking (but don't fail if they fail)
 echo "Running type checking..."
-mypy neuron || echo "Type checking errors found. You can fix them later."
+mypy arara || echo "Type checking errors found. You can fix them later."
 
 echo "Test execution completed successfully!"
 exit 0

@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 # Import the module to test
-from neuron.formatting_utils import colored
+from src.formatting_utils import colored
 
 
 class TestFormattingUtils(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestFormattingUtils(unittest.TestCase):
         result = colored(text, color="red", attrs=attrs)
         self.assertIsInstance(result, str)
 
-    @patch("neuron.formatting_utils.colored", side_effect=lambda text, **kwargs: str(text))
+    @patch("src.formatting_utils.colored", side_effect=lambda text, **kwargs: str(text))
     def test_colored_fallback_when_termcolor_unavailable(self, mock_colored):
         """
         Test that the fallback implementation works when termcolor is unavailable.
@@ -75,12 +75,12 @@ class TestFormattingUtils(unittest.TestCase):
             # We need to reload the module to ensure it sees the new environment variable
             import importlib
 
-            import neuron.formatting_utils
+            import src.formatting_utils
 
-            importlib.reload(neuron.formatting_utils)
+            importlib.reload(src.formatting_utils)
 
             # Now get the colored function from the reloaded module
-            colored_fn = neuron.formatting_utils.colored
+            colored_fn = src.formatting_utils.colored
 
             # Test with color, but it should respect NO_COLOR
             result = colored_fn(text, color="red")
@@ -94,9 +94,9 @@ class TestFormattingUtils(unittest.TestCase):
                 os.environ["NO_COLOR"] = original_no_color
 
             # Reload the module again to reset to the original state
-            import neuron.formatting_utils
+            import src.formatting_utils
 
-            importlib.reload(neuron.formatting_utils)
+            importlib.reload(src.formatting_utils)
 
 
 if __name__ == "__main__":

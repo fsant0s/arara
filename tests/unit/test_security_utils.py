@@ -12,7 +12,7 @@ import unittest
 import warnings
 from unittest import mock
 
-from neuron.security_utils import CredentialManager, sanitize_input, validate_file_path
+from src.security_utils import CredentialManager, sanitize_input, validate_file_path
 
 
 class TestCredentialManager(unittest.TestCase):

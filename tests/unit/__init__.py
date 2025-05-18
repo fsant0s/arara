@@ -1,3 +1,3 @@
 """
-Unit tests for NEURON framework.
+Unit tests for ARARA framework.
 """

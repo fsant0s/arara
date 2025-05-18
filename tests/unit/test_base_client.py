@@ -9,7 +9,7 @@ import unittest
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from neuron.clients.base import BaseClient
+from src.clients.base import BaseClient
 
 
 @dataclass

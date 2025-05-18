@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to set up the development environment for the NEURON project
+# Script to set up the development environment for the ARARA project
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -8,7 +8,7 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}Setting up development environment for NEURON project...${NC}"
+echo -e "${BLUE}Setting up development environment for ARARA project...${NC}"
 
 # Install uv package manager if not installed
 install_uv() {

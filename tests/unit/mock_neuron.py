@@ -1,19 +1,19 @@
 """
-Mock implementation of a neuron for testing purposes.
+Mock implementation of a agent for testing purposes.
 """
 
 from typing import Any, Callable, Dict, List, Optional
 
-from neuron.neurons.base import BaseNeuron
+from src.agents.base import BaseAgent
 
 
-class MockNeuron(BaseNeuron):
+class MockAgent(BaseAgent):
     """
-    A simple mock implementation of BaseNeuron for testing.
+    A simple mock implementation of BaseAgent for testing.
     """
 
-    def __init__(self, name: str = "MockNeuron"):
-        """Initialize a mock neuron."""
+    def __init__(self, name: str = "MockAgent"):
+        """Initialize a mock src."""
         self.name = name
         self.messages_received = []
         self.messages_sent = []
@@ -25,18 +25,18 @@ class MockNeuron(BaseNeuron):
 
     @property
     def name(self) -> str:
-        """Get the neuron's name."""
+        """Get the agent's name."""
         return self._name
 
     @name.setter
     def name(self, value: str):
-        """Set the neuron's name."""
+        """Set the agent's name."""
         self._name = value
 
     @property
     def description(self) -> str:
-        """Get the neuron's description."""
-        return "A mock neuron for testing"
+        """Get the agent's description."""
+        return "A mock agent for testing"
 
     def register_hook(self, hookable_method: str, hook: Callable):
         """Register a hook for the specified method."""
@@ -47,22 +47,22 @@ class MockNeuron(BaseNeuron):
     def send(
         self,
         message: Any,
-        recipient: "BaseNeuron",
+        recipient: "BaseAgent",
         request_reply: bool = False,
         silent: bool = False,
     ):
-        """Mock sending a message to another neuron."""
+        """Mock sending a message to another src."""
         self.messages_sent.append((message, recipient, silent))
         return "Mock response" if request_reply else None
 
     def receive(
         self,
         message: Any,
-        sender: "BaseNeuron",
+        sender: "BaseAgent",
         request_reply: bool = False,
         silent: bool = False,
     ):
-        """Mock receiving a message from another neuron."""
+        """Mock receiving a message from another src."""
         self.messages_received.append((message, sender))
         return "Mock reply" if request_reply else None
 

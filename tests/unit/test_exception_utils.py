@@ -4,29 +4,29 @@ Unit tests for exception_utils module.
 
 import unittest
 
-from neuron.exception_utils import (
+from src.agents.helpers.exception_utils import (
     CredentialError,
     FileTypeError,
     InputValidationError,
-    NeuronNameConflict,
+    AgentNameConflict,
     PathTraversalError,
     SecurityError,
     SenderRequired,
 )
 
 
-class TestNeuronNameConflict(unittest.TestCase):
-    """Tests for NeuronNameConflict exception."""
+class TestAgentNameConflict(unittest.TestCase):
+    """Tests for AgentNameConflict exception."""
 
     def test_default_message(self):
         """Test that default message is correctly set."""
-        exception = NeuronNameConflict()
-        self.assertEqual(str(exception), "Found multiple neurons with the same name.")
+        exception = AgentNameConflict()
+        self.assertEqual(str(exception), "Found multiple agents with the same name.")
 
     def test_custom_message(self):
         """Test that custom message is correctly set."""
         custom_msg = "Custom error message"
-        exception = NeuronNameConflict(msg=custom_msg)
+        exception = AgentNameConflict(msg=custom_msg)
         self.assertEqual(str(exception), custom_msg)
 
 

@@ -1,3 +1,3 @@
 """
-Test package for NEURON framework.
+Test package for ARARA framework.
 """

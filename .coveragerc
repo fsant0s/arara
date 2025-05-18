@@ -1,5 +1,5 @@
 [run]
-source = neuron
+source = arara
 omit =
     # Omit test files
     */tests/*

@@ -1,6 +1,6 @@
-site_name: NEURON Documentation
-site_description: Documentation for the NEURON framework for agent-based recommendation systems
-repo_url: https://github.com/fsant0s/neuron
+site_name: ARARA Documentation
+site_description: Documentation for the ARARA framework for agent-based recommendation systems
+repo_url: https://github.com/fsant0s/arara
 edit_uri: edit/main/docs/
 
 theme:
@@ -30,7 +30,7 @@ nav:
       - Basic Usage: basic_usage.md
   - Architecture: architecture.md
   - Components:
-      - Neurons: components/neurons.md
+      - Agents: components/agents.md
       - Capabilities: components/capabilities.md
       - Clients: components/clients.md
   - Advanced Features:

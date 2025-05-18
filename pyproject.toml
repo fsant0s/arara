@@ -1,5 +1,5 @@
 [project]
-name = "neuron"
+name = "arara"
 version = "0.1.0"
 description = "A framework for agent-based recommendation systems"
 readme = "README.md"
@@ -54,13 +54,14 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["neuron"]
+package-dir = {"" = "src"}
+packages = ["agents", "capabilities"]
 
 [tool.setuptools.package-data]
-neuron = ["py.typed"]
+arara = ["py.typed"]
 
 [tool.setuptools.exclude-package-data]
-neuron = ["logs", "reports"]
+arara = ["logs", "reports"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -114,7 +115,7 @@ warn_unreachable = true
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "build", "dist"]
 skips = ["B101"]                                   # Skip assert statements warning
-targets = ["neuron"]
+targets = ["arara"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
