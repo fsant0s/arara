@@ -1,6 +1,6 @@
 from typing import Optional, Union
 from .. import BaseAgent
-from ...cache import AbstractCache
+from cache import AbstractCache
 
 def reflection_with_llm(
         sender,

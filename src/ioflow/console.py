@@ -5,7 +5,6 @@ from .base import IOStream
 
 __all__ = ("IOConsole",)
 
-
 class IOConsole(IOStream):
     """A console input/output stream."""
 

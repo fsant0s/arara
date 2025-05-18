@@ -1,17 +1,16 @@
 from typing import Dict, List, Union, Generator
 
-from src.agents.base import BaseAgent
+from agents.base import BaseAgent
+from agents.types import Response
 
-from ...runtime_logging import log_event, logging_enabled
+from runtime_logging import log_event, logging_enabled
 from .append_oai_message import append_oai_message
 
-from ...messages import (
+from agent_messages import (
     TextMessage,
 )
 
 from .print_received_message import print_received_message
-
-from ...agents.types import Response
 
 def process_message_before_send(
     self: BaseAgent, message: Response | TextMessage, recipient: BaseAgent, silent: bool
@@ -21,7 +20,6 @@ def process_message_before_send(
     for hook in hook_list:
         message = hook(sender=self, message=message, recipient=recipient, silent=silent)
     return message
-
 
 def process_received_message(
     self: BaseAgent, message: Union[Dict, str], sender: BaseAgent, silent: bool

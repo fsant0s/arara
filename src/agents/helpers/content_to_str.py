@@ -1,6 +1,6 @@
 from typing import List
 from pydantic import BaseModel
-from ...image import Image
+from image import Image
 
 def content_to_str(
     content

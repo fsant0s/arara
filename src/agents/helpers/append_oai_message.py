@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from src.agents.base import BaseAgent
+from agents.base import BaseAgent
 
 from .message_to_dict import message_to_dict
 

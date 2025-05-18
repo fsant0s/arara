@@ -1,7 +1,7 @@
 from typing import Any, Dict, Literal, Optional
 
-from src.logger.base_logger import BaseLogger
-from src.logger.file_logger import FileLogger
+from logger.base_logger import BaseLogger
+from logger.file_logger import FileLogger
 
 __all__ = ("LoggerFactory",)
 

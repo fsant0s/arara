@@ -6,7 +6,7 @@ from typing import Any, Optional, TypedDict, Union
 from azure.cosmos import CosmosClient, PartitionKey, exceptions
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
-from autogen.cache.abstract_cache_base import AbstractCache
+from cache.abstract_cache_base import AbstractCache
 
 
 class CosmosDBConfig(TypedDict, total=False):
@@ -44,7 +44,7 @@ class CosmosDBCache(AbstractCache):
         self.client = cosmosdb_config.get("client") or CosmosClient.from_connection_string(
             cosmosdb_config["connection_string"]
         )
-        database_id = cosmosdb_config.get("database_id", "autogen_cache")
+        database_id = cosmosdb_config.get("database_id", "arara_cache")
         self.database = self.client.get_database_client(database_id)
         container_id = cosmosdb_config.get("container_id")
         self.container = self.database.create_container_if_not_exists(

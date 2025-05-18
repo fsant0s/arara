@@ -3,12 +3,10 @@ import os
 
 from typing import Any, Dict, List, Optional, Union
 
-from src.capabilities.clients.base import BaseClient
-from ...normalize_stop_reason import normalize_stop_reason
-from ...parse_r1_content import parse_r1_content
+from capabilities.clients.base import BaseClient
+from function_utils import normalize_stop_reason, parse_r1_content
 
-
-from ...models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily, CreateResult, RequestUsage
+from llm_messages import ChatCompletionTokenLogprob, TopLogprob, ModelFamily, CreateResult, RequestUsage
 
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
@@ -43,7 +41,7 @@ class OpenAI(BaseClient):
     def create(self, params: Dict[str, Any]) -> CreateResult:
         messages = params.get("messages", [])
 
-        # Convert AutoGen messages to Groq messages
+        # Convert Arara messages to Groq messages
         groq_messages = oai_messages_to_groq_messages(messages)
 
         # Parse parameters to the Groq API's parameters

@@ -1,11 +1,11 @@
 from .ability import Ability
-from ...agents.base import BaseAgent
-from ...messages import (
+from agents.base import BaseAgent
+from agents.types import Response
+from agent_messages import (
     TextMessage,
     ToolCallRequestEvent,
     ToolCallExecutionEvent,
 )
-from ...agents.types import Response
 from typing import Union
 
 class TextExtractionAbility(Ability):

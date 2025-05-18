@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from src.agents import BaseAgent
+from agents import BaseAgent
 
 usage_including_cached_inference = {"total_cost": 0}
 usage_excluding_cached_inference = {"total_cost": 0}
@@ -17,31 +17,6 @@ def gather_usage_summary(sender: BaseAgent, receiver: BaseAgent) -> Dict[Dict[st
           - "usage_including_cached_inference": Cost information on the total usage, including the tokens in cached inference.
           - "usage_excluding_cached_inference": Cost information on the usage of tokens, excluding the tokens in cache. No larger than "usage_including_cached_inference".
 
-    Example:
-
-    ```python
-    {
-        "usage_including_cached_inference" : {
-            "total_cost": 0.0006090000000000001,
-            "gpt-35-turbo": {
-                    "cost": 0.0006090000000000001,
-                    "prompt_tokens": 242,
-                    "completion_tokens": 123,
-                    "total_tokens": 365
-            },
-        },
-
-        "usage_excluding_cached_inference" : {
-            "total_cost": 0.0006090000000000001,
-            "gpt-35-turbo": {
-                    "cost": 0.0006090000000000001,
-                    "prompt_tokens": 242,
-                    "completion_tokens": 123,
-                    "total_tokens": 365
-            },
-        }
-    }
-    ```
 
     Note:
 
@@ -69,7 +44,7 @@ def gather_usage_summary(sender: BaseAgent, receiver: BaseAgent) -> Dict[Dict[st
 
     agents = [sender, receiver]
     if isinstance(receiver, Orchestrator):
-        for agent in receiver.chitchat.agents:
+        for agent in receiver.module.agents:
             if getattr(agent, "client", None):
                 agents.append(agent)
 

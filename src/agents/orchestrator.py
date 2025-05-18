@@ -3,11 +3,12 @@ from typing import Dict, List, Optional, Tuple, Union, Generator
 
 from .helpers import NoEligibleSpeaker
 
-from ..formatting_utils import colored
-from ..runtime_logging import log_new_agent, logging_enabled
+from formatting_utils import colored
+from runtime_logging import log_new_agent, logging_enabled
 
-from ..io.base import IOStream
+from ioflow.base import IOStream
 from .agent import Agent
+
 from .module import Module
 
 logger = logging.getLogger(__name__)

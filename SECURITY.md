@@ -11,7 +11,7 @@ This document provides security guidelines for developers working with the ARARA
 - Use the provided `CredentialManager` class from `src.security_utils` for retrieving API keys:
 
 ```python
-from src.security_utils import CredentialManager
+from security_utils import CredentialManager
 
 # Get an API key (raises error if not found)
 openai_key = CredentialManager.get_api_key("OPENAI")
@@ -38,7 +38,7 @@ if not CredentialManager.validate_api_key(openai_key, "OPENAI"):
 Always validate and sanitize user inputs:
 
 ```python
-from src.security_utils import sanitize_input
+from security_utils import sanitize_input
 
 # Sanitize user input
 safe_input = sanitize_input(user_input)
@@ -49,7 +49,7 @@ safe_input = sanitize_input(user_input)
 Validate file paths to prevent path traversal attacks:
 
 ```python
-from src.security_utils import validate_file_path
+from security_utils import validate_file_path
 
 # Check if a file path is safe
 if not validate_file_path(user_provided_path, allowed_extensions=['.txt', '.csv']):
@@ -58,10 +58,10 @@ if not validate_file_path(user_provided_path, allowed_extensions=['.txt', '.csv'
 
 ## Exception Handling
 
-Use the security-specific exceptions provided in `src.agents.helpers.exception_utils`:
+Use the security-specific exceptions provided in `agents.helpers.exception_utils`:
 
 ```python
-from src.agents.helpers.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
+from agents.helpers.exception_utils import CredentialError, InputValidationError, PathTraversalError, FileTypeError
 
 try:
     # Your code here

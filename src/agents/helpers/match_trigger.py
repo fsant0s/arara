@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional, Union
 
-from src.agents.base import BaseAgent
+from agents.base import BaseAgent
 
 from .exception_utils import SenderRequired
 

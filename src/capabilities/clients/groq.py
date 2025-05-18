@@ -6,13 +6,11 @@ import warnings
 
 from groq import Groq, Stream
 
-from ...models import ChatCompletionTokenLogprob, TopLogprob, ModelFamily, CreateResult, RequestUsage
-from ...normalize_stop_reason import normalize_stop_reason
-from ...parse_r1_content import parse_r1_content
+from llm_messages import ChatCompletionTokenLogprob, TopLogprob, CreateResult, RequestUsage
+from function_utils import normalize_stop_reason, parse_r1_content
 
-
-from src.capabilities.clients.helpers.validate_parameter import validate_parameter
-from src.capabilities.clients.base import BaseClient
+from capabilities.clients.helpers.validate_parameter import validate_parameter
+from capabilities.clients.base import BaseClient
 
 from ..tools import Tool, ToolSchema
 from typing import Dict, List, Union, Any, Sequence
@@ -20,8 +18,8 @@ from typing import Dict, List, Union, Any, Sequence
 from .helpers.assert_valid_name import assert_valid_name
 from .helpers.should_hide_tools import should_hide_tools
 
-from ...agents.types import FunctionCall
-from src.agents.helpers.normalize_name import normalize_name
+from agents.types import FunctionCall
+from agents.helpers.normalize_name import normalize_name
 
 # Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
 # see: https://github.com/AgentOps-AI/tokencost
@@ -106,7 +104,7 @@ class GroqClient(BaseClient):
 
         messages = params.get("messages", [])
 
-        # Convert AutoGen messages to Groq messages
+        # Convert Arara messages to Groq messages
         groq_messages = oai_messages_to_groq_messages(messages)
 
         # Parse parameters to the Groq API's parameters

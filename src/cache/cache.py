@@ -69,7 +69,7 @@ class Cache(AbstractCache):
         client: Optional[any] = None,
     ) -> "Cache":
         """
-        Create a Cosmos DB cache instance with 'autogen_cache' as database ID.
+        Create a Cosmos DB cache instance.
 
         Args:
             connection_string (str, optional): Connection string to the Cosmos DB account.
@@ -81,7 +81,7 @@ class Cache(AbstractCache):
         """
         cosmos_db_config = {
             "connection_string": connection_string,
-            "database_id": "autogen_cache",
+            "database_id": "arara_cache",
             "container_id": container_id,
             "client": client,
         }

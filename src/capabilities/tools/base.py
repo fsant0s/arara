@@ -9,8 +9,7 @@ from opentelemetry.trace import get_tracer
 from pydantic import BaseModel
 from typing_extensions import NotRequired
 
-from ...component_config import ComponentBase
-from ...function_utils import normalize_annotated_type
+from function_utils import normalize_annotated_type
 
 T = TypeVar("T", bound=BaseModel, contravariant=True)
 
@@ -60,8 +59,7 @@ ArgsT = TypeVar("ArgsT", bound=BaseModel, contravariant=True)
 ReturnT = TypeVar("ReturnT", bound=BaseModel, covariant=True)
 StateT = TypeVar("StateT", bound=BaseModel)
 
-
-class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
+class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT]):
 
     component_type = "tool"
 
@@ -165,29 +163,3 @@ class BaseTool(ABC, Tool, Generic[ArgsT, ReturnT], ComponentBase[BaseModel]):
     def load_state_json(self, state: Mapping[str, Any]) -> None:
         pass
 
-
-class BaseToolWithState(BaseTool[ArgsT, ReturnT], ABC, Generic[ArgsT, ReturnT, StateT], ComponentBase[BaseModel]):
-    def __init__(
-        self,
-        args_type: Type[ArgsT],
-        return_type: Type[ReturnT],
-        state_type: Type[StateT],
-        name: str,
-        description: str,
-    ) -> None:
-        super().__init__(args_type, return_type, name, description)
-        self._state_type = state_type
-
-    component_type = "tool"
-
-    @abstractmethod
-    def save_state(self) -> StateT: ...
-
-    @abstractmethod
-    def load_state(self, state: StateT) -> None: ...
-
-    def save_state_json(self) -> Mapping[str, Any]:
-        return self.save_state().model_dump()
-
-    def load_state_json(self, state: Mapping[str, Any]) -> None:
-        self.load_state(self._state_type.model_validate(state))

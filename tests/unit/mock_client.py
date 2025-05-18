@@ -5,7 +5,7 @@ This client simulates responses without making actual API calls.
 
 from typing import Any, Dict, Generator, List, Optional, Union
 
-from src.clients.base import BaseClient
+from src.capabilities.clients.base import BaseClient
 
 
 class MockClient(BaseClient):

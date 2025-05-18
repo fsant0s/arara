@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ...agents.base import BaseAgent
+from agents.base import BaseAgent
 
 class Ability(ABC):
     """Base class for modular abilities that can be added to a src."""

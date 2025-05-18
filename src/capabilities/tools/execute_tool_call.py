@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Tuple, Generator
 import json
-from ...agents.types import FunctionCall
+from agents.types import FunctionCall
 from ..tools.base import BaseTool
-from ...models import FunctionExecutionResult
+from llm_messages import FunctionExecutionResult
 
 def execute_tool_call(
     tool_call: FunctionCall,

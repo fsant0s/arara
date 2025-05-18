@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 
-from src.agents import BaseAgent
+from agents import BaseAgent
 
 
 def has_self_loops(allowed_speaker_transitions: Dict) -> bool:
@@ -120,7 +120,7 @@ def visualize_speaker_transitions_dict(
         import matplotlib.pyplot as plt
         import networkx as nx
     except ImportError as e:
-        logging.fatal("Failed to import networkx or matplotlib. Try running 'pip install autogen[graphs]'")
+        logging.fatal("Failed to import networkx or matplotlib.")
         raise e
 
     G = nx.DiGraph()

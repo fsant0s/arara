@@ -6,7 +6,7 @@ import unittest
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
-from agent.agents.agent import Agent
+from agents import Agent
 from tests.unit.mock_client import MockClient
 
 

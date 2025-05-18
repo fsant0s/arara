@@ -9,14 +9,14 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, TypeVar, Union
 
 from openai.types.chat import ChatCompletion
 
-from src.logger.base_logger import BaseLogger
-from src.logger.logger_utils import get_current_ts, to_dict
+from logger.base_logger import BaseLogger
+from logger.logger_utils import get_current_ts, to_dict
 
 from .base_logger import LLMConfig
 
 if TYPE_CHECKING:
-    from src.agents import Agent
-    from src.capabilities.clients import GroqClient, ClientWrapper
+    from agents import Agent
+    from capabilities.clients import GroqClient, ClientWrapper
 
 
 logger = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ class FileLogger(BaseLogger):
         """
         Log an event from a agent or a string source.
         """
-        from ..agents import Agent
+        from agents import Agent
 
         # This takes an object o as input and returns a string. If the object o cannot be serialized, instead of raising an error,
         # it returns a string indicating that the object is non-serializable, along with its type's qualified name obtained using __qualname__.

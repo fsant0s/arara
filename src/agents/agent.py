@@ -6,51 +6,33 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Un
 
 from openai import BadRequestError
 
-from ..capabilities.abilities import (
+from capabilities.memory import Memory
+from capabilities.tools.execute_tool_call import execute_tool_call
+from capabilities.tools import FunctionTool
+from capabilities.abilities import (
     Ability,
     TextExtractionAbility,
     MemoryAbility
 )
+
 from .base import BaseAgent
 from .helpers import (
-    append_oai_message,
-    match_trigger,
-    process_all_messages_before_reply,
-    process_last_received_message,
-    process_message_before_send,
-    process_received_message,
-    validate_llm_config,
-    content_str,
-    prepare_chat,
-    reflection_with_llm,
-    gather_usage_summary,
-    consolidate_chat_info,
+    append_oai_message, match_trigger,  process_all_messages_before_reply,
+    process_last_received_message, process_message_before_send, process_received_message,
+    validate_llm_config, content_str, prepare_chat, reflection_with_llm,
+    gather_usage_summary, consolidate_chat_info,
 )
 
-from ..capabilities.memory import Memory
 from .types import FunctionCall, Response, ChatResult
-from ..capabilities.tools.execute_tool_call import execute_tool_call
-from ..messages import (
-    TextMessage,
-    ThoughtEvent,
-    ToolCallExecutionEvent,
-    ToolCallRequestEvent,
+from agent_messages import (
+    TextMessage,  ThoughtEvent,
+    ToolCallExecutionEvent, ToolCallRequestEvent,
     ToolCallSummaryMessage
 )
+from llm_messages import CreateResult, FunctionExecutionResult
 
-from ..models import (
-    AssistantMessage,
-    CreateResult,
-    FunctionExecutionResult,
-    CreateResult
-)
-
-from ..capabilities.tools import FunctionTool
-from ..cache.cache import AbstractCache
-from ..io import IOStream
-
-from ..capabilities.tools.execute_tool_call import execute_tool_call
-
+from cache.cache import AbstractCache
+from ioflow import IOStream
 from termcolor import colored
 
 logger = logging.getLogger(__name__)
@@ -336,7 +318,7 @@ class Agent(BaseAgent):
             else:
                 raise TypeError(f"Unsupported ability type: {type(ability)}")
 
-    def initiate_chat(
+    def talk_to(
         self,
         recipient: "Agent",
         should_clear_history: bool = True,

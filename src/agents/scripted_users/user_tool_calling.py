@@ -1,6 +1,6 @@
 from typing import Optional, Literal
 
-from ...runtime_logging import log_new_agent, logging_enabled
+from runtime_logging import log_new_agent, logging_enabled
 from .. import User
 
 class UserToolCalling(User):

@@ -1,6 +1,3 @@
-# File based from: https://github.com/microsoft/autogen/blob/47f905267245e143562abfb41fcba503a9e1d56d/autogen/function_utils.py
-# Credit to original authors
-
 import inspect
 import typing
 from functools import partial
@@ -24,7 +21,10 @@ from typing import (
 
 from pydantic import BaseModel, Field, TypeAdapter, create_model  # type: ignore
 from pydantic_core import PydanticUndefined
+
 from typing_extensions import Literal
+import warnings
+from llm_messages import FinishReasons
 
 logger = getLogger(__name__)
 
@@ -92,7 +92,6 @@ def get_param_annotations(
     return {
         k: v.annotation for k, v in typed_signature.parameters.items() if v.annotation is not inspect.Signature.empty
     }
-
 
 class Parameters(BaseModel):
     """Parameters of a function as defined by the OpenAI API"""
@@ -230,29 +229,6 @@ def get_function_schema(f: Callable[..., Any], *, name: Optional[str] = None, de
     Raises:
         TypeError: If the function is not annotated
 
-    Examples:
-
-        .. code-block:: python
-
-            def f(
-                a: Annotated[str, "Parameter a"],
-                b: int = 2,
-                c: Annotated[float, "Parameter c"] = 0.1,
-            ) -> None:
-                pass
-
-
-            get_function_schema(f, description="function f")
-
-            #   {'type': 'function',
-            #    'function': {'description': 'function f',
-            #        'name': 'f',
-            #        'parameters': {'type': 'object',
-            #           'properties': {'a': {'type': 'str', 'description': 'Parameter a'},
-            #               'b': {'type': 'int', 'description': 'b'},
-            #               'c': {'type': 'float', 'description': 'Parameter c'}},
-            #           'required': ['a']}}}
-
     """
     typed_signature = get_typed_signature(f)
     required = get_required_params(typed_signature)
@@ -321,3 +297,53 @@ def args_base_model_from_signature(name: str, sig: inspect.Signature) -> Type[Ba
         fields[param_name] = (type, Field(default=default_value, description=description))
 
     return cast(BaseModel, create_model(name, **fields))  # type: ignore
+
+
+def parse_r1_content(content: str) -> Tuple[str | None, str]:
+    """Parse the content of an R1-style message that contains a `<think>...</think>` field."""
+    # Find the start and end of the think field
+    think_start = content.find("<think>")
+    think_end = content.find("</think>")
+
+    if think_start == -1 or think_end == -1:
+        warnings.warn(
+            "Could not find <think>..</think> field in model response content. " "No thought was extracted.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None, content
+
+    if think_end < think_start:
+        warnings.warn(
+            "Found </think> before <think> in model response content. " "No thought was extracted.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return None, content
+
+    # Extract the think field
+    thought = content[think_start + len("<think>") : think_end].strip()
+
+    # Extract the rest of the content, skipping the think field.
+    content = content[think_end + len("</think>") :].strip()
+
+    return thought, content
+
+
+def normalize_stop_reason(stop_reason: str | None) -> FinishReasons:
+    if stop_reason is None:
+        return "unknown"
+
+    # Convert to lower case
+    stop_reason = stop_reason.lower()
+
+    KNOWN_STOP_MAPPINGS: Dict[str, FinishReasons] = {
+        "stop": "stop",
+        "length": "length",
+        "content_filter": "content_filter",
+        "function_calls": "function_calls",
+        "end_turn": "stop",
+        "tool_calls": "function_calls",
+    }
+
+    return KNOWN_STOP_MAPPINGS.get(stop_reason, "unknown")

@@ -1,12 +1,9 @@
 from typing import Any, List
-
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...component_config import Component
-from ...models import SystemMessage
+from llm_messages import SystemMessage
 from .base_memory import Memory, MemoryContent, MemoryQueryResult, UpdateContextResult
-
 
 class ListMemoryConfig(BaseModel):
     """Configuration for ListMemory component."""
@@ -16,8 +13,7 @@ class ListMemoryConfig(BaseModel):
     memory_contents: List[MemoryContent] = []
     """List of memory contents stored in this memory instance."""
 
-
-class ListMemory(Memory, Component[ListMemoryConfig]):
+class ListMemory(Memory):
     """Simple chronological list-based memory implementation.
 
     This memory implementation stores contents in a list and retrieves them in
@@ -25,47 +21,10 @@ class ListMemory(Memory, Component[ListMemoryConfig]):
 
     The memory content can be directly accessed and modified through the content property,
     allowing external applications to manage memory contents directly.
-
-    Example:
-
-        .. code-block:: python
-
-            import asyncio
-            from autogen_core.memory import ListMemory, MemoryContent
-            from autogen_core.model_context import BufferedChatCompletionContext
-
-
-            def main() -> None:
-                # Initialize memory
-                memory = ListMemory(name="chat_history")
-
-                # Add memory content
-                content = MemoryContent(content="User prefers formal language", mime_type="text/plain")
-                await memory.add(content)
-
-                # Directly modify memory contents
-                memory.content = [MemoryContent(content="New preference", mime_type="text/plain")]
-
-                # Create a model context
-                model_context = BufferedChatCompletionContext(buffer_size=10)
-
-                # Update a model context with memory
-                await memory.update_context(model_context)
-
-                # See the updated model context
-                print(await model_context.get_messages())
-
-
-            asyncio.run(main())
-
     Args:
         name: Optional identifier for this memory instance
 
     """
-
-    component_type = "memory"
-    component_provider_override = "autogen_core.memory.ListMemory"
-    component_config_schema = ListMemoryConfig
 
     def __init__(self, name: str | None = None, memory_contents: List[MemoryContent] | None = None) -> None:
         self._name = name or "default_list_memory"

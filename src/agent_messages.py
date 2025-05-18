@@ -7,13 +7,13 @@ class and includes specific fields relevant to the type of message being sent.
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, List, Literal, Mapping, TypeVar
 
-from .agents.types import FunctionCall
-from .image import Image
-from .capabilities.memory import MemoryContent
-from .models import FunctionExecutionResult, RequestUsage, UserMessage
+from agents.types import FunctionCall
+from image import Image
+from capabilities.memory import MemoryContent
+from llm_messages import FunctionExecutionResult, RequestUsage, UserMessage
 from pydantic import BaseModel, ConfigDict, computed_field
 from typing_extensions import Self
-from .agents import BaseAgent
+from agents import BaseAgent
 
 class BaseMessage(BaseModel, ABC):
     """Base class for all message types in AgentChat. This is an abstract class
@@ -24,7 +24,6 @@ class BaseMessage(BaseModel, ABC):
         If you want to create a new message type, do not inherit from this class.
         Instead, inherit from :class:`ChatMessage` or :class:`AgentEvent`
         to clarify the purpose of the message type.
-
     """
 
     @computed_field
@@ -106,8 +105,8 @@ class ChatMessage(BaseMessage, ABC):
 
     @abstractmethod
     def to_model_message(self) -> UserMessage:
-        """Convert the message content to a :class:`~autogen_core.models.UserMessage`
-        for use with model client, e.g., :class:`~autogen_core.models.ChatCompletionClient`."""
+        """Convert the message content to a UserMessage`
+        for use with model client, e.g., ChatCompletionClient`."""
         ...
 class TextChatMessage(ChatMessage, ABC):
     """Base class for all text-only :class:`ChatMessage` types.
@@ -183,7 +182,7 @@ class StructuredMessage(ChatMessage, Generic[StructuredContentType]):
     .. code-block:: python
 
         from pydantic import BaseModel
-        from autogen_agentchat.messages import StructuredMessage
+        from agent_messages import StructuredMessage
 
 
         class MyMessageContent(BaseModel):

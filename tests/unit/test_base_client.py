@@ -9,7 +9,7 @@ import unittest
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from src.clients.base import BaseClient
+from src.capabilities.clients.base import BaseClient
 
 
 @dataclass

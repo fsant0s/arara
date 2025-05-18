@@ -4,8 +4,7 @@ from typing import Any, Dict, List, Union
 
 from pydantic import BaseModel, ConfigDict, field_serializer
 
-from ...component_config import ComponentBase
-from ...image import Image
+from image import Image
 
 
 class MemoryMimeType(Enum):
@@ -25,7 +24,7 @@ class MemoryContent(BaseModel):
     """A memory content item."""
 
     content: ContentType
-    """The content of the memory item. It can be a string, bytes, dict, or :class:`~autogen_core.Image`."""
+    """The content of the memory item. It can be a string, bytes, dict, or :class:`~Image`."""
 
     mime_type: MemoryMimeType | str = MemoryMimeType.TEXT
     """The MIME type of the memory content."""
@@ -44,18 +43,18 @@ class MemoryContent(BaseModel):
 
 
 class MemoryQueryResult(BaseModel):
-    """Result of a memory :meth:`~autogen_core.memory.Memory.query` operation."""
+    """Result of a memory :meth:`~memory.Memory.query` operation."""
 
     results: List[MemoryContent]
 
 
 class UpdateContextResult(BaseModel):
-    """Result of a memory :meth:`~autogen_core.memory.Memory.update_context` operation."""
+    """Result of a memory :meth:`~memory.Memory.update_context` operation."""
 
     memories: MemoryQueryResult
 
 
-class Memory(ABC, ComponentBase[BaseModel]):
+class Memory(ABC):
     """Protocol defining the interface for memory implementations.
 
     A memory is the storage for data that can be used to enrich or modify the model context.
@@ -67,7 +66,7 @@ class Memory(ABC, ComponentBase[BaseModel]):
     It is also a memory implementation's responsibility to update the model context
     with relevant memory content based on the current model context and querying the memory store.
 
-    See :class:`~autogen_core.memory.ListMemory` for an example implementation.
+    See :class:`~memory.ListMemory` for an example implementation.
     """
 
     component_type = "memory"

@@ -16,7 +16,7 @@ The enhanced logger automatically adds useful context to each log entry:
 - Custom context data relevant to the operation
 
 ```python
-from src.logger.enhanced_logger import get_logger
+from logger.enhanced_logger import get_logger
 
 # Get a logger for a specific component
 logger = get_logger("my_component")
@@ -35,7 +35,7 @@ user_logger.info("Processing user request",
 You can easily instrument functions with comprehensive logging using the `log_operation` decorator:
 
 ```python
-from src.logger.enhanced_logger import log_operation, get_logger
+from logger.enhanced_logger import log_operation, get_logger
 
 logger = get_logger("my_service")
 
@@ -61,7 +61,7 @@ ARARA's metrics collector provides tools for measuring and analyzing performance
 The `measure_time` decorator automatically tracks execution time for operations:
 
 ```python
-from src.monitoring.metrics import measure_time
+from monitoring.metrics import measure_time
 
 @measure_time("llm_inference")
 def get_llm_response(prompt: str):
@@ -75,7 +75,7 @@ def get_llm_response(prompt: str):
 You can track how many times specific operations are performed:
 
 ```python
-from src.monitoring.metrics import count_operation
+from monitoring.metrics import count_operation
 
 @count_operation("database_query")
 def fetch_user_data(user_id: str):
@@ -89,7 +89,7 @@ def fetch_user_data(user_id: str):
 ARARA can monitor system resource usage in real-time:
 
 ```python
-from src.monitoring.metrics import metrics_collector
+from monitoring.metrics import metrics_collector
 
 # Start monitoring resources (CPU, memory) every 10 seconds
 metrics_collector.start_resource_monitoring(interval_seconds=10.0)
@@ -108,8 +108,8 @@ Here's a complete example that combines logging and metrics:
 
 ```python
 import logging
-from src.logger.enhanced_logger import get_logger, configure_all_loggers, log_operation
-from src.monitoring.metrics import measure_time, count_operation, metrics_collector
+from logger.enhanced_logger import get_logger, configure_all_loggers, log_operation
+from monitoring.metrics import measure_time, count_operation, metrics_collector
 
 # Configure logging for the application
 configure_all_loggers(

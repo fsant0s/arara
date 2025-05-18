@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, 
 
 from openai.types.chat import ChatCompletion
 
-from src.logger.base_logger import BaseLogger, LLMConfig
-from src.logger.logger_factory import LoggerFactory
+from logger.base_logger import BaseLogger, LLMConfig
+from logger.logger_factory import LoggerFactory
 
 if TYPE_CHECKING:
     from .capabilities.clients import GroqClient, BaseClient
-    from .agents import Agent
+    from agents import Agent
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def start(
         try:
             agent_logger = LoggerFactory.get_logger(logger_type=logger_type, config=config)
         except Exception as e:
-            logger = logging.getLogger("src.runtime_logging")
+            logger = logging.getLogger("runtime_logging")
             logger.error(f"[runtime logging] Failed to start logging: {e}")
             return None  # Retorna None em caso de erro, sem propagar a exceção
 
@@ -83,7 +83,7 @@ def start(
         session_id = agent_logger.start()
         is_logging = True
     except Exception as e:
-        logger = logging.getLogger("src.runtime_logging")
+        logger = logging.getLogger("runtime_logging")
         logger.error(f"[runtime logging] Failed to start logging: {e}")
         return None
     return session_id """

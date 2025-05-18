@@ -1,8 +1,8 @@
 from typing import Optional
 
-from src.agents.base import BaseAgent
-from src.io.console import IOStream
-from src.formatting_utils import colored
+from agents.base import BaseAgent
+from ioflow.console import IOStream
+from formatting_utils import colored
 
 def clear_history(self, recipient: Optional[BaseAgent] = None, nr_messages_to_preserve: Optional[int] = None):
         """Clear the chat history of the agent.

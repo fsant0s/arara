@@ -1,5 +1,5 @@
 from .ability import Ability
-from ...agents.base import BaseAgent
+from agents.base import BaseAgent
 from typing import Union
 
 class MemoryAbility(Ability):

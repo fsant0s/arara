@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, TypeVar, Union
 from openai.types.chat import ChatCompletion
 
 if TYPE_CHECKING:
-    from ..agents import ClientWrapper, Agent
+    from agents import ClientWrapper, Agent
 
 F = TypeVar("F", bound=Callable[..., Any])
 ConfigItem = Dict[str, Union[str, List[str]]]

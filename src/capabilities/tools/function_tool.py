@@ -7,12 +7,11 @@ from typing import Any, Callable, Sequence
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from ...component_config import Component
-from ...function_utils import (
+from function_utils import (
     args_base_model_from_signature,
     get_typed_signature,
 )
-from ..code_executor.func_with_reqs import Import, import_to_str, to_code
+from .func_with_reqs import Import, import_to_str, to_code
 from .base import BaseTool
 
 
@@ -26,7 +25,7 @@ class FunctionToolConfig(BaseModel):
     has_cancellation_support: bool
 
 
-class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]):
+class FunctionTool(BaseTool[BaseModel, BaseModel]):
     """
     Create custom tools by wrapping standard Python functions.
 
@@ -49,38 +48,7 @@ class FunctionTool(BaseTool[BaseModel, BaseModel], Component[FunctionToolConfig]
         strict (bool, optional): If set to True, the tool schema will only contain arguments that are explicitly
             defined in the function signature, and no default values will be allowed. Defaults to False.
             This is required to be set to True when used with models in structured output mode.
-
-    Example:
-
-        .. code-block:: python
-
-            import random
-            from autogen_core.tools import FunctionTool
-            from typing_extensions import Annotated
-            import asyncio
-
-
-            async def get_stock_price(ticker: str, date: Annotated[str, "Date in YYYY/MM/DD"]) -> float:
-                # Simulates a stock price retrieval by returning a random float within a specified range.
-                return random.uniform(10, 200)
-
-
-            async def example():
-                # Initialize a FunctionTool instance for retrieving stock prices.
-                stock_price_tool = FunctionTool(get_stock_price, description="Fetch the stock price for a given ticker.")
-
-                # Execute the tool with cancellation support.
-                result = await stock_price_tool.run_json({"ticker": "AAPL", "date": "2021/01/01"})
-
-                # Output the result as a formatted string.
-                print(stock_price_tool.return_value_as_string(result))
-
-
-            asyncio.run(example())
     """
-
-    component_provider_override = "autogen_core.tools.FunctionTool"
-    component_config_schema = FunctionToolConfig
 
     def __init__(
         self,

@@ -1,4 +1,4 @@
-from .base import BaseTool, BaseToolWithState, ParametersSchema, Tool, ToolSchema
+from .base import BaseTool, ParametersSchema, Tool, ToolSchema
 from .function_tool import FunctionTool
 
 __all__ = [
@@ -6,6 +6,5 @@ __all__ = [
     "ToolSchema",
     "ParametersSchema",
     "BaseTool",
-    "BaseToolWithState",
     "FunctionTool",
 ]

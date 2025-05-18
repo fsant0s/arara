@@ -7,7 +7,7 @@ that are not yet considered stable parts of the public API.
 
 from typing import Any, Dict, List, Optional
 
-from src.api_utils import experimental
+from api_utils import experimental
 
 
 @experimental

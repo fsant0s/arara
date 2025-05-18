@@ -10,13 +10,6 @@ def should_hide_tools(messages: List[Dict[str, Any]], tools: List[Dict[str, Any]
 
     Returns:
         bool: Indicates whether the tools should be excluded from the response create request
-
-    Example Usage:
-    ```python
-        # Validating a numerical parameter within specific bounds
-        messages = params.get("messages", [])
-        tools = params.get("tools", None)
-        hide_tools = should_hide_tools(messages, tools, params["hide_tools"])
     """
 
     if hide_tools_param == "never" or tools is None or len(tools) == 0:

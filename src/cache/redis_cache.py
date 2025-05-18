@@ -56,7 +56,7 @@ class RedisCache(AbstractCache):
         Returns:
             str: The namespaced key.
         """
-        return f"autogen:{self.seed}:{key}"
+        return f"arara:{self.seed}:{key}"
 
     def get(self, key: str, default: Optional[Any] = None) -> Optional[Any]:
         """

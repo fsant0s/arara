@@ -13,31 +13,7 @@ from typing_extensions import Literal
 
 
 class Image:
-    """Represents an image.
-
-
-    Example:
-
-        Loading an image from a URL:
-
-        .. code-block:: python
-
-            from autogen_core import Image
-            from PIL import Image as PILImage
-            import aiohttp
-            import asyncio
-
-
-            async def from_url(url: str) -> Image:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(url) as response:
-                        content = await response.read()
-                        return Image.from_pil(PILImage.open(content))
-
-
-            image = asyncio.run(from_url("https://example.com/image"))
-
-    """
+    """Represents an image."""
 
     def __init__(self, image: PILImage.Image):
         self.image: PILImage.Image = image.convert("RGB")

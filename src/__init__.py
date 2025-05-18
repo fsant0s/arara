@@ -1,5 +1,5 @@
 import logging
-from src.agents.helpers.exception_utils import SenderRequired
+from agents.helpers.exception_utils import SenderRequired
 from .formatting_utils import colored
 
 # Set the root logger.

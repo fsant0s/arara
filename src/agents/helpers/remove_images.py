@@ -1,5 +1,5 @@
 from typing import List
-from ...models import LLMMessage, UserMessage
+from llm_messages import LLMMessage, UserMessage
 from .content_to_str import content_to_str
 
 def remove_images(messages: List[LLMMessage]) -> List[LLMMessage]:

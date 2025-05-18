@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 # Importações específicas em vez de importação em massa
 # para evitar o ciclo de importação
-from src.capabilities.clients.groq import GroqClient
+from capabilities.clients.groq import GroqClient
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """

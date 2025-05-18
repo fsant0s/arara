@@ -1,11 +1,11 @@
 from typing import Dict, Literal, Union
 
-from src.capabilities.clients import ClientWrapper
-from src.agents.base import BaseAgent
+from capabilities.clients import ClientWrapper
+from agents.base import BaseAgent
 
 from .content_str import content_str
-from ...formatting_utils import colored
-from ...io import IOStream
+from formatting_utils import colored
+from ioflow import IOStream
 from .message_to_dict import message_to_dict
 
 import re

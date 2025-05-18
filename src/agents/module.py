@@ -16,13 +16,13 @@ from .helpers import (
    invert_disallowed_to_allowed
 )
 
-from ..formatting_utils import colored
+from formatting_utils import colored
 
-from ..io.base import IOStream
+from ioflow.base import IOStream
 from .agent import Agent
 
-from ..agents.types import Response
-from ..messages import TextMessage
+from agents.types import Response
+from agent_messages import TextMessage
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +169,10 @@ class Module:
             )
 
         # If both self.allowed_or_disallowed_speaker_transitions is None and self.allow_repeat_speaker is None, set allow_repeat_speaker to True to ensure backward compatibility
-        # Discussed in https://github.com/microsoft/autogen/pull/857#discussion_r1451541204
         if self.allowed_or_disallowed_speaker_transitions is None and self.allow_repeat_speaker is None:
             self.allow_repeat_speaker = True
 
         # self.allowed_or_disallowed_speaker_transitions and self.allow_repeat_speaker are mutually exclusive parameters.
-        # Discussed in https://github.com/microsoft/autogen/pull/857#discussion_r1451266661
         if self.allowed_or_disallowed_speaker_transitions is not None and self.allow_repeat_speaker is not None:
             raise ValueError(
                 "Don't provide both allowed_or_disallowed_speaker_transitions and allow_repeat_speaker in module. "
@@ -182,7 +180,6 @@ class Module:
             )
 
         # Asks the user to specify whether the speaker_transitions_type is allowed or disallowed if speaker_transitions_type is supplied
-        # Discussed in https://github.com/microsoft/autogen/pull/857#discussion_r1451259524
         if self.allowed_or_disallowed_speaker_transitions is not None and self.speaker_transitions_type is None:
             raise ValueError(
                 "Module allowed_or_disallowed_speaker_transitions is not None, but speaker_transitions_type is None. "
@@ -283,7 +280,7 @@ class Module:
 
     def agent_by_name(
         self, name: str, recursive: bool = False, raise_on_name_conflict: bool = False
-    ) -> Optional["Agent"]:
+    ) -> Optional[Agent]:
         """Returns the agent with a given name. If recursive is True, it will search in nested teams."""
         agents = self.nested_agents() if recursive else self.agents
         filtered_agents = [agent for agent in agents if agent.name == name]
@@ -297,7 +294,7 @@ class Module:
         """Returns all agents in the module."""
         agents = self.agents.copy()
         for agent in agents:
-            if isinstance(agent, Orchestrator):
+           if type(agent).__name__ == "Orchestrator":
                 # Recursive call for nested teams
                 agents.extend(agent.module.nested_agents())
         return agents
@@ -647,7 +644,7 @@ class Module:
             start_message = messages[-1]
 
         # Run the speaker selection chat
-        result = checking_agent.initiate_chat(
+        result = checking_agent.talk_to(
             speaker_selection_agent,
             cache=None,  # don't use caching for the speaker selection chat
             message=start_message,

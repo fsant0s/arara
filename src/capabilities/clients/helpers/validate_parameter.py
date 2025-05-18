@@ -33,19 +33,6 @@ def validate_parameter(
     Raises:
         TypeError: If `allowed_values` is provided but is not a list.
 
-    Example Usage:
-    ```python
-        # Validating a numerical parameter within specific bounds
-        params = {"temperature": 0.5, "safety_model": "Meta-Llama/Llama-Guard-7b"}
-        temperature = validate_parameter(params, "temperature", (int, float), True, 0.7, (0, 1), None)
-        # Result: 0.5
-
-        # Validating a parameter that can be one of a list of allowed values
-        model = validate_parameter(
-        params, "safety_model", str, True, None, None, ["Meta-Llama/Llama-Guard-7b", "Meta-Llama/Llama-Guard-13b"]
-        )
-        # If "safety_model" is missing or invalid in params, defaults to "default"
-    ```
     """
 
     if allowed_values is not None and not isinstance(allowed_values, list):
