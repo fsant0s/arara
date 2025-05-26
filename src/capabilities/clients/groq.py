@@ -110,8 +110,6 @@ class GroqClient(BaseClient):
         # Parse parameters to the Groq API's parameters
         groq_params = self.parse_params(params)
 
-
-
         # Add tools to the call if we have them and aren't hiding them
         if "tools" in params:
             hide_tools = validate_parameter(

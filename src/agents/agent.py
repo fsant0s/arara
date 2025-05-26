@@ -477,7 +477,6 @@ class Agent(BaseAgent):
         for entry in self._reply_func_list:
             if not match_trigger(self, entry["trigger"], sender):
                 continue
-
             reply_func = entry["reply_func"]
             config = entry["config"]
             for response_batch in reply_func(self, messages=messages, sender=sender, config=config):
@@ -577,6 +576,18 @@ class Agent(BaseAgent):
         for f in self._reply_func_list:
             if f["reply_func"] == old_reply_func:
                 f["reply_func"] = new_reply_func
+
+    def unregister_reply_func(self, reply_func: Callable):
+        """Unregister a reply function.
+
+        Args:
+            reply_func (Callable): the reply function to be unregistered.
+        """
+        for f in self._reply_func_list:
+            if f["reply_func"] == reply_func:
+                self._reply_func_list.remove(f)
+                return
+        raise ValueError(f"{reply_func} is not registered as a reply function.")
 
     def register_hook(self, hookable_method: str, hook: Callable):
         """

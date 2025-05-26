@@ -1,5 +1,5 @@
 # ARARA
-A framework for agent-based conversational recommendation systems powered by Large Language Models (LLMs).
+A Multi-Agent Framework for Conversational Recommendation System with Large Language Models
 
 ## Overview
 

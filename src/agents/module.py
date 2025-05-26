@@ -106,7 +106,7 @@ class Module:
     - role_for_select_speaker_messages: sets the role name for speaker selection when in 'auto' mode, typically 'user' or 'system'. (default: 'system')
     """
     agents: List[Agent]
-    messages: List[Dict]
+    messages: List[Dict] = field(default_factory=list)
     max_round: int = 10
     admin_name: str = "Admin"
     func_call_filter: bool = True
@@ -194,8 +194,6 @@ class Module:
 
             # Create a fully connected allowed_speaker_transitions_dict not including self loops
             for agent in self.agents:
-                if isinstance(agent, Module):
-                    print(agent.admin_name)
                 self.allowed_speaker_transitions_dict[agent] = [
                     other_agent for other_agent in self.agents if other_agent != agent
                 ]

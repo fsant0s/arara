@@ -2,6 +2,8 @@ import logging
 from typing import Dict, List, Optional, Tuple, Union, Generator
 
 from .helpers import NoEligibleSpeaker
+from agents.types import Response
+from agent_messages import TextMessage
 
 from formatting_utils import colored
 from runtime_logging import log_new_agent, logging_enabled
@@ -44,6 +46,7 @@ class Orchestrator(Agent):
         self._module = module
         self._silent = silent
 
+        self.unregister_reply_func(Agent._generate_oai_reply)
         self.register_reply(Agent, Orchestrator.run_chat, config=module, reset_config=Module.reset)
 
     @property
@@ -85,7 +88,6 @@ class Orchestrator(Agent):
         message = messages[-1]
 
         speaker = sender
-        print("config", config)
         module = config
         send_introductions = getattr(module, "send_introductions", False)
         silent = getattr(self, "_silent", False)
@@ -122,6 +124,8 @@ class Orchestrator(Agent):
                 reply = None
                 for reply in speaker.generate_reply(sender=self):
                     reply = reply
+                    if not isinstance(reply, Response):
+                        speaker.send(reply, self, silent=silent, request_reply=False)
                     # The speaker sends the message without requesting a reply
                     #speaker.send(reply, self, request_reply=False, silent=silent)
             except KeyboardInterrupt:
@@ -159,7 +163,15 @@ class Orchestrator(Agent):
             for a in module.agents:
                 a.client_cache = a.previous_cache
                 a.previous_cache = None
-        return [[(True, message)]]
+
+        response = Response(
+            chat_message=TextMessage(
+                content=message["content"],
+                sender=sender,
+                receiver=self,
+            )
+        )
+        yield [(True, response)]
 
     def clear_agents_history(self, reply: dict, module: Module) -> str:
         """Clears history of messages for all agents or selected one. Can preserve selected number of last messages.
