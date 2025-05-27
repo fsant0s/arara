@@ -164,6 +164,11 @@ class Orchestrator(Agent):
                 a.client_cache = a.previous_cache
                 a.previous_cache = None
 
+
+        if sender._conversation_terminated[self]: # An agent typed "exit"
+             yield [(True, None)]
+             return
+
         response = Response(
             chat_message=TextMessage(
                 content=message["content"],

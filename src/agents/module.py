@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
+import sys
 
 import logging
 import random
@@ -107,7 +108,7 @@ class Module:
     """
     agents: List[Agent]
     messages: List[Dict] = field(default_factory=list)
-    max_round: int = 10
+    max_round: int = sys.maxsize  # Default to infinite rounds
     admin_name: str = "Admin"
     func_call_filter: bool = True
     speaker_selection_method: Union[Literal["auto", "manual", "random", "round_robin"], Callable] = "auto"
@@ -649,7 +650,7 @@ class Module:
             max_turns=2
             * max(1, max_attempts),  # Limiting the chat to the number of attempts, including the initial one
             should_clear_history=False,
-            silent=not self.select_speaker_auto_verbose,  # Base silence on the verbose attribute
+            silent=not self.select_speaker_auto_verbose  # Base silence on the verbose attribute
         )
         return self._process_speaker_selection_result(result, last_speaker, agents)
 
@@ -706,11 +707,11 @@ class Module:
                     Response(
                         chat_message=TextMessage(
                             content=self.select_speaker_auto_multiple_template.format(agentlist=agentlist),
-                            sorce=sender.name,
-                            target=recipient.name,
+                            sender=sender,
+                            receiver=recipient,
+                            override_role= self.role_for_select_speaker_messages,
                         )
                     )
-                    #"override_role": self.role_for_select_speaker_messages,
                 )]]
             else:
                 # Final failure, no attempts left
@@ -740,9 +741,9 @@ class Module:
                         Response(
                             chat_message=TextMessage(
                                 content= self.select_speaker_auto_none_template.format(agentlist=agentlist),
-                                source=sender.name,
-                                target=recipient.name,
-                                #"override_role": self.role_for_select_speaker_messages,
+                                sender=sender,
+                                receiver=recipient,
+                                override_role=self.role_for_select_speaker_messages,
                             )
                         )
                 )]]
@@ -751,7 +752,7 @@ class Module:
                 messages.append(
                     {
                         "role": "user",
-                        "content": f"[AGENT SELECTION FAILED]Select speaker attempt #{attempt} of {attempt + attempts_left} failed as it did not include any agent names.",
+                        "content": f"[AGENT SELECTION FAILED] Select speaker attempt #{attempt} of {attempt + attempts_left} failed as it did not include any agent names.",
                     }
                 )
 

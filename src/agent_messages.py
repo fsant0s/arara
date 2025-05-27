@@ -119,6 +119,9 @@ class TextChatMessage(ChatMessage, ABC):
     content: str
     """The content of the message."""
 
+    override_role: str = None
+    """Override the role of the sender in the model client."""
+
     def to_text(self) -> str:
         return self.content
 

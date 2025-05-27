@@ -9,10 +9,10 @@ from openai import BadRequestError
 from capabilities.memory import Memory
 from capabilities.tools.execute_tool_call import execute_tool_call
 from capabilities.tools import FunctionTool
-from capabilities.abilities import (
-    Ability,
-    TextExtractionAbility,
-    MemoryAbility
+from capabilities.skills import (
+    Skill,
+    TextExtraction,
+    SequentialMemory
 )
 
 from .base import BaseAgent
@@ -166,7 +166,7 @@ class Agent(BaseAgent):
         tools: List[FunctionTool | Callable[..., Any] | Callable[..., Awaitable[Any]]] | None = None,
         tool_call_summary_format: str = "{result}",
         reflect_on_tool_use: bool = False,
-        abilities: Optional[List[Ability]] = [],
+        skills: Optional[List[Skill]] = None,
         llm_reflection: bool = False,
         memory: Sequence[Memory] | None = None,
         llm_reflection_prompt: str = LLM_REFLECTION_PROMPT
@@ -211,8 +211,8 @@ class Agent(BaseAgent):
             reflect_on_tool_use (bool, optional):
                 If True, performs an additional inference using the tool result to refine the response.
 
-            abilities (Optional[List[Ability]], optional):
-                List of specific capabilities or skills assigned to the Agent.
+            skills (Optional[List[Skill]], optional):
+                List of specific skills assigned to the Agent.
 
             llm_reflection (bool, optional):
                 Enables internal reflection mechanisms, allowing the Agent to review its own outputs.
@@ -250,11 +250,11 @@ class Agent(BaseAgent):
                 raise TypeError(f"Expected Memory, List[Memory], or None, got {type(memory)}")
 
         # Avoid mutable default argument
-        self._abilities = abilities if abilities is not None else []
+        self._skills = skills if skills is not None else []
 
-        # Add default abilities (they are always included)
-        self._abilities.append(TextExtractionAbility())
-        self._abilities.append(MemoryAbility())
+        # Add default skills (they are always included)
+        self._skills.append(TextExtraction())
+        self._skills.append(SequentialMemory())
 
         # HUMAN IN THE LOOP
         self._max_consecutive_auto_reply = max_consecutive_auto_reply
@@ -279,7 +279,7 @@ class Agent(BaseAgent):
                 ) from e
 
         # Registered hooks are kept in lists, indexed by hookable method, to be called in their order of registration.
-        # New hookable methods should be added to this list as required to support new Agent abilities.
+        # New hookable methods should be added to this list as required to support new Agent skills.
         self.hook_lists: Dict[str, List[Callable]] = {
             "process_last_received_message": [],
             "process_message_before_send": [],
@@ -306,17 +306,17 @@ class Agent(BaseAgent):
         if len(tool_names) != len(set(tool_names)):
             raise ValueError(f"Tool names must be unique: {tool_names}")
 
-        self._add_abilities()
+        self._add_skills()
 
-    def _add_abilities(self):
+    def _add_skills(self):
         """
-        Attach all abilities declared in the Agent, including self abilities.
+        Attach all skills declared in the Agent, including self skills.
         """
-        for ability in self._abilities:
-            if isinstance(ability, Ability):
-                ability.add_to_agent(self)
+        for skill in self._skills:
+            if isinstance(skill, Skill):
+                skill.add_to_agent(self)
             else:
-                raise TypeError(f"Unsupported ability type: {type(ability)}")
+                raise TypeError(f"Unsupported skill type: {type(skill)}")
 
     def talk_to(
         self,
@@ -596,7 +596,7 @@ class Agent(BaseAgent):
 
         Args:
             hookable_method: A hookable method name implemented by Agent.
-            hook: A method implemented by a subclass of AgentAbility.
+            hook: A method implemented by a subclass of AgentSkill.
         """
         assert hookable_method in self.hook_lists, f"{hookable_method} is not a hookable method."
         hook_list = self.hook_lists[hookable_method]

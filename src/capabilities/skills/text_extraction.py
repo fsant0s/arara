@@ -1,4 +1,4 @@
-from .ability import Ability
+from .skill import Skill
 from agents.base import BaseAgent
 from agents.types import Response
 from agent_messages import (
@@ -8,9 +8,9 @@ from agent_messages import (
 )
 from typing import Union
 
-class TextExtractionAbility(Ability):
+class TextExtraction(Skill):
     """
-    An ability that enables a agent to normalize various message types into plain text content.
+    An skill that enables a agent to normalize various message types into plain text content.
 
     This is useful for preparing messages for processing, display, or logging by extracting their semantic content,
     regardless of the original message format (TextMessage, ToolCall, or Response).
@@ -18,16 +18,16 @@ class TextExtractionAbility(Ability):
 
     def __init__(self) -> None:
         """
-        Initialize the ability and bind it to a src.
+        Initialize the skill and bind it to a src.
 
         Args:
-            agent (BaseAgent): The agent to which this ability is attached.
+            agent (BaseAgent): The agent to which this skill is attached.
         """
         super().__init__()
 
     def on_add_to_agent(self, agent: BaseAgent):
         """
-        Register this ability as a utility hook.
+        Register this skill as a utility hook.
         """
         if not isinstance(agent, BaseAgent):
             raise TypeError(
@@ -70,6 +70,11 @@ class TextExtractionAbility(Ability):
             return message.content if isinstance(message.content, str) else str(message.content)
 
         if isinstance(message, Response):
+            if message.chat_message.override_role:
+                return {
+                    "role": message.chat_message.override_role,
+                    "content": message.chat_message.content
+                }
             return message.chat_message.content
 
         raise TypeError(f"Unsupported message type: {type(message)}")

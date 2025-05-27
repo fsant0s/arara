@@ -1,10 +1,10 @@
-from .ability import Ability
+from .skill import Skill
 from agents.base import BaseAgent
 from typing import Union
 
-class MemoryAbility(Ability):
+class SequentialMemory(Skill):
     """
-    An ability that allows a agent to inject relevant memory content before replying to a message.
+    An skill that allows a agent to inject relevant memory content before replying to a message.
 
     This is useful for enriching the agent's response context with previously stored memory entries,
     enhancing continuity and coherence in conversations.
@@ -12,16 +12,16 @@ class MemoryAbility(Ability):
 
     def __init__(self) -> None:
         """
-        Initialize the memory ability.
+        Initialize the memory skill.
         """
         super().__init__()
 
     def on_add_to_agent(self, agent: BaseAgent):
         """
-        Register this ability as a hook on the agent to inject memory content before replying.
+        Register this skill as a hook on the agent to inject memory content before replying.
 
         Args:
-            agent (BaseAgent): The agent to which this ability is attached.
+            agent (BaseAgent): The agent to which this skill is attached.
 
         Raises:
             TypeError: If the given agent is not an instance of BaseAgent.
@@ -35,13 +35,13 @@ class MemoryAbility(Ability):
 
     def _get_memories(
         self,
-        processed_user_content: Union[dict, str],
-    ) -> str:
+        processed_messages: Union[dict, str],
+    ) ->  Union[dict, str]:
         """
         Fetch relevant memory entries from the agent's memory and append them to the message content.
 
         Args:
-            processed_user_content (Union[dict, str]): The content to which memory will be appended.
+            processed_messages (Union[dict, str]): The content to which memory will be appended.
 
         Returns:
             str: The combined content with relevant memory included.
@@ -60,7 +60,7 @@ class MemoryAbility(Ability):
                 'role': 'system'
             }]
             # Append memory content to the processed user content
-            return processed_user_content + memories
+            return processed_messages + memories
 
         # Return the original content if no memory is found
-        return processed_user_content
+        return processed_messages
