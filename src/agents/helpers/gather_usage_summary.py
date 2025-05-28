@@ -24,6 +24,22 @@ def gather_usage_summary(sender: BaseAgent, receiver: BaseAgent) -> Dict[Dict[st
     """
     from ..orchestrator import Orchestrator
 
+    def collect_all_agents_with_client(sender, receiver):
+        def collect(agent):
+            collected = []
+            if getattr(agent, "client", None):
+                collected.append(agent)
+            if isinstance(agent, Orchestrator) and hasattr(agent, "module"):
+                for sub_agent in getattr(agent.module, "agents", []):
+                    collected.extend(collect(sub_agent))
+            return collected
+
+        agents = []
+        for entry in [sender, receiver]:
+            agents.extend(collect(entry))
+
+        return agents
+
     def aggregate_summary(usage_summary: Dict[str, Any], agent_summary: Dict[str, Any], agent_name: str) -> None:
 
         if agent_summary is None:
@@ -42,11 +58,8 @@ def gather_usage_summary(sender: BaseAgent, receiver: BaseAgent) -> Dict[Dict[st
                     usage_summary[agent_name][model]["completion_tokens"] += data.get("completion_tokens", 0)
                     usage_summary[agent_name][model]["total_tokens"] += data.get("total_tokens", 0)
 
-    agents = [sender, receiver]
-    if isinstance(receiver, Orchestrator):
-        for agent in receiver.module.agents:
-            if getattr(agent, "client", None):
-                agents.append(agent)
+    agents = collect_all_agents_with_client(sender, receiver)
+
 
     for agent in agents:
         if getattr(agent, "client", None):

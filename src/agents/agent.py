@@ -47,6 +47,7 @@ class Agent(BaseAgent):
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
+    DEFAULT_DESCRIPTION = "A agent capable of processing requests and generating responses using LLMs."
     DEFAULT_SUMMARY_METHOD = "last_msg"
     DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
     LLM_REFLECTION_PROMPT = """
@@ -156,7 +157,7 @@ class Agent(BaseAgent):
         self,
         name: str,
         llm_config: Optional[Union[Dict, Literal[False]]] = None,
-        description: Optional[str] = None,
+        description: Optional[str] = DEFAULT_DESCRIPTION,
         chat_messages: Optional[Dict[BaseAgent, List[Dict]]] = None,
         default_auto_reply: Union[str, Dict] = "",
         system_message: str = "",

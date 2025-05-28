@@ -50,7 +50,10 @@ class UserModule(User):
 
         # Predefined sequence of messages to trigger tool calls
         self._dialog = [
-            "exit",
+            "Sim, de um filme",
+            "Agora gostaria de um livro",
+            "sim",
+            "exit"
         ]
 
     def get_human_input(self, prompt):
