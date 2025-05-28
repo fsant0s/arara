@@ -1,262 +1,262 @@
+![ARARA Logo](logo.png)
+
 # ARARA
-A Multi-Agent Framework for Conversational Recommendation System with Large Language Models
+A Multi-Agent Framework for Conversational Recommendation Systems with Large Language Models
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=fsant0s/arara&type=Timeline)](https://www.star-history.com/#fsant0s/arara&Timeline)
 
 ## Overview
 
-ARARA is a modular framework designed to build complex agent-based recommendation systems. It leverages the power of Large Language Models (LLMs) through a flexible architecture of interconnected agents with specialized capabilities.
+Several multi-agent frameworks have emerged recently — such as AutoGen, CrewAI, and LangGraph — aiming to coordinate LLM agents.
+But here's the gap:
 
-Key features:
-- **Modular Architecture**: Build systems using interconnected agents with specialized roles
-- **Memory Capabilities**: Episodic memory and shared memory for enhanced context awareness
-- **Reflection Mechanisms**: Self-improvement through introspection and error analysis
-- **Flexible LLM Integration**: Support for multiple LLM providers (OpenAI, Groq, etc.)
-- **Extensible Design**: Easily add custom capabilities and LLM providers
+❌ No dialogue planning
+❌ No memory-based decisions
+❌ No user-intent alignment
+❌ No modular, task-oriented orchestration
+❌ ...and none are designed for **conversational recommendation** tasks
+
+**ARARA** fills this gap.
+
+It is a modular, extensible framework for orchestrating LLM-based agents in complex recommendation scenarios, especially those involving dialogue, memory, tools, and reflection.
+
+### Key Features
+
+- **Agent-based Dialogue Planning**: Dynamically selects the most suitable agent to respond based on dialogue context and user intent
+- **Contextual Memory Integration**: Memory is treated as a first-class capability, enabling agents to retain and reason over relevant information
+- **Introspective Agents**: Built-in reflection mechanisms allow agents to self-evaluate and adapt their behavior
+- **Multi-LLM Support**: Compatible with Groq, OpenAI, and Maritaca.
+- **Compositional Modularity**: Agents can operate independently or within orchestrated modules, promoting reusability and scalability
+- **Conversational Recommendation Focus**: Designed specifically for multi-turn, personalized, dialogue-driven recommendation scenarios
+
+
+---
 
 ## Architecture
 
-ARARA follows a modular architecture organized around these key components:
+![ARARA Architecture](https://github.com/fsant0s/arara/assets/architecture.png)
+
+The ARARA architecture includes:
+
+- **Single Agents** that respond directly to user prompts
+- A central **Orchestrator Agent** that coordinates the interaction
+- **Modules**: groups of agents governed by internal orchestrators, designed to handle specific subtasks
+- Decision flows for choosing who speaks next, invoking tools, using memory, and returning coherent responses to users
+
+This structure allows for both horizontal and vertical scaling of agent-based workflows.
+
+---
+
+## Project Structure
+The current structure of the `src/` directory in ARARA is organized as follows:
 
 ```
 src/
-├── agents/         # Core agents implementations
-├── capabilities/    # Specialized abilities for agents
-├── clients/         # LLM provider integrations
-├── cognitions/      # Higher-level thinking processes
-├── components/      # Reusable building blocks
-├── logger/          # Logging utilities
-└── io/              # Input/output handling
+├── agents/ # Core agent and orchestrator implementations
+├── capabilities/ # Specialized capabilities for agents:
+│ # ├── clients/: Wrappers and configs for LLM providers (e.g., OpenAI, Groq, Maritaca)
+│ # ├── memory/: Implementations of memory mechanisms (short-term, episodic, etc.)
+│ # ├── skills/: Built-in skills such as WebCrawler, WebSearch, Vision, etc.
+│ # └── tools/: Tool execution and integration with external functions
+├── ioflow/ # Input and output flow management
+├── logger/ # Logging utilities for tracking and debugging
+├── monitoring/ # Runtime monitoring and diagnostics
+├── cache/ # Caching mechanisms and temporary data
 ```
 
-### Component Diagram
+This modular structure is designed to support:
+- **Separation of responsibilities** across capabilities, execution flow, and logging
+- **Scalability** through reusable and decoupled components
+- **Ease of maintenance**, allowing new features and agents to be added independently
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                      Application                         │
-└───────────────────────────┬─────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────┐
-│                    ARARA Framework                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ Agents   │◄─┤Capabilities│ │Cognitions│ │Components│ │
-│  └────┬─────┘  └──────────┘  └──────────┘  └──────────┘ │
-│       │        ┌──────────┐                             │
-│       ├───────►│    IO    │                             │
-│       │        └──────────┘                             │
-│  ┌────▼─────┐                    ┌──────────┐           │
-│  │ Clients  │────────────────────► Logger   │           │
-│  └────┬─────┘                    └──────────┘           │
-└───────┼─────────────────────────────────────────────────┘
-        │
-┌───────▼─────────────────────────────────────────────────┐
-│                    LLM Providers                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │  OpenAI  │  │   Groq   │  │ Anthropic│  │  Custom  │ │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
+
+---
 
 ## Use Cases
 
-ARARA is designed for building sophisticated recommendation systems in various domains:
+ARARA is ideal for building **dialogue-driven recommendation systems**. Example applications include:
 
-1. **E-commerce Product Recommendations**
-   - Personalized product recommendations based on user preferences
-   - Cross-sells and up-sells with contextual awareness
+1. **Conversational E-commerce**
+   - Agents that understand user preferences over multiple turns
+   - Personalized product recommendations with contextual awareness
 
-2. **Content Recommendation Systems**
-   - Article and media recommendations with understanding of content themes
-   - Learning user preferences through interactions
+2. **Media and Content Discovery**
+   - Systems that suggest articles, videos, or music based on ongoing user conversations
+   - Adaptation through memory and feedback
 
-3. **Knowledge Discovery**
-   - Research assistance with relevant document identification
-   - Connecting related pieces of information across databases
+3. **AI-Powered Research Assistants**
+   - Multi-agent setups to retrieve, analyze, and recommend documents or data
+   - Collaboration between explainer, retriever, and recommender agents
 
-4. **Expert Systems**
-   - Domain-specific advice based on specialized knowledge
-   - Multi-agent collaboration for complex problem solving
+4. **Personalized Assistants**
+   - Agents that track and recall preferences
+   - Support proactive and reactive dialogue planning
+
+5. **Conversational Recommender Systems Research**
+- A modular experimentation environment for researchers working on conversational recommendation
+- Facilitates evaluation of memory strategies, dialogue planning, and agent coordination
+
+
+---
 
 ## Quick Start Example
 
-Here's a simple example of creating a basic recommendation agent:
+Here’s a basic example from [`notebooks/memory.ipynb`](notebooks/memory.ipynb):
 
 ```python
-from agents import Agent
-from capabilities import EpisodicMemoryCapability, ReflectionCapability
+from agents import Agent, User
+from agents.scripted_users import UserMemory
+from capabilities.memory import ListMemory, MemoryContent
+import os
 
-# Configure LLM client
-client = ClientWrapper(provider="groq", model="llama3-70b-8192")
-
-# Create a recommendation agent with memory and reflection
-recommender = Agent(
-    name="ProductRecommender",
-    client=client,
-    capabilities=[
-        EpisodicMemoryCapability(),
-        ReflectionCapability()
+# LLM configuration
+llm_config = {
+    "config_list": [
+        {
+            "client": "groq",
+            "temperature": 0.0,
+            "model": "llama-3.3-70b-versatile",
+            "api_key": os.getenv("GROQ_API_KEY")
+        }
     ]
+}
+
+# Create memory
+sequential_memory = ListMemory(name="chat_history")
+sequential_memory.add(MemoryContent(content="User likes beef."))
+
+# Example tool
+def get_recipe(diet_type: str = "standard") -> str:
+    if diet_type == "vegan":
+        return "Chickpea pasta with sautéed vegetables"
+    elif diet_type == "peanut":
+        return "Thai peanut stir-fry"
+    else:
+        return "Creamy chicken alfredo"
+
+# Create user and agent
+user = UserMemory(name="user")
+assistant = Agent(
+    name="assistant_agent",
+    llm_config=llm_config,
+    tools=[get_recipe],
+    memory=[sequential_memory],
 )
 
-# Use the recommender
-user_query = "I'm looking for a smartphone with good battery life under $500"
-recommendations = recommender.process(user_query)
-print(recommendations)
+# Ask a question
+chat_result = user.talk_to(
+    assistant_agent,
+    message="Can you recommend me something for dinner?"
+)
 ```
 
-For more complex examples, see the [notebooks](notebooks/) directory.
+More advanced examples can be found in the `notebooks/` directory.
+
+---
 
 ## Run Locally
 
-Clone the project
+Clone the repository:
 
-~~~bash
-  git clone https://github.com/fsant0s/arara.git
-~~~
+```bash
+git clone https://github.com/fsant0s/arara.git
+cd arara
+```
 
-Go to the project directory
+Install dependencies:
 
-~~~bash
-  cd arara
-~~~
-
-### Install dependencies
-
-First, ensure you have Python 3.12 and the uv package manager installed.
-
-To set up the development environment automatically:
-
-~~~bash
+```bash
 ./scripts/setup_dev_env.sh
-~~~
+```
 
-This script will:
-1. Create a virtual environment
-2. Install all dependencies
-3. Configure pre-commit hooks
-4. Set up a basic test structure
+Or manually:
 
-Alternatively, install dependencies manually:
-
-~~~bash
-# Install package in development mode (without dev dependencies)
-uv pip install -e .
-
-# Install with development dependencies
+```bash
 uv pip install -e ".[dev]"
-~~~
+```
 
-### Environment Configuration
-
-Copy the example environment file and configure your LLM API keys:
+Set up your environment:
 
 ```bash
 cp .env.example .env
+# Then edit .env with your API keys
 ```
 
-Edit the .env file with your API keys for the LLM services you're using.
+---
 
 ## Dependencies
 
-The ARARA project carefully manages its dependencies to ensure reproducibility and reliability.
+All production dependencies are version-pinned. Development and testing dependencies are optional and separated.
 
-- All production dependencies have fixed versions to guarantee consistent behavior
-- Development dependencies are organized separately from production code
-- For a detailed description of all dependencies, see [DEPENDENCIES.md](DEPENDENCIES.md)
+See [DEPENDENCIES.md](DEPENDENCIES.md) for a full list.
+
+---
 
 ## Development
 
-### Code Style
+We follow strict code quality practices. Tools used:
 
-This project uses several tools to maintain code quality:
+- **Black**: Formatting
+- **isort**: Import ordering
+- **flake8**: Linting
+- **mypy**: Static type checking
 
-- **Black**: Code formatting
-- **isort**: Import sorting
-- **flake8**: Code linting
-- **mypy**: Type checking
+To apply:
 
-Configuration for these tools is in the `pyproject.toml` file.
+```bash
+black . && isort . && flake8 . && mypy .
+```
 
-To run these tools:
+---
 
-~~~bash
-# Format code
-black .
-isort .
+## Testing
 
-# Check code
-flake8 .
-mypy .
-~~~
+To run unit and integration tests with coverage:
 
-### Testing
-
-ARARA uses automated tests to ensure code quality and reliability:
-
-- **Unit Tests**: Verify individual components
-- **Integration Tests**: Validate interaction between components
-- **Coverage Reports**: Monitor test coverage
-
-To run all tests and generate coverage reports:
-
-~~~bash
+```bash
 ./scripts/run_tests.sh
-~~~
+```
 
-For more details about the test structure and how to add new tests, see [tests/README.md](tests/README.md).
+Details in [tests/README.md](tests/README.md).
+
+---
 
 ## Contributing
 
-Contributions are always welcome!
+We welcome contributions!
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for ways to get started.
+Please check:
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
-Please adhere to this project's [Code of Conduct](CODE_OF_CONDUCT.md).
+---
 
 ## Versioning and Releases
 
-### Conventional Commits
+We follow:
 
-This project follows the [Conventional Commits](https://www.conventionalcommits.org/) pattern for commit messages, allowing automatic CHANGELOG generation and facilitating semantic versioning.
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Semantic Versioning](https://semver.org/)
 
-Basic format for commit messages:
+Scripts:
 
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
+```bash
+python scripts/bump_version.py
+python scripts/generate_changelog.py
 ```
 
-Common commit types:
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Changes that do not affect code meaning
-- **refactor**: Code changes that neither fix bugs nor add features
-- **perf**: Performance improvements
-- **test**: Adding or fixing tests
-- **build**: Changes to the build system or dependencies
-- **ci**: Changes to CI configuration files
-
-### Semantic Versioning
-
-This project follows [Semantic Versioning](https://semver.org/). For more details, see the [VERSIONING.md](VERSIONING.md) file.
-
-### Versioning Scripts
-
-The project includes scripts to facilitate version management:
-
-- `scripts/bump_version.py`: Increments the project version (major, minor, patch)
-- `scripts/generate_changelog.py`: Generates entries for CHANGELOG.md from commits
+---
 
 ## Security
 
-Security is a priority for the ARARA project. See [SECURITY.md](SECURITY.md) for details on:
+Security best practices and contact details are outlined in [SECURITY.md](SECURITY.md).
 
-- How we handle secure credentials
-- Input validation practices
-- Reporting security vulnerabilities
+---
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/).
+
+> **Note**: ARARA is based on [AutoGen](https://github.com/microsoft/autogen) and respects its licensing model.
