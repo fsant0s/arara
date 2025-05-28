@@ -1,22 +1,20 @@
-![ARARA Logo](logo.png)
+<p align="center">
+  <img src="logo.png" alt="ARARA Logo" width="120"/><br/>
+  <strong style="font-size: 1.8em;">ARARA</strong><br/>
+  <em>A Multi-Agent Framework for Conversational Recommendation Systems with Large Language Models</em>
+</p>
 
-# ARARA
-A Multi-Agent Framework for Conversational Recommendation Systems with Large Language Models
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=fsant0s/arara&type=Timeline)](https://www.star-history.com/#fsant0s/arara&Timeline)
 
 ## Overview
 
 Several multi-agent frameworks have emerged recently — such as AutoGen, CrewAI, and LangGraph — aiming to coordinate LLM agents.
 But here's the gap:
 
-❌ No dialogue planning
-❌ No memory-based decisions
-❌ No user-intent alignment
-❌ No modular, task-oriented orchestration
-❌ ...and none are designed for **conversational recommendation** tasks
+- ❌ No dialogue planning
+- ❌ No memory-based decisions
+- ❌ No user-intent alignment
+- ❌ No modular, task-oriented orchestration
+- ❌ ...and none are designed for **conversational recommendation** tasks
 
 **ARARA** fills this gap.
 
