@@ -210,7 +210,7 @@ class WebSearch(Skill):
 
         system_response_part = [{
             "content": final_content,
-            "role": "system" # Or "tool_response", "assistant", depending on agent's schema
+            "role": "assistant" # Or "tool_response", "assistant", depending on agent's schema
         }]
 
         return processed_messages + system_response_part

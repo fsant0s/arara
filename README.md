@@ -34,12 +34,14 @@ It is a modular, extensible framework for orchestrating LLM-based agents in comp
 
 ## Architecture
 
-![ARARA Architecture](https://github.com/fsant0s/arara/assets/architecture.png)
+<p align="center">
+  <img src="https://github.com/fsant0s/arara/assets/architecture.png" alt="ARARA Architecture" width="600"/>
+</p>
 
 The ARARA architecture includes:
 
 - **Single Agents** that respond directly to user prompts
-- A central **Orchestrator Agent** that coordinates the interaction
+- A central **Orchestrator Agent** that coordinates the interactionm
 - **Modules**: groups of agents governed by internal orchestrators, designed to handle specific subtasks
 - Decision flows for choosing who speaks next, invoking tools, using memory, and returning coherent responses to users
 

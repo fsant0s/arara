@@ -77,7 +77,7 @@ class WebCrawler(Skill):
 
         system_response = [{
             "content": scraped_content,
-            "role": "system"
+            "role": "assistant"
         }]
 
         return processed_messages + system_response

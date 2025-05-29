@@ -246,7 +246,7 @@ class GoogleDocsReader(Skill):
 
         system_response_part = [{
             "content": collated_content,
-            "role": "system"
+            "role": "assistant"
         }]
 
         return processed_messages + system_response_part

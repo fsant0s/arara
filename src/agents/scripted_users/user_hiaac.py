@@ -50,9 +50,9 @@ class UserHIAAC(User):
 
         # Predefined sequence of messages to trigger tool calls
         self._dialog = [
-            "Quando será a proxima reuniao?",
+            "Quando será a proxima reuniao do hiaac?",
             "Liste os pesquisadores do hiaac",
-            "Quem apresentará em junho?",
+            "Quem será os participantes do hiaac que apresentará em junho?",
             "E em janeiro?",
             "E em julho e Maio?",
             "exit",

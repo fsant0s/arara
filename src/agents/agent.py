@@ -1,4 +1,5 @@
 import copy
+import re
 import logging
 import warnings
 from collections import defaultdict
@@ -20,7 +21,7 @@ from .helpers import (
     append_oai_message, match_trigger,  process_all_messages_before_reply,
     process_last_received_message, process_message_before_send, process_received_message,
     validate_llm_config, content_str, prepare_chat, reflection_with_llm,
-    gather_usage_summary, consolidate_chat_info,
+    gather_usage_summary, consolidate_chat_info, parse_function_call_list_from_string
 )
 
 from .types import FunctionCall, Response, ChatResult
@@ -44,6 +45,9 @@ class Agent(BaseAgent):
     Agents are the core components of the ARARA framework. They can be equipped with
     various capabilities, communicate with each other, and interact with LLM providers.
     """
+
+    # Validates agent names: no spaces or characters invalid in OpenAI's Chat API (e.g., <, |, \, /, >, ")
+    NAME_PATTERN = re.compile(r'^[^\s<|\\/>\"]+$')
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
@@ -220,6 +224,12 @@ class Agent(BaseAgent):
         """
 
 
+        if not self.NAME_PATTERN.match(name):
+            raise ValueError(
+                f"Invalid agent name '{name}'. "
+                "It must not contain spaces or any of these characters: < | \\ / > \""
+            )
+
         # a dictionary of conversations, default value is list
         if chat_messages is None:
             self._oai_messages = defaultdict(list)
@@ -349,6 +359,9 @@ class Agent(BaseAgent):
         for agent in [self, recipient]:
             agent.previous_cache = agent.client_cache
             agent.client_cache = cache
+
+        if self.human_input_mode == "ALWAYS":
+            self._human_input.append(message)
 
         prepare_chat(self, recipient, should_clear_history)
         self.send(message, recipient, silent=silent, request_reply=True)
@@ -821,17 +834,26 @@ class Agent(BaseAgent):
             yield None
             return
 
-        # If direct text response (string)
         if isinstance(model_result.content, str):
-            yield Response(
-                chat_message=TextMessage(
-                    content=model_result.content,
-                    sender=sender,
-                    receiver=self,
-                    models_usage=model_result.usage,
+            # A dumb solution for dumb models.
+            # Some models return tool/function calls as stringified "FunctionCall(...)" inside `content`,
+            # instead of using the proper `tool_calls` field. This block detects and fixes that
+            # by parsing the string manually and reconstructing the expected structure,
+            # moving the extracted FunctionCall into `tool_calls` and clearing the `content`.
+            extracted_calls = parse_function_call_list_from_string(model_result.content)
+            if extracted_calls:
+                model_result.content = extracted_calls
+                model_result.finish_reason = "function_calls"
+            else:
+                yield Response(
+                    chat_message=TextMessage(
+                        content=model_result.content,
+                        sender=sender,
+                        receiver=self,
+                        models_usage=model_result.usage,
+                    )
                 )
-            )
-            return
+                return
 
         # Otherwise, we have function calls
         assert isinstance(model_result.content, list) and all(
@@ -951,7 +973,7 @@ class Agent(BaseAgent):
         cache: Optional[AbstractCache] = None,
     ) -> Response:
 
-        all_messages += [{"content": str(response.content), "role": "user"}] + [{"content": self._llm_reflection_prompt, 'role': 'system'}]
+        all_messages += [{"content": str(response.content), "role": "user"}] + [{"content": self._llm_reflection_prompt, 'role': 'assistant'}]
         return llm_client.create(
         context=all_messages[-1].pop("context", None),
         messages=all_messages ,

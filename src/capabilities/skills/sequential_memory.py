@@ -57,7 +57,7 @@ class SequentialMemory(Skill):
             formatted = "\nRelevant memory content (in chronological order):\n" + "\n".join(lines) + "\n"
             memories = [{
                 'content': formatted,
-                'role': 'system'
+                'role': 'assistant'
             }]
             # Append memory content to the processed user content
             return processed_messages + memories

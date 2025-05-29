@@ -637,7 +637,7 @@ class Module:
         if self.select_speaker_prompt_template is not None:
             start_message = {
                 "content": self.select_speaker_prompt(agents),
-                "override_role": self.role_for_select_speaker_messages,
+                "override_role": "assistant",
             }
         else:
             start_message = messages[-1]

@@ -2,41 +2,27 @@ from __future__ import annotations
 
 import copy
 import os
-import warnings
 
+from typing import Dict, List, Union, Any
 from groq import Groq, Stream
 
 from llm_messages import ChatCompletionTokenLogprob, TopLogprob, CreateResult, RequestUsage
-from function_utils import normalize_stop_reason, parse_r1_content
+from function_utils import normalize_stop_reason
 
-from capabilities.clients.helpers.validate_parameter import validate_parameter
-from capabilities.clients.base import BaseClient
-
-from ..tools import Tool, ToolSchema
-from typing import Dict, List, Union, Any, Sequence
-
-from .helpers.assert_valid_name import assert_valid_name
-from .helpers.should_hide_tools import should_hide_tools
+from .base import BaseClient
 
 from agents.types import FunctionCall
 from agents.helpers.normalize_name import normalize_name
 
-# Cost per thousand tokens - Input / Output (NOTE: Convert $/Million to $/K)
-# see: https://github.com/AgentOps-AI/tokencost
-GROQ_PRICING_1K = {
-    "gemma2-9b-it": (0.0002, 0.0002),
-    "qwen-2.5-32b": (0.00059, 0.00079),
-    "llama-3.3-70b-versatile": (0.00059, 0.00079),
-    "llama3-70b-8192": (0.00059, 0.00079),
-    "mixtral-8x7b-32768": (0.00024, 0.00024),
-    "llama3-8b-8192": (0.00005, 0.00008),
-    "gemma-7b-it": (0.00007, 0.00007),
-    "llama3-groq-70b-8192-tool-use-preview": (0.00089, 0.00089),
-}
-
+from .utils.should_hide_tools import should_hide_tools
+from .utils.convert_tools import convert_tools
+from .utils.calculate_token_cost import calculate_token_cost
+from .utils.validate_parameter import validate_parameter
 
 class GroqClient(BaseClient):
     """Client for Groq's API."""
+
+    PROVIDER_NAME = "groq"
 
     def __init__(self, **kwargs):
         """Requires api_key or environment variable to be set
@@ -105,7 +91,7 @@ class GroqClient(BaseClient):
         messages = params.get("messages", [])
 
         # Convert Arara messages to Groq messages
-        groq_messages = oai_messages_to_groq_messages(messages)
+        groq_messages = self._oai_messages_to_groq_messages(messages)
 
         # Parse parameters to the Groq API's parameters
         groq_params = self.parse_params(params)
@@ -116,7 +102,7 @@ class GroqClient(BaseClient):
                 params, "hide_tools", str, False, "never", None, ["if_all_run", "if_any_run", "never"]
             )
             if not should_hide_tools(groq_messages, params["tools"], hide_tools):
-                groq_params["tools"] = self.convert_tools(params["tools"])
+                groq_params["tools"] = convert_tools(params["tools"])
 
         groq_params["messages"] = groq_messages
 
@@ -223,17 +209,18 @@ class GroqClient(BaseClient):
                 for x in response.choices[0].logprobs.content
             ]
 
-        #   This is for local R1 models.
-        #TODO: test it.
-        if isinstance(content, str) and thought is None and self._model_info is not None:
-            if self._model_info["family"] == ModelFamily.R1:
-                thought, content = parse_r1_content(content)
-
         usage = RequestUsage(
             # TODO backup token counting
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens
+        )
+
+        calculated_cost = calculate_token_cost(
+            input_tokens=prompt_tokens,
+            output_tokens=completion_tokens,
+            provider=self.PROVIDER_NAME,
+            model_name=groq_params["model"]
         )
 
         response = CreateResult(
@@ -245,68 +232,22 @@ class GroqClient(BaseClient):
             cached=False,
             logprobs=logprobs,
             thought=thought,
-            cost=calculate_groq_cost(prompt_tokens, completion_tokens, groq_params["model"]),
+            cost=calculated_cost,
             model_name=groq_params["model"],
         )
 
         return response
 
-    def convert_tools(
-            self,
-            tools: Sequence[Tool | ToolSchema],
-        ) -> List[Dict[str, Union[str, Dict]]]:
-        result: List[Dict[str, Union[str, Dict]]] = []
-        for tool in tools:
-            if isinstance(tool, Tool):
-                tool_schema = tool.schema
-            else:
-                assert isinstance(tool, dict)
-                tool_schema = tool
+    def _oai_messages_to_groq_messages(self, messages: list[Dict[str, Any]]) -> list[dict[str, Any]]:
+        """Convert messages from OAI format to Groq's format.
+        We correct for any specific role orders and types.
+        """
 
-            function_def = {
-                "type": "function",
-                "function": {
-                    "name": tool_schema["name"],
-                    "description": tool_schema.get("description", ""),
-                    "parameters": tool_schema.get("parameters", {}),
-                    # "strict" não é mais aceito diretamente pela OpenAI
-                }
-            }
+        groq_messages = copy.deepcopy(messages)
 
-            result.append(function_def)
+        # Remove the name field
+        for message in groq_messages:
+            if "name" in message:
+                message.pop("name", None)
 
-        # Check if all tools have valid names.
-        for tool_param in result:
-            assert_valid_name(tool_param["function"]["name"])
-
-        return result
-
-
-def oai_messages_to_groq_messages(messages: list[Dict[str, Any]]) -> list[dict[str, Any]]:
-    """Convert messages from OAI format to Groq's format.
-    We correct for any specific role orders and types.
-    """
-
-    groq_messages = copy.deepcopy(messages)
-
-    # Remove the name field
-    for message in groq_messages:
-        if "name" in message:
-            message.pop("name", None)
-
-    return groq_messages
-
-
-def calculate_groq_cost(input_tokens: int, output_tokens: int, model: str) -> float:
-    """Calculate the cost of the completion using the Groq pricing."""
-    total = 0.0
-
-    if model in GROQ_PRICING_1K:
-        input_cost_per_k, output_cost_per_k = GROQ_PRICING_1K[model]
-        input_cost = (input_tokens / 1000) * input_cost_per_k
-        output_cost = (output_tokens / 1000) * output_cost_per_k
-        total = input_cost + output_cost
-    else:
-        warnings.warn(f"Cost calculation not available for model {model}", UserWarning)
-
-    return total
+        return groq_messages

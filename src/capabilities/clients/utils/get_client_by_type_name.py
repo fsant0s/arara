@@ -1,8 +1,5 @@
-from typing import Any, Dict
-
-# Importações específicas em vez de importação em massa
-# para evitar o ciclo de importação
 from capabilities.clients.groq import GroqClient
+from capabilities.clients.openai import OpenAIClient
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """
@@ -29,6 +26,8 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
         # Mapping from client keys to their constructor functions
         client_constructors = {
             "groq": GroqClient,
+            "openai": OpenAIClient,
+            "maritaca": OpenAIClient,  # Assuming Maritaca uses the same client as OpenAI
         }
 
         # Retrieve the appropriate client class from the mapping

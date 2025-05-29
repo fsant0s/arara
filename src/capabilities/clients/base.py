@@ -65,4 +65,3 @@ class BaseClient(Protocol):
             "model": response.model_name,
         }
 
-    def convert_tools(tools: Sequence[Tool | ToolSchema],) -> List[Dict[str, Union[str, Dict]]]: ...

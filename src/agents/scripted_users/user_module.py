@@ -50,9 +50,7 @@ class UserModule(User):
 
         # Predefined sequence of messages to trigger tool calls
         self._dialog = [
-            "Sim, de um filme",
-            "Agora gostaria de um livro",
-            "sim",
+            "Qualquer um",
             "exit"
         ]
 

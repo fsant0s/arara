@@ -16,7 +16,7 @@ from runtime_logging import (
 )
 
 from .base import BaseClient
-from .helpers import PlaceHolderClient, get_client_by_type_name
+from .utils import (PlaceHolderClient, get_client_by_type_name)
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
