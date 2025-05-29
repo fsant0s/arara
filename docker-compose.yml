@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  arara:
+    container_name: arara-dev
+    build:
+      context: .                          # Use the current project directory
+      dockerfile: .container/Dockerfile  # Dockerfile path relative to the root
+    volumes:
+      - .:/app                            # Mount local project into /app in the container
+    working_dir: /app                    # Set working dir for consistency
+    stdin_open: true                     # Keep STDIN open (interactive)
+    tty: true                            # Allocate a pseudo-TTY (interactive shell)
