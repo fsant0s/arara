@@ -1,0 +1,126 @@
+[project]
+name = "Arara"
+version = "0.1.0"
+description = "A framework for agent-based recommendation systems"
+readme = "README.md"
+requires-python = "==3.12.6"
+dependencies = [
+    # Framework for building agents with memory and reasoning capabilities
+    "be-great==0.0.8",
+    # Automated machine learning library for efficient model selection and tuning
+    "flaml[automl]==2.3.2",
+    # Client for Groq LLM API access
+    "groq==0.11.0",
+    # Client for OpenAI API access
+    "openai==1.54.3",
+    # Data manipulation and analysis library
+    "pandas==2.2.3",
+    # Colored terminal text output
+    "termcolor==2.5.0",
+    # Deep learning framework
+    "torch==2.5.1",
+    # Transformers library for working with pre-trained language models
+    "transformers==4.46.2",
+    # Process and system monitoring
+    "psutil==5.9.8",
+    "cohere==5.14.0",
+    "pytest-cov==6.0.0",
+    "flake8==7.0.0",
+    "mypy==1.9.0",
+    "types-psutil==7.0.0.20250218",
+    "pandas-stubs==2.2.3.250308",
+    "bandit==1.8.3",
+    "jsonref==1.1.0",
+    "pillow==11.2.1",
+    "opentelemetry-api==1.33.1",
+    # Jupyter kernel for Python
+    "ipykernel==6.29.5",
+    "diskcache==5.6.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Test coverage reporting
+    "pytest-cov==6.0.0",
+    # Testing framework
+    "pytest==8.3.3",
+    # Code formatting
+    "black==24.3.0",
+    # Import sorting
+    "isort==5.13.2",
+    # Code linting
+    "flake8==7.0.0",
+    # Type checking
+    "mypy==1.9.0",
+    # Type stubs
+    "types-termcolor==1.1.6",
+    "types-requests==2.31.0.10",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["agents", "capabilities", "logger", "models", "ioflow", "monitoring", "model_context"]
+
+[tool.setuptools.package-data]
+arara = ["py.typed"]
+
+[tool.setuptools.exclude-package-data]
+arara = ["logs", "reports"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = "Test*"
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "build", "dist"]
+skips = ["B101"]                                   # Skip assert statements warning
+targets = ["arara"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
