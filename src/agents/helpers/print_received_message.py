@@ -93,7 +93,6 @@ def print_received_message(
                 if parsed:
                     print_function_execution(iostream, parsed)
             else:
-                # Texto normal
                 if "context" in message:
                     content = ClientWrapper.instantiate(
                         content,

@@ -24,7 +24,7 @@ echo "Running unit tests with coverage..."
 pytest tests/unit -v --cov=arara --cov-report=html:reports/coverage_html --cov-report=xml:reports/coverage.xml
 
 # Check if unit tests passed
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]; the
     echo "Tests failed!"
     exit 1
 fi

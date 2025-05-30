@@ -1,56 +1,41 @@
 <p align="center">
-  <img src="logo.png" alt="ARARA Logo" width="120"/><br/>
-  <strong style="font-size: 1.8em;">ARARA</strong><br/>
+  <img src="./assets/logo.png" alt="ARARA Logo" width="220"/><br/>
   <em>A Multi-Agent Framework for Conversational Recommendation Systems with Large Language Models</em>
 </p>
 
+ARARA is a modular, extensible framework for orchestrating LLM-based agents in complex recommendation scenarios — particularly those involving dialogue, memory, tools, and reflection.
 
-## Overview
-
-Several multi-agent frameworks have emerged recently — such as AutoGen, CrewAI, and LangGraph — aiming to coordinate LLM agents.
-But here's the gap:
-
-- ❌ No dialogue planning
-- ❌ No memory-based decisions
-- ❌ No user-intent alignment
-- ❌ No modular, task-oriented orchestration
-- ❌ ...and none are designed for **conversational recommendation** tasks
-
-**ARARA** fills this gap.
-
-It is a modular, extensible framework for orchestrating LLM-based agents in complex recommendation scenarios, especially those involving dialogue, memory, tools, and reflection.
+Unlike existing frameworks such as AutoGen, CrewAI, or LangGraph, ARARA is purpose-built for **conversational recommendation**, with native support for memory, dialogue context awareness, and modular coordination.
 
 ### Key Features
 
-- **Agent-based Dialogue Planning**: Dynamically selects the most suitable agent to respond based on dialogue context and user intent
-- **Contextual Memory Integration**: Memory is treated as a first-class capability, enabling agents to retain and reason over relevant information
-- **Introspective Agents**: Built-in reflection mechanisms allow agents to self-evaluate and adapt their behavior
+- **Agent-based Dialogue Planning**: Dynamically selects the most suitable agent based on dialogue context and user intent
+- **Contextual Memory Integration**: Memory is a first-class capability, enabling agents to retain and reason over prior interactions
 - **Multi-LLM Support**: Compatible with Groq, OpenAI, and Maritaca.
-- **Compositional Modularity**: Agents can operate independently or within orchestrated modules, promoting reusability and scalability
-- **Conversational Recommendation Focus**: Designed specifically for multi-turn, personalized, dialogue-driven recommendation scenarios
-
+- **Compositional Modularity**: Agents can operate standalone or within orchestrated modules for scalability and reuse
+- **Conversational Recommendation Focus**: Tailored for multi-turn, personalized recommendation scenarios
 
 ---
 
 ## Architecture
 
 <p align="center">
-  <img src="https://github.com/fsant0s/arara/assets/architecture.png" alt="ARARA Architecture" width="600"/>
+  <img src="./assets/architecture.png" alt="ARARA Architecture" width="800"/>
+
 </p>
 
-The ARARA architecture includes:
+The architecture includes:
 
-- **Single Agents** that respond directly to user prompts
-- A central **Orchestrator Agent** that coordinates the interactionm
-- **Modules**: groups of agents governed by internal orchestrators, designed to handle specific subtasks
-- Decision flows for choosing who speaks next, invoking tools, using memory, and returning coherent responses to users
+- **Single Agents**: Respond to user prompts
+- **Orchestrator Agent**: Coordinates the overall conversation
+- **Modules**: Groups of agents governed by internal orchestrators
+- **Decision Logic**: Selects the next speaker, invokes tools, leverages memory, and manages outputs
 
-This structure allows for both horizontal and vertical scaling of agent-based workflows.
+This enables horizontal and vertical scaling of agent-based workflows.
 
 ---
 
 ## Project Structure
-The current structure of the `src/` directory in ARARA is organized as follows:
 
 ```
 src/
@@ -66,44 +51,25 @@ src/
 ├── cache/ # Caching mechanisms and temporary data
 ```
 
-This modular structure is designed to support:
-- **Separation of responsibilities** across capabilities, execution flow, and logging
-- **Scalability** through reusable and decoupled components
-- **Ease of maintenance**, allowing new features and agents to be added independently
-
-
 ---
 
 ## Use Cases
 
-ARARA is ideal for building **dialogue-driven recommendation systems**. Example applications include:
+ARARA was designed as a research-first framework for **conversational recommender systems**, enabling experimentation with:
 
-1. **Conversational E-commerce**
-   - Agents that understand user preferences over multiple turns
-   - Personalized product recommendations with contextual awareness
+- Memory strategies in multi-turn recommendation dialogues
+- Dialogue planning with agent specialization and turn-taking policies
+- Tool-augmented recommendation pipelines for contextual reasoning
+- Modular agent orchestration and explainability in multi-agent conversations
+- Evaluation protocols for coherence, personalization, and recommendation quality
 
-2. **Media and Content Discovery**
-   - Systems that suggest articles, videos, or music based on ongoing user conversations
-   - Adaptation through memory and feedback
-
-3. **AI-Powered Research Assistants**
-   - Multi-agent setups to retrieve, analyze, and recommend documents or data
-   - Collaboration between explainer, retriever, and recommender agents
-
-4. **Personalized Assistants**
-   - Agents that track and recall preferences
-   - Support proactive and reactive dialogue planning
-
-5. **Conversational Recommender Systems Research**
-- A modular experimentation environment for researchers working on conversational recommendation
-- Facilitates evaluation of memory strategies, dialogue planning, and agent coordination
-
+Ideal for researchers exploring **LLM-powered, dialogue-driven recommendation systems**.
 
 ---
 
 ## Quick Start Example
 
-Here’s a basic example from [`notebooks/memory.ipynb`](notebooks/memory.ipynb):
+From [`notebooks/memory.ipynb`](notebooks/memory.ipynb):
 
 ```python
 from agents import Agent, User
@@ -111,7 +77,6 @@ from agents.scripted_users import UserMemory
 from capabilities.memory import ListMemory, MemoryContent
 import os
 
-# LLM configuration
 llm_config = {
     "config_list": [
         {
@@ -123,11 +88,9 @@ llm_config = {
     ]
 }
 
-# Create memory
 sequential_memory = ListMemory(name="chat_history")
 sequential_memory.add(MemoryContent(content="User likes beef."))
 
-# Example tool
 def get_recipe(diet_type: str = "standard") -> str:
     if diet_type == "vegan":
         return "Chickpea pasta with sautéed vegetables"
@@ -136,7 +99,6 @@ def get_recipe(diet_type: str = "standard") -> str:
     else:
         return "Creamy chicken alfredo"
 
-# Create user and agent
 user = UserMemory(name="user")
 assistant = Agent(
     name="assistant_agent",
@@ -145,14 +107,13 @@ assistant = Agent(
     memory=[sequential_memory],
 )
 
-# Ask a question
 chat_result = user.talk_to(
     assistant_agent,
     message="Can you recommend me something for dinner?"
 )
 ```
 
-More advanced examples can be found in the `notebooks/` directory.
+More examples in the notebooks/ directory.
 
 ---
 
