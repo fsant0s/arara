@@ -36,6 +36,12 @@ dependencies = [
     # Jupyter kernel for Python
     "ipykernel==6.29.5",
     "diskcache==5.6.3",
+    "google-api-python-client>=2.170.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.2",
+    "beautifulsoup4>=4.13.4",
+    "chainlit>=2.2.1",
+    "tavily-python>=0.7.3",
 ]
 
 [project.optional-dependencies]

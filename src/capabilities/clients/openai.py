@@ -45,6 +45,8 @@ class OpenAIClient(BaseClient):
 
         # Determine provider based on base_url
         if self.base_url and "maritaca" in self.base_url.lower():
+            if not self.base_url:
+                raise ValueError("The 'base_url' parameter is required when using the Maritaca provider.")
             self.PROVIDER_NAME = "maritaca"
             self.api_key = kwargs.get("api_key", os.getenv("MARITACA_API_KEY"))
         else:
