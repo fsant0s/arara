@@ -76,3 +76,7 @@ config.local.yaml
 # OS specific
 .DS_Store
 Thumbs.db
+
+
+src/agents/scripted_users/
+secrets/
