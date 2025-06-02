@@ -59,7 +59,7 @@ dev = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["agents", "capabilities", "logger", "models", "ioflow", "monitoring", "model_context"]
+packages = ["agents", "cache", "capabilities", "ioflow", "logger", "monitoring"]
 
 [tool.setuptools.package-data]
 arara = ["py.typed"]
