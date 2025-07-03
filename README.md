@@ -20,7 +20,7 @@ Unlike existing frameworks such as AutoGen, CrewAI, or LangGraph, ARARA is purpo
 ## Architecture
 
 <p align="center">
-  <img src="./assets/architecture.png" alt="ARARA Architecture" width="800"/>
+  <img src="./assets/architecture.jpg" alt="ARARA Architecture" width="800"/>
 
 </p>
 
@@ -73,7 +73,6 @@ From [`notebooks/memory.ipynb`](notebooks/memory.ipynb):
 
 ```python
 from agents import Agent, User
-from agents.scripted_users import UserMemory
 from capabilities.memory import ListMemory, MemoryContent
 import os
 
@@ -99,7 +98,7 @@ def get_recipe(diet_type: str = "standard") -> str:
     else:
         return "Creamy chicken alfredo"
 
-user = UserMemory(name="user")
+user = User(name="user")
 assistant = Agent(
     name="assistant_agent",
     llm_config=llm_config,

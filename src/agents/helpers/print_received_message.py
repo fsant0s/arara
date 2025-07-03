@@ -1,15 +1,15 @@
+import json
+import re
 from typing import Dict, Literal, Union
 
-from capabilities.clients import ClientWrapper
 from agents.base import BaseAgent
-
-from .content_str import content_str
+from capabilities.clients import ClientWrapper
 from formatting_utils import colored
 from ioflow import IOStream
+
+from .content_str import content_str
 from .message_to_dict import message_to_dict
 
-import re
-import json
 
 def parse_function_call(content: str):
     match = re.match(r"\[FunctionCall\(id='(.*?)', arguments='(.*?)', name='(.*?)'\)\]", content)
@@ -24,21 +24,26 @@ def parse_function_call(content: str):
             "function": {
                 "name": name,
                 "arguments": arguments,
-            }
+            },
         }
-    return None
+    raise ValueError("No match found for the provided content string")
+
 
 def parse_function_execution(content: str):
-    match = re.match(r"\[FunctionExecutionResult\(content='(.*?)', name='(.*?)', call_id='(.*?)', is_error=(.*?)\)\]", content)
+    match = re.match(
+        r"\[FunctionExecutionResult\(content=['|\"](.*?)['|\"], name='(.*?)', call_id='(.*?)', is_error=(.*?)\)\]",
+        content,
+    )
     if match:
         result_content, name, call_id, is_error = match.groups()
         return {
             "name": name,
             "arguments": result_content,
             "call_id": call_id,
-            "is_error": is_error == "True"
+            "is_error": is_error == "True",
         }
-    return None
+    raise ValueError("No match found for the provided content string")
+
 
 def print_function_call(iostream, parsed):
     function = parsed.get("function", {})
@@ -54,6 +59,7 @@ def print_function_call(iostream, parsed):
     else:
         iostream.print(colored(f" {arguments}", "green"), flush=True)
 
+
 def print_function_execution(iostream, parsed):
     name = parsed.get("name", "(unknown function)")
     title = f"✅ Function Execution Result: {name}"
@@ -64,11 +70,13 @@ def print_function_execution(iostream, parsed):
     for line_content in result_lines:
         iostream.print(colored(f" {line_content}", "yellow"), flush=True)
 
+
 def print_sender_receiver(iostream, sender, name):
     title = f"{sender.name} ⟶ {name}"
     line = "─" * max(40, len(title) + 5)
     iostream.print(colored(f"╭ {title}", "cyan"), flush=True)
     iostream.print(colored(f"╰{line}", "cyan"), flush=True)
+
 
 def print_received_message(
     message: Union[Dict, str],
