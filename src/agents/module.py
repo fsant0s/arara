@@ -1,31 +1,29 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
-import sys
-
 import logging
 import random
 import re
+import sys
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
+from agent_messages import TextMessage
+from agents.types import Response
+from formatting_utils import colored
+from ioflow.base import IOStream
+
+from .agent import Agent
 from .helpers import (
-   content_str,
-   AgentNameConflict,
-   NoEligibleSpeaker,
-   UndefinedNextAgent,
-   check_graph_validity,
-   invert_disallowed_to_allowed
+    AgentNameConflict,
+    NoEligibleSpeaker,
+    UndefinedNextAgent,
+    check_graph_validity,
+    content_str,
+    invert_disallowed_to_allowed,
 )
 
-from formatting_utils import colored
-
-from ioflow.base import IOStream
-from .agent import Agent
-
-from agents.types import Response
-from agent_messages import TextMessage
-
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Module:
@@ -106,12 +104,15 @@ class Module:
     - send_introductions: send a round of introductions at the start of the module, so agents know who they can speak to (default: False)
     - role_for_select_speaker_messages: sets the role name for speaker selection when in 'auto' mode, typically 'user' or 'system'. (default: 'system')
     """
+
     agents: List[Agent]
     messages: List[Dict] = field(default_factory=list)
     max_round: int = sys.maxsize  # Default to infinite rounds
     admin_name: str = "Admin"
     func_call_filter: bool = True
-    speaker_selection_method: Union[Literal["auto", "manual", "random", "round_robin"], Callable] = "auto"
+    speaker_selection_method: Union[
+        Literal["auto", "manual", "random", "round_robin"], Callable
+    ] = "auto"
     max_retries_for_selecting_speaker: int = 2
     allow_repeat_speaker: Optional[Union[bool, List[Agent]]] = None
     allowed_or_disallowed_speaker_transitions: Optional[Dict] = None
@@ -145,16 +146,16 @@ class Module:
     _VALID_SPEAKER_TRANSITIONS_TYPE = ["allowed", "disallowed", None]
 
     # Define a class attribute for the default introduction message
-    DEFAULT_INTRO_MSG = (
-        "Hello everyone. We have assembled a great team today to answer questions and solve tasks. In attendance are:"
-    )
+    DEFAULT_INTRO_MSG = "Hello everyone. We have assembled a great team today to answer questions and solve tasks. In attendance are:"
 
     allowed_speaker_transitions_dict: Dict = field(init=False)
 
     def __post_init__(self):
         # Post init steers clears of the automatically generated __init__ method from dataclass
 
-        if self.allow_repeat_speaker is not None and not isinstance(self.allow_repeat_speaker, (bool, list)):
+        if self.allow_repeat_speaker is not None and not isinstance(
+            self.allow_repeat_speaker, (bool, list)
+        ):
             raise ValueError("Module allow_repeat_speaker should be a bool or a list of Agents.")
 
         # Here, we create allowed_speaker_transitions_dict from the supplied allowed_or_disallowed_speaker_transitions and speaker_transitions_type, and lastly checks for validity.
@@ -170,18 +171,27 @@ class Module:
             )
 
         # If both self.allowed_or_disallowed_speaker_transitions is None and self.allow_repeat_speaker is None, set allow_repeat_speaker to True to ensure backward compatibility
-        if self.allowed_or_disallowed_speaker_transitions is None and self.allow_repeat_speaker is None:
+        if (
+            self.allowed_or_disallowed_speaker_transitions is None
+            and self.allow_repeat_speaker is None
+        ):
             self.allow_repeat_speaker = True
 
         # self.allowed_or_disallowed_speaker_transitions and self.allow_repeat_speaker are mutually exclusive parameters.
-        if self.allowed_or_disallowed_speaker_transitions is not None and self.allow_repeat_speaker is not None:
+        if (
+            self.allowed_or_disallowed_speaker_transitions is not None
+            and self.allow_repeat_speaker is not None
+        ):
             raise ValueError(
                 "Don't provide both allowed_or_disallowed_speaker_transitions and allow_repeat_speaker in module. "
                 "Please set one of them to None."
             )
 
         # Asks the user to specify whether the speaker_transitions_type is allowed or disallowed if speaker_transitions_type is supplied
-        if self.allowed_or_disallowed_speaker_transitions is not None and self.speaker_transitions_type is None:
+        if (
+            self.allowed_or_disallowed_speaker_transitions is not None
+            and self.speaker_transitions_type is None
+        ):
             raise ValueError(
                 "Module allowed_or_disallowed_speaker_transitions is not None, but speaker_transitions_type is None. "
                 "Please set speaker_transitions_type to either 'allowed' or 'disallowed'."
@@ -213,7 +223,9 @@ class Module:
         else:
             # Process based on speaker_transitions_type
             if self.speaker_transitions_type == "allowed":
-                self.allowed_speaker_transitions_dict = self.allowed_or_disallowed_speaker_transitions
+                self.allowed_speaker_transitions_dict = (
+                    self.allowed_or_disallowed_speaker_transitions
+                )
             else:
                 # Logic for processing disallowed allowed_or_disallowed_speaker_transitions to allowed_speaker_transitions_dict
                 self.allowed_speaker_transitions_dict = invert_disallowed_to_allowed(
@@ -221,27 +233,45 @@ class Module:
                 )
         # Check for validity
         check_graph_validity(
-           allowed_speaker_transitions_dict=self.allowed_speaker_transitions_dict,
-           agents=self.agents,
+            allowed_speaker_transitions_dict=self.allowed_speaker_transitions_dict,
+            agents=self.agents,
         )
 
         # Check select speaker messages, prompts, roles, and retries have values
-        if self.select_speaker_message_template is None or len(self.select_speaker_message_template) == 0:
+        if (
+            self.select_speaker_message_template is None
+            or len(self.select_speaker_message_template) == 0
+        ):
             raise ValueError("select_speaker_message_template cannot be empty or None.")
 
-        if self.select_speaker_prompt_template is not None and len(self.select_speaker_prompt_template) == 0:
+        if (
+            self.select_speaker_prompt_template is not None
+            and len(self.select_speaker_prompt_template) == 0
+        ):
             self.select_speaker_prompt_template = None
 
-        if self.role_for_select_speaker_messages is None or len(self.role_for_select_speaker_messages) == 0:
+        if (
+            self.role_for_select_speaker_messages is None
+            or len(self.role_for_select_speaker_messages) == 0
+        ):
             raise ValueError("role_for_select_speaker_messages cannot be empty or None.")
 
-        if self.select_speaker_auto_multiple_template is None or len(self.select_speaker_auto_multiple_template) == 0:
+        if (
+            self.select_speaker_auto_multiple_template is None
+            or len(self.select_speaker_auto_multiple_template) == 0
+        ):
             raise ValueError("select_speaker_auto_multiple_template cannot be empty or None.")
 
-        if self.select_speaker_auto_none_template is None or len(self.select_speaker_auto_none_template) == 0:
+        if (
+            self.select_speaker_auto_none_template is None
+            or len(self.select_speaker_auto_none_template) == 0
+        ):
             raise ValueError("select_speaker_auto_none_template cannot be empty or None.")
 
-        if self.max_retries_for_selecting_speaker is None or len(self.role_for_select_speaker_messages) == 0:
+        if (
+            self.max_retries_for_selecting_speaker is None
+            or len(self.role_for_select_speaker_messages) == 0
+        ):
             raise ValueError("role_for_select_speaker_messages cannot be empty or None.")
 
         # Validate max select speakers retries
@@ -250,10 +280,14 @@ class Module:
         ):
             raise ValueError("max_retries_for_selecting_speaker cannot be None or non-int")
         elif self.max_retries_for_selecting_speaker < 0:
-            raise ValueError("max_retries_for_selecting_speaker must be greater than or equal to zero")
+            raise ValueError(
+                "max_retries_for_selecting_speaker must be greater than or equal to zero"
+            )
 
         # Validate select_speaker_auto_verbose
-        if self.select_speaker_auto_verbose is None or not isinstance(self.select_speaker_auto_verbose, bool):
+        if self.select_speaker_auto_verbose is None or not isinstance(
+            self.select_speaker_auto_verbose, bool
+        ):
             raise ValueError("select_speaker_auto_verbose cannot be None or non-bool")
 
     @property
@@ -293,7 +327,7 @@ class Module:
         """Returns all agents in the module."""
         agents = self.agents.copy()
         for agent in agents:
-           if type(agent).__name__ == "Orchestrator":
+            if type(agent).__name__ == "Orchestrator":
                 # Recursive call for nested teams
                 agents.extend(agent.module.nested_agents())
         return agents
@@ -376,7 +410,9 @@ class Module:
         while try_count <= 3:
             try_count += 1
             if try_count >= 3:
-                iostream.print(f"You have tried {try_count} times. The next speaker will be selected automatically.")
+                iostream.print(
+                    f"You have tried {try_count} times. The next speaker will be selected automatically."
+                )
                 break
             try:
                 i = iostream.input(
@@ -409,7 +445,9 @@ class Module:
         if isinstance(self.speaker_selection_method, Callable):
             selected_agent = self.speaker_selection_method(last_speaker, self)
             if selected_agent is None:
-                raise NoEligibleSpeaker("Custom speaker selection function returned None. Terminating conversation.")
+                raise NoEligibleSpeaker(
+                    "Custom speaker selection function returned None. Terminating conversation."
+                )
             elif isinstance(selected_agent, Agent):
                 if selected_agent in self.agents:
                     return selected_agent, self.agents, None
@@ -446,7 +484,11 @@ class Module:
                 f"Module is underpopulated with {n_agents} agents. "
                 "Please add more agents to the Module or use direct communication instead."
             )
-        elif n_agents == 2 and speaker_selection_method.lower() != "round_robin" and allow_repeat_speaker:
+        elif (
+            n_agents == 2
+            and speaker_selection_method.lower() != "round_robin"
+            and allow_repeat_speaker
+        ):
             logger.warning(
                 f"Module is underpopulated with {n_agents} agents. "
                 "Consider setting speaker_selection_method to 'round_robin' or allow_repeat_speaker to False, "
@@ -463,7 +505,9 @@ class Module:
                 funcs += [self.messages[-1]["function_call"]["name"]]
             if "tool_calls" in self.messages[-1]:
                 funcs += [
-                    tool["function"]["name"] for tool in self.messages[-1]["tool_calls"] if tool["type"] == "function"
+                    tool["function"]["name"]
+                    for tool in self.messages[-1]["tool_calls"]
+                    if tool["type"] == "function"
                 ]
 
             # find agents with the right function_map which contains the function name
@@ -482,7 +526,11 @@ class Module:
                         "Please check the function_map of the agents."
                     )
         # remove the last speaker from the list to avoid selecting the same speaker if allow_repeat_speaker is False
-        agents = [agent for agent in agents if agent != last_speaker] if allow_repeat_speaker is False else agents
+        agents = (
+            [agent for agent in agents if agent != last_speaker]
+            if allow_repeat_speaker is False
+            else agents
+        )
 
         # Filter agents with allowed_speaker_transitions_dict
 
@@ -490,15 +538,58 @@ class Module:
 
         # this condition means last_speaker is a sink in the graph, then no agents are eligible
         if last_speaker not in self.allowed_speaker_transitions_dict and is_last_speaker_in_group:
-            raise NoEligibleSpeaker(f"Last speaker {last_speaker.name} is not in the allowed_speaker_transitions_dict.")
+            raise NoEligibleSpeaker(
+                f"Last speaker {last_speaker.name} is not in the allowed_speaker_transitions_dict."
+            )
         # last_speaker is not in the group, so all agents are eligible
-        elif last_speaker not in self.allowed_speaker_transitions_dict and not is_last_speaker_in_group:
+        elif (
+            last_speaker not in self.allowed_speaker_transitions_dict
+            and not is_last_speaker_in_group
+        ):
             graph_eligible_agents = []
         else:
-            # Extract agent names from the list of agents
-            graph_eligible_agents = [
-                agent for agent in agents if agent in self.allowed_speaker_transitions_dict[last_speaker]
-            ]
+            # Retrieve the transition rule defined for the last speaker.
+            transition_rule = self.allowed_speaker_transitions_dict[last_speaker]
+
+            # CASE 1: The rule is a list (original, static behavior).
+            # The next eligible speakers are statically defined in this list.
+            if isinstance(transition_rule, list):
+                graph_eligible_agents = [agent for agent in agents if agent in transition_rule]
+
+            # CASE 2: The rule is a dictionary (NEW conditional behavior).
+            # The next eligible speakers depend on the content of the last message.
+            elif isinstance(transition_rule, dict):
+                graph_eligible_agents = []
+                if self.messages:
+                    last_message_content = (
+                        content_str(self.messages[-1].get("content", "")).strip().lower()
+                    )
+                    next_agent_list = None
+                    # Find the first condition key that is a substring of the last message.
+                    for condition_key, agents_for_condition in transition_rule.items():
+                        # The fallback key "*" should not be used for substring matching.
+                        if condition_key != "*" and condition_key.lower() in last_message_content:
+                            next_agent_list = agents_for_condition
+                            break  # Use the first match found.
+
+                    if isinstance(next_agent_list, list):
+                        graph_eligible_agents = [
+                            agent for agent in next_agent_list if agent in self.agents
+                        ]
+                    else:
+                        # If no substring match was found, use the fallback transition.
+                        fallback_list = transition_rule.get("*")
+                        if isinstance(fallback_list, list):
+                            graph_eligible_agents = [
+                                agent for agent in fallback_list if agent in self.agents
+                            ]
+            else:
+                # This handles a configuration error.
+                # The transition rule must be either a list of agents or a dictionary of conditions.
+                raise TypeError(
+                    f"Transition rule for agent '{last_speaker.name}' must be a list or a dict, "
+                    f"but got {type(transition_rule)}."
+                )
 
         # If there is only one eligible agent, just return it to avoid the speaker selection prompt
         if len(graph_eligible_agents) == 1:
@@ -540,7 +631,9 @@ class Module:
         # auto speaker selection with 2-agent chat
         return self._auto_select_speaker(last_speaker, selector, messages, agents)
 
-    def _finalize_speaker(self, last_speaker: Agent, final: bool, name: str, agents: Optional[List[Agent]]) -> Agent:
+    def _finalize_speaker(
+        self, last_speaker: Agent, final: bool, name: str, agents: Optional[List[Agent]]
+    ) -> Agent:
         if not final:
             # the LLM client is None, thus no reply is generated. Use round robin instead.
             return self.next_agent(last_speaker, agents)
@@ -598,7 +691,9 @@ class Module:
         attempt = 0
 
         # Registered reply function for checking_agent, checks the result of the response for agent names
-        def validate_speaker_name(recipient, messages, sender, config) -> List[Tuple[bool, Union[Response, None]]]:
+        def validate_speaker_name(
+            recipient, messages, sender, config
+        ) -> List[Tuple[bool, Union[Response, None]]]:
             # The number of retries left, starting at max_retries_for_selecting_speaker
             nonlocal attempts_left
             nonlocal attempt
@@ -606,7 +701,9 @@ class Module:
             attempt = attempt + 1
             attempts_left = attempts_left - 1
 
-            return self._validate_speaker_name(recipient, messages, sender, config, attempts_left, attempt, agents)
+            return self._validate_speaker_name(
+                recipient, messages, sender, config, attempts_left, attempt, agents
+            )
 
         # Two-agent chat for speaker selection
 
@@ -648,9 +745,11 @@ class Module:
             cache=None,  # don't use caching for the speaker selection chat
             message=start_message,
             max_turns=2
-            * max(1, max_attempts),  # Limiting the chat to the number of attempts, including the initial one
+            * max(
+                1, max_attempts
+            ),  # Limiting the chat to the number of attempts, including the initial one
             should_clear_history=False,
-            silent=not self.select_speaker_auto_verbose  # Base silence on the verbose attribute
+            silent=not self.select_speaker_auto_verbose,  # Base silence on the verbose attribute
         )
         return self._process_speaker_selection_result(result, last_speaker, agents)
 
@@ -703,16 +802,23 @@ class Module:
             if attempts_left:
                 # Message to return to the chat for the next attempt
                 agentlist = f"{[agent.name for agent in agents]}"
-                return [[(True,
-                    Response(
-                        chat_message=TextMessage(
-                            content=self.select_speaker_auto_multiple_template.format(agentlist=agentlist),
-                            sender=sender,
-                            receiver=recipient,
-                            override_role= self.role_for_select_speaker_messages,
+                return [
+                    [
+                        (
+                            True,
+                            Response(
+                                chat_message=TextMessage(
+                                    content=self.select_speaker_auto_multiple_template.format(
+                                        agentlist=agentlist
+                                    ),
+                                    sender=sender,
+                                    receiver=recipient,
+                                    override_role=self.role_for_select_speaker_messages,
+                                )
+                            ),
                         )
-                    )
-                )]]
+                    ]
+                ]
             else:
                 # Final failure, no attempts left
                 messages.append(
@@ -737,16 +843,23 @@ class Module:
             if attempts_left:
                 # Message to return to the chat for the next attempt
                 agentlist = f"{[agent.name for agent in agents]}"
-                return [[(True,
-                        Response(
-                            chat_message=TextMessage(
-                                content= self.select_speaker_auto_none_template.format(agentlist=agentlist),
-                                sender=sender,
-                                receiver=recipient,
-                                override_role=self.role_for_select_speaker_messages,
-                            )
+                return [
+                    [
+                        (
+                            True,
+                            Response(
+                                chat_message=TextMessage(
+                                    content=self.select_speaker_auto_none_template.format(
+                                        agentlist=agentlist
+                                    ),
+                                    sender=sender,
+                                    receiver=recipient,
+                                    override_role=self.role_for_select_speaker_messages,
+                                )
+                            ),
                         )
-                )]]
+                    ]
+                ]
             else:
                 # Final failure, no attempts left
                 messages.append(
@@ -758,7 +871,9 @@ class Module:
 
         return [[(True, None)]]
 
-    def _process_speaker_selection_result(self, result, last_speaker: Agent, agents: Optional[List[Agent]]):
+    def _process_speaker_selection_result(
+        self, result, last_speaker: Agent, agents: Optional[List[Agent]]
+    ):
         """Checks the result of the auto_select_speaker function, returning the
         agent to speak.
 
@@ -792,7 +907,9 @@ class Module:
             roles.append(f"{agent.name}: {agent.description}".strip())
         return "\n".join(roles)
 
-    def _mentioned_agents(self, message_content: Union[str, List], agents: Optional[List[Agent]]) -> Dict:
+    def _mentioned_agents(
+        self, message_content: Union[str, List], agents: Optional[List[Agent]]
+    ) -> Dict:
         """Counts the number of times each agent is mentioned in the provided message content.
         Agent names will match under any of the following conditions (all case-sensitive):
         - Exact name match
@@ -827,7 +944,9 @@ class Module:
                 + re.escape(agent.name.replace("_", r"\_"))
                 + r")(?=\W)"
             )
-            count = len(re.findall(regex, f" {message_content} "))  # Pad the message to help with matching
+            count = len(
+                re.findall(regex, f" {message_content} ")
+            )  # Pad the message to help with matching
             if count > 0:
                 mentions[agent.name] = count
         return mentions

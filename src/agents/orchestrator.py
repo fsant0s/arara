@@ -1,19 +1,18 @@
 import logging
-from typing import Dict, List, Optional, Tuple, Union, Generator
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
-from .helpers import NoEligibleSpeaker
-from agents.types import Response
 from agent_messages import TextMessage
-
+from agents.types import Response
 from formatting_utils import colored
+from ioflow.base import IOStream
 from runtime_logging import log_new_agent, logging_enabled
 
-from ioflow.base import IOStream
 from .agent import Agent
-
+from .helpers import NoEligibleSpeaker
 from .module import Module
 
 logger = logging.getLogger(__name__)
+
 
 class Orchestrator(Agent):
     """(In preview) A chat manager agent that can manage a module of multiple agents."""
@@ -109,7 +108,7 @@ class Orchestrator(Agent):
                 if agent != speaker:
                     self.send(message, agent, request_reply=False, silent=True)
 
-            if self._is_termination_msg(message) or i == module.max_round - 1:
+            if speaker._is_termination_msg(message) or i == module.max_round - 1:
                 # The conversation is over or it's the last round
                 break
 
@@ -118,7 +117,9 @@ class Orchestrator(Agent):
                 speaker = module.select_speaker(speaker, self)
                 if not silent:
                     iostream = IOStream.get_default()
-                    iostream.print(colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True)
+                    iostream.print(
+                        colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True
+                    )
                 # let the speaker speak
                 # The speaker sends the message and requests a repl
                 reply = None
@@ -127,14 +128,14 @@ class Orchestrator(Agent):
                     if not isinstance(reply, Response):
                         speaker.send(reply, self, silent=silent, request_reply=False)
                     # The speaker sends the message without requesting a reply
-                    #speaker.send(reply, self, request_reply=False, silent=silent)
+                    # speaker.send(reply, self, request_reply=False, silent=silent)
             except KeyboardInterrupt:
                 # let the admin agent speak if interrupted
                 if module.admin_name in module.agent_names:
                     # admin agent is one of the participants
                     speaker = module.agent_by_name(module.admin_name)
                     for reply in speaker.generate_reply(sender=self):
-                    # The speaker sends the message without requesting a reply
+                        # The speaker sends the message without requesting a reply
                         speaker.send(reply, self, request_reply=False, silent=silent)
                 else:
                     # admin agent is not found in the participants
@@ -164,10 +165,9 @@ class Orchestrator(Agent):
                 a.client_cache = a.previous_cache
                 a.previous_cache = None
 
-
-        if sender._conversation_terminated[self]: # An agent typed "exit"
-             yield [(True, None)]
-             return
+        if sender._conversation_terminated[self]:  # An agent typed "exit"
+            yield [(True, None)]
+            return
 
         response = Response(
             chat_message=TextMessage(
@@ -199,7 +199,9 @@ class Orchestrator(Agent):
         # Split the reply into words
         words = reply_content.split()
         # Find the position of "clear" to determine where to start processing
-        clear_word_index = next(i for i in reversed(range(len(words))) if words[i].upper() == "CLEAR")
+        clear_word_index = next(
+            i for i in reversed(range(len(words))) if words[i].upper() == "CLEAR"
+        )
         # Extract potential agent name and steps
         words_to_check = words[clear_word_index + 2 : clear_word_index + 4]
         nr_messages_to_preserve = None
@@ -210,7 +212,9 @@ class Orchestrator(Agent):
             if word.isdigit():
                 nr_messages_to_preserve = int(word)
                 nr_messages_to_preserve_provided = True
-            elif word[:-1].isdigit():  # for the case when number of messages is followed by dot or other sign
+            elif word[
+                :-1
+            ].isdigit():  # for the case when number of messages is followed by dot or other sign
                 nr_messages_to_preserve = int(word[:-1])
                 nr_messages_to_preserve_provided = True
             else:
@@ -218,7 +222,9 @@ class Orchestrator(Agent):
                     if agent.name == word:
                         agent_to_memory_clear = agent
                         break
-                    elif agent.name == word[:-1]:  # for the case when agent name is followed by dot or other sign
+                    elif (
+                        agent.name == word[:-1]
+                    ):  # for the case when agent name is followed by dot or other sign
                         agent_to_memory_clear = agent
                         break
         # preserve last tool call message if clear history called inside of tool response
@@ -238,7 +244,9 @@ class Orchestrator(Agent):
             agent_to_memory_clear.clear_history(nr_messages_to_preserve=nr_messages_to_preserve)
         else:
             if nr_messages_to_preserve:
-                iostream.print(f"Clearing history for all agents except last {nr_messages_to_preserve} messages.")
+                iostream.print(
+                    f"Clearing history for all agents except last {nr_messages_to_preserve} messages."
+                )
                 # clearing history for module here
                 temp = module.messages[-nr_messages_to_preserve:]
                 module.messages.clear()
@@ -252,7 +260,11 @@ class Orchestrator(Agent):
                 agent.clear_history(nr_messages_to_preserve=nr_messages_to_preserve)
 
         # Reconstruct the reply without the "clear history" command and parameters
-        skip_words_number = 2 + int(bool(agent_to_memory_clear)) + int(nr_messages_to_preserve_provided)
-        reply_content = " ".join(words[:clear_word_index] + words[clear_word_index + skip_words_number :])
+        skip_words_number = (
+            2 + int(bool(agent_to_memory_clear)) + int(nr_messages_to_preserve_provided)
+        )
+        reply_content = " ".join(
+            words[:clear_word_index] + words[clear_word_index + skip_words_number :]
+        )
 
         return reply_content
