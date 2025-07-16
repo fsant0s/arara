@@ -69,7 +69,7 @@ Ideal for researchers exploring **LLM-powered, dialogue-driven recommendation sy
 
 ## Quick Start Example
 
-From [`notebooks/memory.ipynb`](notebooks/memory.ipynb):
+From [`examples/memory.ipynb`](examples/memory.ipynb):
 
 ```python
 from agents import Agent, User
