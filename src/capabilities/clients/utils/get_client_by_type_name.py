@@ -1,5 +1,7 @@
 from capabilities.clients.groq import GroqClient
+from capabilities.clients.ollama import OllamaClient
 from capabilities.clients.openai import OpenAIClient
+
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """
@@ -28,6 +30,7 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
             "groq": GroqClient,
             "openai": OpenAIClient,
             "maritaca": OpenAIClient,  # Assuming Maritaca uses the same client as OpenAI
+            "ollama": OllamaClient,
         }
 
         # Retrieve the appropriate client class from the mapping

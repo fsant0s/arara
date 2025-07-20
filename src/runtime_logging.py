@@ -11,8 +11,9 @@ from logger.base_logger import BaseLogger, LLMConfig
 from logger.logger_factory import LoggerFactory
 
 if TYPE_CHECKING:
-    from .capabilities.clients import GroqClient, BaseClient
     from agents import Agent
+
+    from .capabilities.clients import BaseClient, GroqClient, OllamaClient
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +179,8 @@ def logging_enabled() -> bool:
 
 def log_new_client(
     client: Union[
-        GroqClient
+        GroqClient,
+        OllamaClient,
         # TODO: AzureOpenAI, OpenAI, GeminiClient, AnthropicClient, MistralAIClient, TogetherClient, GroqClient, CohereClient
     ],
     wrapper: BaseClient,
