@@ -37,6 +37,7 @@ MODEL_PRICING_PER_1K_TOKENS = {
         "chatgpt-4o-latest": (0.005, 0.015),
         # Add other OpenAI models here
     },
+    "ollama": {},
     "maritaca": {
         "sabia-3": (0.0001, 0.0001),
     },
