@@ -2,22 +2,21 @@ from __future__ import annotations
 
 import copy
 import os
+from typing import Any, Dict, List, Union
 
-from typing import Dict, List, Union, Any
 from groq import Groq, Stream
 
-from llm_messages import ChatCompletionTokenLogprob, TopLogprob, CreateResult, RequestUsage
+from agents.helpers.normalize_name import normalize_name
+from agents.types import FunctionCall
 from function_utils import normalize_stop_reason
+from llm_messages import ChatCompletionTokenLogprob, CreateResult, RequestUsage, TopLogprob
 
 from .base import BaseClient
-
-from agents.types import FunctionCall
-from agents.helpers.normalize_name import normalize_name
-
-from .utils.should_hide_tools import should_hide_tools
-from .utils.convert_tools import convert_tools
 from .utils.calculate_token_cost import calculate_token_cost
+from .utils.convert_tools import convert_tools
+from .utils.should_hide_tools import should_hide_tools
 from .utils.validate_parameter import validate_parameter
+
 
 class GroqClient(BaseClient):
     """Client for Groq's API."""
@@ -66,14 +65,20 @@ class GroqClient(BaseClient):
         groq_params["frequency_penalty"] = validate_parameter(
             params, "frequency_penalty", (int, float), True, None, (-2, 2), None
         )
-        groq_params["max_tokens"] = validate_parameter(params, "max_tokens", int, True, None, (0, None), None)
+        groq_params["max_tokens"] = validate_parameter(
+            params, "max_tokens", int, True, None, (0, None), None
+        )
         groq_params["presence_penalty"] = validate_parameter(
             params, "presence_penalty", (int, float), True, None, (-2, 2), None
         )
         groq_params["seed"] = validate_parameter(params, "seed", int, True, None, None, None)
         groq_params["stream"] = validate_parameter(params, "stream", bool, True, False, None, None)
-        groq_params["temperature"] = validate_parameter(params, "temperature", (int, float), True, 1, (0, 2), None)
-        groq_params["top_p"] = validate_parameter(params, "top_p", (int, float), True, None, None, None)
+        groq_params["temperature"] = validate_parameter(
+            params, "temperature", (int, float), True, 1, (0, 2), None
+        )
+        groq_params["top_p"] = validate_parameter(
+            params, "top_p", (int, float), True, None, None, None
+        )
 
         # Groq parameters not supported by their models yet, ignoring
         # logit_bias, logprobs, top_logprobs
@@ -99,7 +104,13 @@ class GroqClient(BaseClient):
         # Add tools to the call if we have them and aren't hiding them
         if "tools" in params:
             hide_tools = validate_parameter(
-                params, "hide_tools", str, False, "never", None, ["if_all_run", "if_any_run", "never"]
+                params,
+                "hide_tools",
+                str,
+                False,
+                "never",
+                None,
+                ["if_all_run", "if_any_run", "never"],
             )
             if not should_hide_tools(groq_messages, params["tools"], hide_tools):
                 groq_params["tools"] = convert_tools(params["tools"])
@@ -121,6 +132,7 @@ class GroqClient(BaseClient):
         finish_reason = None
         thought: str | None = None
         try:
+            print("groq_params:", groq_params)
             response = client.chat.completions.create(**groq_params)
         except Exception as e:
             raise RuntimeError(f"Groq exception occurred: {e}")
@@ -169,7 +181,9 @@ class GroqClient(BaseClient):
                 response_id = chunk.id
             else:
                 if response.choices[0].message.function_call is not None:
-                    raise ValueError("function_call is deprecated and is not supported by this model client.")
+                    raise ValueError(
+                        "function_call is deprecated and is not supported by this model client."
+                    )
 
                 # Non-streaming response
                 # If we have tool calls as the response, populate completed tool calls for our return OAI response
@@ -191,7 +205,9 @@ class GroqClient(BaseClient):
                     content = response.choices[0].message.content or ""
                     # if there is a reasoning_content field, then we populate the thought field. This is for models such as R1 - direct from deepseek api.
                     if response.choices[0].message.model_extra is not None:
-                        reasoning_content = response.choices[0].message.model_extra.get("reasoning_content")
+                        reasoning_content = response.choices[0].message.model_extra.get(
+                            "reasoning_content"
+                        )
                         if reasoning_content is not None:
                             thought = reasoning_content
         else:
@@ -203,7 +219,9 @@ class GroqClient(BaseClient):
                 ChatCompletionTokenLogprob(
                     token=x.token,
                     logprob=x.logprob,
-                    top_logprobs=[TopLogprob(logprob=y.logprob, bytes=y.bytes) for y in x.top_logprobs],
+                    top_logprobs=[
+                        TopLogprob(logprob=y.logprob, bytes=y.bytes) for y in x.top_logprobs
+                    ],
                     bytes=x.bytes,
                 )
                 for x in response.choices[0].logprobs.content
@@ -213,14 +231,14 @@ class GroqClient(BaseClient):
             # TODO backup token counting
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
-            total_tokens=total_tokens
+            total_tokens=total_tokens,
         )
 
         calculated_cost = calculate_token_cost(
             input_tokens=prompt_tokens,
             output_tokens=completion_tokens,
             provider=self.PROVIDER_NAME,
-            model_name=groq_params["model"]
+            model_name=groq_params["model"],
         )
 
         response = CreateResult(
@@ -238,7 +256,9 @@ class GroqClient(BaseClient):
 
         return response
 
-    def _oai_messages_to_groq_messages(self, messages: list[Dict[str, Any]]) -> list[dict[str, Any]]:
+    def _oai_messages_to_groq_messages(
+        self, messages: list[Dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Convert messages from OAI format to Groq's format.
         We correct for any specific role orders and types.
         """

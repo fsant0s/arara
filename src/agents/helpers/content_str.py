@@ -1,7 +1,11 @@
-from typing import Union, List
-from .types import UserMessageImageContentPart, UserMessageTextContentPart
+from typing import List, Union
 
-def content_str(content: Union[str, List[Union[UserMessageTextContentPart, UserMessageImageContentPart]], None]) -> str:
+from custom_types import UserMessageImageContentPart, UserMessageTextContentPart
+
+
+def content_str(
+    content: Union[str, List[Union[UserMessageTextContentPart, UserMessageImageContentPart]], None]
+) -> str:
     """Converts the `content` field of an OpenAI message into a string format.
 
     This function processes content that may be a string, a list of mixed text and image URLs, or None,
@@ -31,12 +35,16 @@ def content_str(content: Union[str, List[Union[UserMessageTextContentPart, UserM
     rst = ""
     for item in content:
         if not isinstance(item, dict):
-            raise TypeError("Wrong content format: every element should be dict if the content is a list.")
+            raise TypeError(
+                "Wrong content format: every element should be dict if the content is a list."
+            )
         assert "type" in item, "Wrong content format. Missing 'type' key in content's dict."
         if item["type"] == "text":
             rst += item["text"]
         elif item["type"] == "image_url":
             rst += "<image>"
         else:
-            raise ValueError(f"Wrong content format: unknown type {item['type']} within the content")
+            raise ValueError(
+                f"Wrong content format: unknown type {item['type']} within the content"
+            )
     return rst

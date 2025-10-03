@@ -117,9 +117,9 @@ class Orchestrator(Agent):
                 speaker = module.select_speaker(speaker, self)
                 if not silent:
                     iostream = IOStream.get_default()
-                    iostream.print(
-                        colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True
-                    )
+                    # iostream.print(
+                    #    colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True
+                    # )
                 # let the speaker speak
                 # The speaker sends the message and requests a repl
                 reply = None

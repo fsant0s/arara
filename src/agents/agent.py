@@ -1,42 +1,63 @@
 import copy
-import re
 import logging
+import re
 import warnings
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union, Awaitable, Generator, Sequence
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from openai import BadRequestError
+from termcolor import colored
 
-from capabilities.memory import Memory
-from capabilities.tools.execute_tool_call import execute_tool_call
-from capabilities.tools import FunctionTool
-from capabilities.skills import (
-    Skill,
-    TextExtraction,
-    SequentialMemory
+from agent_messages import (
+    TextMessage,
+    ThoughtEvent,
+    ToolCallExecutionEvent,
+    ToolCallRequestEvent,
+    ToolCallSummaryMessage,
 )
+from cache.cache import AbstractCache
+from capabilities.memory import Memory
+from capabilities.skills import SequentialMemory, Skill, TextExtraction
+from capabilities.tools import FunctionTool
+from capabilities.tools.execute_tool_call import execute_tool_call
+from coding.base import CodeExecutor
+from coding.factory import CodeExecutorFactory
+from ioflow import IOStream
+from llm_messages import CreateResult, FunctionExecutionResult
 
 from .base import BaseAgent
 from .helpers import (
-    append_oai_message, match_trigger,  process_all_messages_before_reply,
-    process_last_received_message, process_message_before_send, process_received_message,
-    validate_llm_config, content_str, prepare_chat, reflection_with_llm,
-    gather_usage_summary, consolidate_chat_info, parse_function_call_list_from_string
+    append_oai_message,
+    consolidate_chat_info,
+    content_str,
+    gather_usage_summary,
+    match_trigger,
+    parse_function_call_list_from_string,
+    prepare_chat,
+    process_all_messages_before_reply,
+    process_last_received_message,
+    process_message_before_send,
+    process_received_message,
+    reflection_with_llm,
+    validate_llm_config,
 )
-
-from .types import FunctionCall, Response, ChatResult
-from agent_messages import (
-    TextMessage,  ThoughtEvent,
-    ToolCallExecutionEvent, ToolCallRequestEvent,
-    ToolCallSummaryMessage
-)
-from llm_messages import CreateResult, FunctionExecutionResult
-
-from cache.cache import AbstractCache
-from ioflow import IOStream
-from termcolor import colored
+from .types import ChatResult, FunctionCall, Response
 
 logger = logging.getLogger(__name__)
+
 
 class Agent(BaseAgent):
     """
@@ -47,11 +68,13 @@ class Agent(BaseAgent):
     """
 
     # Validates agent names: no spaces or characters invalid in OpenAI's Chat API (e.g., <, |, \, /, >, ")
-    NAME_PATTERN = re.compile(r'^[^\s<|\\/>\"]+$')
+    NAME_PATTERN = re.compile(r"^[^\s<|\\/>\"]+$")
 
     llm_config: Union[Dict, Literal[False]]
     DEFAULT_CONFIG = False  # False or dict, the default config for llm inference
-    DEFAULT_DESCRIPTION = "A agent capable of processing requests and generating responses using LLMs."
+    DEFAULT_DESCRIPTION = (
+        "A agent capable of processing requests and generating responses using LLMs."
+    )
     DEFAULT_SUMMARY_METHOD = "last_msg"
     DEFAULT_SUMMARY_PROMPT = "Summarize the takeaway from the conversation in a contextualized manner, providing a detailed summary of all parties involved, without adding introductory phrases"
     LLM_REFLECTION_PROMPT = """
@@ -67,7 +90,6 @@ class Agent(BaseAgent):
 
     After reflecting, summarize what went well, what could be improved, and provide an improved version of your answer if applicable.
     """
-
 
     @property
     def name(self) -> str:
@@ -118,6 +140,13 @@ class Agent(BaseAgent):
         """
         return self._oai_system_message[0]["content"]
 
+    @property
+    def code_executor(self) -> Optional[CodeExecutor]:
+        """The code executor used by this agent. Returns None if code execution is disabled."""
+        if not hasattr(self, "_code_executor"):
+            return None
+        return self._code_executor
+
     def update_system_message(self, system_message: str) -> None:
         """
         Update the system message for this Agent.
@@ -134,9 +163,13 @@ class Agent(BaseAgent):
 
     def max_consecutive_auto_reply(self, sender: Optional["Agent"] = None) -> int:
         """
-            The maximum number of consecutive auto replies.
+        The maximum number of consecutive auto replies.
         """
-        return self._max_consecutive_auto_reply if sender is None else self._max_consecutive_auto_reply_dict[sender]
+        return (
+            self._max_consecutive_auto_reply
+            if sender is None
+            else self._max_consecutive_auto_reply_dict[sender]
+        )
 
     def update_max_consecutive_auto_reply(self, value: int, sender: Optional["Agent"] = None):
         """
@@ -168,13 +201,16 @@ class Agent(BaseAgent):
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         human_input_mode: Literal["ALWAYS", "NEVER"] = "NEVER",
         max_consecutive_auto_reply: int = 0,
-        tools: List[FunctionTool | Callable[..., Any] | Callable[..., Awaitable[Any]]] | None = None,
+        tools: (
+            List[FunctionTool | Callable[..., Any] | Callable[..., Awaitable[Any]]] | None
+        ) = None,
         tool_call_summary_format: str = "{result}",
         reflect_on_tool_use: bool = False,
         skills: Optional[List[Skill]] = None,
         llm_reflection: bool = False,
         memory: Sequence[Memory] | None = None,
-        llm_reflection_prompt: str = LLM_REFLECTION_PROMPT
+        llm_reflection_prompt: str = LLM_REFLECTION_PROMPT,
+        code_execution_config: Union[Dict, Literal[False]] = False,
     ):
         """
         Initialize a Agent.
@@ -221,13 +257,17 @@ class Agent(BaseAgent):
 
             llm_reflection (bool, optional):
                 Enables internal reflection mechanisms, allowing the Agent to review its own outputs.
-        """
 
+            code_execution_config (Union[Dict, Literal[False]], optional):
+                Configuration for code execution capabilities. If False, code execution is disabled.
+                If None, it defaults to an empty dict, enabling default code execution behavior.
+                If a dict, it should contain configuration parameters for the code executor.
+        """
 
         if not self.NAME_PATTERN.match(name):
             raise ValueError(
                 f"Invalid agent name '{name}'. "
-                "It must not contain spaces or any of these characters: < | \\ / > \""
+                'It must not contain spaces or any of these characters: < | \\ / > "'
             )
 
         # a dictionary of conversations, default value is list
@@ -301,6 +341,44 @@ class Agent(BaseAgent):
         self.register_reply([BaseAgent, None], Agent._generate_oai_reply)
         self.register_reply([BaseAgent, None], Agent.check_termination_and_human_reply)
 
+        # Setting up code execution.
+        # Do not register code execution reply if code execution is disabled.
+        if code_execution_config is not False:
+            # If code_execution_config is None, set it to an empty dict.
+            if code_execution_config is None:
+                warnings.warn(
+                    "Using None to signal a default code_execution_config is deprecated. "
+                    "Use {} to use default or False to disable code execution.",
+                    stacklevel=2,
+                )
+                code_execution_config = {}
+            if not isinstance(code_execution_config, dict):
+                raise ValueError("code_execution_config must be a dict or False.")
+
+            # We have got a valid code_execution_config.
+            self._code_execution_config = code_execution_config
+
+            if self._code_execution_config.get("executor") is not None:
+                if "work_dir" in self._code_execution_config:
+                    raise ValueError(
+                        "'work_dir' in code_execution_config is not valid when 'executor' is set. Use the appropriate arg in the chosen executor instead."
+                    )
+
+                if "timeout" in self._code_execution_config:
+                    raise ValueError(
+                        "'timeout' in code_execution_config is not valid when 'executor' is set. Use the appropriate arg in the chosen executor instead."
+                    )
+
+                # Use the new code executor.
+                self._code_executor = CodeExecutorFactory.create(self._code_execution_config)
+                self.register_reply(
+                    [BaseAgent, None], Agent._generate_code_execution_reply_using_executor
+                )
+
+        else:
+            # Code execution is disabled.
+            self._code_execution_config = False
+
         # Tools initialization
         self._tools: List[FunctionTool] = []
         if tools:
@@ -367,9 +445,9 @@ class Agent(BaseAgent):
         self.send(message, recipient, silent=silent, request_reply=True)
 
         summary = self._summarize_chat(
-             summary_method,
+            summary_method,
             summary_args,
-               recipient,
+            recipient,
             cache=cache,
         )
 
@@ -391,7 +469,7 @@ class Agent(BaseAgent):
         message: Union[Dict, str],
         recipient: BaseAgent,
         request_reply: Optional[bool] = None,
-        silent: Optional[bool] = False
+        silent: Optional[bool] = False,
     ):
         """
         Send a message to another Agent.
@@ -438,18 +516,18 @@ class Agent(BaseAgent):
         """
         process_received_message(self, message, sender, silent)
         if (
-            (request_reply is False
+            request_reply is False
             or request_reply is None
-            and self.reply_at_receive[sender] is False)
-            or self._conversation_terminated[sender] # User typed "exit"
-        ):
+            and self.reply_at_receive[sender] is False
+        ) or self._conversation_terminated[
+            sender
+        ]:  # User typed "exit"
             return
-
 
         for reply in self.generate_reply(sender=sender):
             # It is the final yield. If the type is Response, it marks the generator's last yield.
             request_reply = False
-            if isinstance(reply, Response):
+            if isinstance(reply, Response) and reply.to_reply:
                 request_reply = True
             self.send(reply, sender, silent=silent, request_reply=request_reply)
 
@@ -479,7 +557,6 @@ class Agent(BaseAgent):
 
         if messages is None:
             messages = self._oai_messages[sender]
-
         # Call the hookable method that gives registered hooks a chance to process the last message.
         # Message modifications do not affect the incoming messages or self._oai_messages.
         messages = process_last_received_message(self, messages)
@@ -515,7 +592,9 @@ class Agent(BaseAgent):
         if messages is None:
             messages = self._oai_messages[sender]
 
-        for extracted_response in self._generate_oai_reply_from_client(client, messages, self.client_cache, sender):
+        for extracted_response in self._generate_oai_reply_from_client(
+            client, messages, self.client_cache, sender
+        ):
             if extracted_response is not None:
                 yield [(True, extracted_response)]
             else:
@@ -544,10 +623,7 @@ class Agent(BaseAgent):
         # TODO: Improve this to be more generic and less hardcoded
         if self._llm_reflection:
             model_result = self._perform_llm_reflection(
-                model_result,
-                all_messages,
-                llm_client,
-                cache
+                model_result, all_messages, llm_client, cache
             )
 
         for output_event in self._process_model_result(
@@ -699,10 +775,15 @@ class Agent(BaseAgent):
             elif isinstance(content, list):
                 # Remove the `TERMINATE` word in the content list.
                 summary = "\n".join(
-                    x["text"].replace("TERMINATE", "") for x in content if isinstance(x, dict) and "text" in x
+                    x["text"].replace("TERMINATE", "")
+                    for x in content
+                    if isinstance(x, dict) and "text" in x
                 )
         except (IndexError, AttributeError) as e:
-            warnings.warn(f"Cannot extract summary using last_msg: {e}. Using an empty str as summary.", UserWarning)
+            warnings.warn(
+                f"Cannot extract summary using last_msg: {e}. Using an empty str as summary.",
+                UserWarning,
+            )
         return summary
 
     def _reflection_with_llm_as_summary(self, sender, recipient, summary_args):
@@ -717,14 +798,115 @@ class Agent(BaseAgent):
             raise ValueError("The summary_role in summary_arg must be a string.")
         try:
             summary = reflection_with_llm(
-                sender, prompt, msg_list, llm_agent=agent, cache=summary_args.get("cache"), role=role
+                sender,
+                prompt,
+                msg_list,
+                llm_agent=agent,
+                cache=summary_args.get("cache"),
+                role=role,
             )
         except BadRequestError as e:
             warnings.warn(
-                f"Cannot extract summary using reflection_with_llm: {e}. Using an empty str as summary.", UserWarning
+                f"Cannot extract summary using reflection_with_llm: {e}. Using an empty str as summary.",
+                UserWarning,
             )
             summary = ""
         return summary
+
+    def _generate_code_execution_reply_using_executor(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[BaseAgent] = None,
+        config: Optional[Union[Dict, Literal[False]]] = None,
+    ):
+        """Generate a reply using code executor."""
+        iostream = IOStream.get_default()
+
+        if config is not None:
+            raise ValueError(
+                "config is not supported for _generate_code_execution_reply_using_executor."
+            )
+        if self._code_execution_config is False:
+            yield [(False, None)]
+            return
+        if messages is None:
+            messages = self._oai_messages[sender]
+        last_n_messages = self._code_execution_config.get("last_n_messages", "auto")
+
+        if (
+            not (isinstance(last_n_messages, (int, float)) and last_n_messages >= 0)
+            and last_n_messages != "auto"
+        ):
+            raise ValueError(
+                "last_n_messages must be either a non-negative integer, or the string 'auto'."
+            )
+
+        num_messages_to_scan = last_n_messages
+        if last_n_messages == "auto":
+            # Find when the agent last spoke
+            num_messages_to_scan = 0
+            for message in reversed(messages):
+                if "role" not in message:
+                    break
+                elif message["role"] != "user":
+                    break
+                else:
+                    num_messages_to_scan += 1
+        num_messages_to_scan = min(len(messages), num_messages_to_scan)
+        messages_to_scan = messages[-num_messages_to_scan:]
+
+        # iterate through the last n messages in reverse
+        # if code blocks are found, execute the code blocks and return the output
+        # if no code blocks are found, continue
+        for message in reversed(messages_to_scan):
+            if not message["content"]:
+                continue
+            code_blocks = self._code_executor.code_extractor.extract_code_blocks(message["content"])
+            if len(code_blocks) == 0:
+                continue
+
+            num_code_blocks = len(code_blocks)
+            if num_code_blocks == 1:
+                f"EXECUTING CODE BLOCK (language: {code_blocks[0].language})",
+                iostream.print(
+                    colored(
+                        f"\n🚀 [{self._name}] EXECUTING CODE BLOCK (language: {code_blocks[0].language})",
+                        "yellow",
+                    ),
+                    colored(f"\n{code_blocks[0].code}", "green"),
+                )
+            else:
+                iostream.print(
+                    colored(
+                        f"\n🚀 [{self._name}] EXECUTING {num_code_blocks} CODE BLOCKS (languages: [{', '.join([x.language for x in code_blocks])}])...",
+                        "yellow",
+                    ),
+                    colored("\n" + "\n".join([f"[*] {x.code}\n" for x in code_blocks]), "green"),
+                )
+
+            # found code blocks, execute code.
+            code_result = self._code_executor.execute_code_blocks(code_blocks)
+            exitcode2str = (
+                "execution succeeded" if code_result.exit_code == 0 else "execution failed"
+            )
+            reply = f"exitcode: {code_result.exit_code} ({exitcode2str})\nCode output: {code_result.output}"
+
+            # If llm_config is not set, we assume that the agent is not using LLM and we should not reply.
+            to_reply = False if self.llm_config else True
+
+            response = Response(
+                chat_message=TextMessage(
+                    content=reply,
+                    sender=sender,
+                    receiver=self,
+                ),
+                to_reply=to_reply,
+            )
+            yield [(True, response)]
+            return
+
+        yield [(False, None)]
+        return
 
     def check_termination_and_human_reply(
         self,
@@ -768,7 +950,9 @@ class Agent(BaseAgent):
                 yield [(False, None)]
                 return
 
-            elif self._consecutive_auto_reply_counter[sender] >= self._max_consecutive_auto_reply_dict[sender] or self._is_termination_msg(message):
+            elif self._consecutive_auto_reply_counter[
+                sender
+            ] >= self._max_consecutive_auto_reply_dict[sender] or self._is_termination_msg(message):
                 reply = "exit"
 
         # print the no_human_input_msg
@@ -795,6 +979,7 @@ class Agent(BaseAgent):
             )
             yield [(True, response)]
             return
+
         self._consecutive_auto_reply_counter[sender] += 1
         # increment the consecutive_auto_reply_counter
         if self.human_input_mode != "NEVER":
@@ -823,9 +1008,8 @@ class Agent(BaseAgent):
     def _process_model_result(
         self,
         model_result: CreateResult,
-        sender: BaseAgent  = None,
+        sender: BaseAgent = None,
     ) -> Generator[Response | ToolCallRequestEvent, None, None]:
-
         """
         Handle final responses from model_result, including tool calls, and reflection if needed.
         """
@@ -973,11 +1157,13 @@ class Agent(BaseAgent):
         cache: Optional[AbstractCache] = None,
     ) -> Response:
 
-        all_messages += [{"content": str(response.content), "role": "user"}] + [{"content": self._llm_reflection_prompt, 'role': 'assistant'}]
+        all_messages += [{"content": str(response.content), "role": "user"}] + [
+            {"content": self._llm_reflection_prompt, "role": "assistant"}
+        ]
         return llm_client.create(
-        context=all_messages[-1].pop("context", None),
-        messages=all_messages ,
-        tools=self._tools,
-        cache=cache,
-        Agent=self,
+            context=all_messages[-1].pop("context", None),
+            messages=all_messages,
+            tools=self._tools,
+            cache=cache,
+            Agent=self,
         )

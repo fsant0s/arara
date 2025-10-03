@@ -13,7 +13,7 @@ SEE https://github.com/AgentOps-AI/tokencost
 
 import warnings
 
-# Prices per 1000 tokens (input, output)
+# Prices per 1M (million) tokens (input, output)
 MODEL_PRICING_PER_1K_TOKENS = {
     "groq": {
         "gemma2-9b-it": (0.0002, 0.0002),
@@ -39,7 +39,8 @@ MODEL_PRICING_PER_1K_TOKENS = {
     },
     "ollama": {},
     "maritaca": {
-        "sabia-3": (0.0001, 0.0001),
+        "sabia-3": (0.00009, 0.00179),
+        "sabia-3.1": (0.00009, 0.00179),
     },
     # Add other providers here
     # "anthropic": {
@@ -58,11 +59,9 @@ MODEL_PRICING_PER_1K_TOKENS = {
 #     }
 # }
 
+
 def calculate_token_cost(
-    input_tokens: int,
-    output_tokens: int,
-    provider: str,
-    model_name: str
+    input_tokens: int, output_tokens: int, provider: str, model_name: str
 ) -> float | None:
     """
     Calculate the cost of the completion using centralized pricing.
@@ -82,7 +81,7 @@ def calculate_token_cost(
     if not provider_pricing:
         warnings.warn(
             f"Cost calculation not available for provider '{provider}'. Model: '{model_name}'",
-            UserWarning
+            UserWarning,
         )
         return None
 
@@ -103,7 +102,7 @@ def calculate_token_cost(
                 warnings.warn(
                     f"Exact match for model '{model_name}' not found for provider '{provider}'. "
                     f"Using pricing for base model '{known_model_name}'.",
-                    UserWarning
+                    UserWarning,
                 )
                 input_cost = (input_tokens / 1000) * input_cost_pk
                 output_cost = (output_tokens / 1000) * output_cost_pk
@@ -112,6 +111,6 @@ def calculate_token_cost(
 
         warnings.warn(
             f"Cost calculation not available for model '{model_name}' under provider '{provider}'.",
-            UserWarning
+            UserWarning,
         )
         return None
