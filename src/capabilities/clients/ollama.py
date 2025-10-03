@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 
 from ollama import Client
 
-from agents.helpers.normalize_name import normalize_name
 from agents.types import FunctionCall
 from function_utils import normalize_stop_reason
 from llm_messages import CreateResult, RequestUsage
@@ -15,6 +14,7 @@ from llm_messages import CreateResult, RequestUsage
 from .base import BaseClient
 from .utils.calculate_token_cost import calculate_token_cost
 from .utils.convert_tools import convert_tools
+from .utils.normalize_name import normalize_name
 from .utils.should_hide_tools import should_hide_tools
 from .utils.validate_parameter import validate_parameter
 
