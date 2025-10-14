@@ -35,6 +35,7 @@ MODEL_PRICING_PER_1K_TOKENS = {
         "o1-mini": (0.0011, 0.0044),
         "o1-mini-2024-09-12": (0.003, 0.012),
         "chatgpt-4o-latest": (0.005, 0.015),
+        "gpt-4.1-2025-04-14": (0.02, 0.08),
         # Add other OpenAI models here
     },
     "ollama": {},
