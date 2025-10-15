@@ -1062,15 +1062,13 @@ class Agent(BaseAgent):
             )
             for call in model_result.content
         ]
-        exec_results = [result for _, result in executed_calls_and_results]
 
-        # Yield ToolCallExecutionEvent
-        tool_call_result_msg = ToolCallExecutionEvent(
-            content=exec_results,
-            sender=sender,
-            receiver=self,
-        )
-        yield tool_call_result_msg
+        for _, result in executed_calls_and_results:
+            yield ToolCallExecutionEvent(
+                content=[result],
+                sender=sender,
+                receiver=self,
+            )
 
         # STEP 3: Reflect or summarize tool results
         if self._reflect_on_tool_use:

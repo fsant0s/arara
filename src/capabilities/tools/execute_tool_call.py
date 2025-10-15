@@ -1,14 +1,17 @@
-from typing import Any, Dict, List, Tuple, Generator
 import json
+from typing import Any, Dict, List, Tuple
+
 from agents.types import FunctionCall
-from ..tools.base import BaseTool
 from llm_messages import FunctionExecutionResult
+
+from ..tools.base import BaseTool
+
 
 def execute_tool_call(
     tool_call: FunctionCall,
     tools: List[BaseTool[Any, Any]],
-) -> Generator[tuple[FunctionCall, FunctionExecutionResult], None, None]:
-    """Execute a single tool call and return the result."""
+) -> Tuple[FunctionCall, FunctionExecutionResult]:
+    """Execute a single tool call and return the pair (call, result)."""
     try:
         all_tools = tools
         if not all_tools:

@@ -47,17 +47,59 @@ def parse_function_execution(content: str):
 
 def print_function_call(iostream, parsed):
     function = parsed.get("function", {})
-    name = function.get("name", "(unknown function)")
-    title = f"🛠️ Suggested Function Call: {name}"
-    iostream.print(colored(f"{title}", "green"), flush=True)
-    iostream.print(colored(f" Arguments:", "green"), flush=True)
-    arguments = function.get("arguments", "(no arguments)")
-    if isinstance(arguments, dict):
-        args_text = json.dumps(arguments, indent=2, ensure_ascii=False).splitlines()
-        for line_content in args_text:
-            iostream.print(colored(f" {line_content}", "green"), flush=True)
-    else:
-        iostream.print(colored(f" {arguments}", "green"), flush=True)
+    name_field = function.get("name", "(unknown function)")
+
+    # Divide quando houver concatenação de múltiplos FunctionCall
+    parts = re.split(r"FunctionCall", name_field)
+
+    for idx, part in enumerate(parts, start=1):
+        text = part.strip()
+
+        # 1) Tenta pegar name='foo' (aceita aspas simples/duplas e até sem a aspa final)
+        m = re.search(r"name\s*=\s*['\"]?([A-Za-z0-9_.:-]+)", text)
+        if m:
+            clean_name = m.group(1)
+        else:
+            # 2) Se não houver "name=", tenta isolar o primeiro token "limpo"
+            text_tmp = re.sub(r"^[\s,;:)'\"\\]+", "", text)
+            text_tmp = re.split(r"[,\)]", text_tmp, maxsplit=1)[0]
+            m2 = re.search(r"([A-Za-z0-9_.:-]+)$", text_tmp)
+            clean_name = m2.group(1) if m2 else text_tmp.strip()
+
+        clean_name = clean_name.strip(" '")  # remove aspas soltas no fim
+
+        if not clean_name or clean_name == "(unknown function)":
+            continue
+
+        # Cabeçalho
+        title = f"🛠️ Suggested Function Call [{idx}]: {clean_name}"
+        iostream.print(colored(title, "green", attrs=["bold"]), flush=True)
+
+        # Arguments — pegue os do próprio bloco
+        # Bloco 1: usa os arguments do campo function
+        # Blocos seguintes: extrai de arguments='...'(JSON) dentro do trecho atual
+        if idx == 1:
+            per_args = function.get("arguments", "(no arguments)")
+        else:
+            margs = re.search(r"arguments\s*=\s*'(\{.*?\})'", text)
+            if margs:
+                try:
+                    per_args = json.loads(margs.group(1))
+                except Exception:
+                    per_args = {"_raw": margs.group(1)}
+            else:
+                per_args = "(no arguments)"
+
+        # Impressão dos argumentos
+        iostream.print(colored(" Arguments:", "green"), flush=True)
+        if isinstance(per_args, dict):
+            args_text = json.dumps(per_args, indent=2, ensure_ascii=False).splitlines()
+            for line_content in args_text:
+                iostream.print(colored(f" {line_content}", "green"), flush=True)
+        else:
+            iostream.print(colored(f" {per_args}", "green"), flush=True)
+
+        iostream.print("", flush=True)
 
 
 def print_function_execution(iostream, parsed):
