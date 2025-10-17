@@ -1,6 +1,7 @@
 from capabilities.clients.groq import GroqClient
-from capabilities.clients.openai import OpenAIClient
 from capabilities.clients.ollama import OllamaClient
+from capabilities.clients.openai import OpenAIClient
+
 
 def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
     """

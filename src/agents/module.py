@@ -31,7 +31,7 @@ class Module:
     - agents: a list of participating agents.
     - messages: a list of messages in the module.
     - max_round: the maximum number of rounds.
-    - admin_name: the name of the admin agent if there is one. Default is "Admin".
+    - name: the name of the admin agent if there is one. Default is "Admin".
         KeyBoardInterrupt will make the admin agent take over.
     - func_call_filter: whether to enforce function call filter. Default is True.
         When set to True and when a message is a function call suggestion,
@@ -108,7 +108,7 @@ class Module:
     agents: List[Agent]
     messages: List[Dict] = field(default_factory=list)
     max_round: int = sys.maxsize  # Default to infinite rounds
-    admin_name: str = "Admin"
+    name: str = "module"
     func_call_filter: bool = True
     speaker_selection_method: Union[
         Literal["auto", "manual", "random", "round_robin"], Callable

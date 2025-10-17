@@ -85,7 +85,7 @@ class Orchestrator(Agent):
         if messages is None:
             messages = self._oai_messages[sender]
         message = messages[-1]
-
+        print("oi")
         speaker = sender
         module = config
         send_introductions = getattr(module, "send_introductions", False)
@@ -117,9 +117,9 @@ class Orchestrator(Agent):
                 speaker = module.select_speaker(speaker, self)
                 if not silent:
                     iostream = IOStream.get_default()
-                    # iostream.print(
-                    #    colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True
-                    # )
+                    iostream.print(
+                        colored(f"\nNext speaker: {speaker.name}\n", "green"), flush=True
+                    )
                 # let the speaker speak
                 # The speaker sends the message and requests a repl
                 reply = None
@@ -131,9 +131,9 @@ class Orchestrator(Agent):
                     # speaker.send(reply, self, request_reply=False, silent=silent)
             except KeyboardInterrupt:
                 # let the admin agent speak if interrupted
-                if module.admin_name in module.agent_names:
+                if module.name in module.agent_names:
                     # admin agent is one of the participants
-                    speaker = module.agent_by_name(module.admin_name)
+                    speaker = module.agent_by_name(module.name)
                     for reply in speaker.generate_reply(sender=self):
                         # The speaker sends the message without requesting a reply
                         speaker.send(reply, self, request_reply=False, silent=silent)

@@ -29,7 +29,7 @@ MODEL_PRICING_PER_1K_TOKENS = {
         # Example of how you would add OpenAI models (fictional values)
         "gpt-4": (0.03, 0.06),
         "gpt-4-0613": (0.03, 0.06),
-        "gpt-4o": (0.0025, 0.01),
+        "gpt-4o": (0.005, 0.015),
         "gpt-4o-mini": (0.00015, 0.0006),
         "gpt-4o-mini-2024-07-18": (0.00015, 0.0006),
         "o1-mini": (0.0011, 0.0044),
@@ -49,9 +49,7 @@ MODEL_PRICING_PER_1K_TOKENS = {
         "deepseek/deepseek-chat": (0.00038, 0.00089),
         "meta-llama/llama-3.3-70b-instruct:free": (0, 0),
         "meta-llama/llama-3.3-70b-instruct": (0.00013, 0.000038),
-    }
-
-
+    },
     # Add other providers here
     # "anthropic": {
     # "claude-3-opus-20240229": (0.015, 0.075),
