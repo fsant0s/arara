@@ -43,6 +43,15 @@ MODEL_PRICING_PER_1K_TOKENS = {
         "sabia-3": (0.00009, 0.00179),
         "sabia-3.1": (0.00009, 0.00179),
     },
+    "openrouter": {
+        "openai/gpt-4o": (0.0025, 0.01),
+        "anthropic/claude-3.5-sonnet": (0.003, 0.015),
+        "deepseek/deepseek-chat": (0.00038, 0.00089),
+        "meta-llama/llama-3.3-70b-instruct:free": (0, 0),
+        "meta-llama/llama-3.3-70b-instruct": (0.00013, 0.000038),
+    }
+
+
     # Add other providers here
     # "anthropic": {
     # "claude-3-opus-20240229": (0.015, 0.075),

@@ -30,6 +30,7 @@ def get_client_by_type_name(client_type: str, openai_config: dict) -> object:
             "openai": OpenAIClient,
             "ollama": OllamaClient,
             "maritaca": OpenAIClient,  # Assuming Maritaca uses the same client as OpenAI
+            "openrouter": OpenAIClient,  # Assuming OpenRouter uses the same client as OpenAI
         }
 
         # Retrieve the appropriate client class from the mapping

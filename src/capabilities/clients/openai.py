@@ -47,6 +47,13 @@ class OpenAIClient(BaseClient):
                 )
             self.PROVIDER_NAME = "maritaca"
             self.api_key = kwargs.get("api_key", os.getenv("MARITACA_API_KEY"))
+        elif self.base_url and "openrouter" in self.base_url.lower():
+            if not self.base_url:
+                raise ValueError(
+                    "The 'base_url' parameter is required when using the OpenRouter provider."
+                )
+            self.PROVIDER_NAME = "openrouter"
+            self.api_key = kwargs.get("api_key", os.getenv("OPEN_ROUTER_API_KEY"))
         else:
             self.PROVIDER_NAME = "openai"
             self.api_key = kwargs.get("api_key", os.getenv("OPENAI_API_KEY"))
