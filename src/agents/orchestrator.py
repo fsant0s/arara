@@ -85,7 +85,7 @@ class Orchestrator(Agent):
         if messages is None:
             messages = self._oai_messages[sender]
         message = messages[-1]
-        print("oi")
+
         speaker = sender
         module = config
         send_introductions = getattr(module, "send_introductions", False)
